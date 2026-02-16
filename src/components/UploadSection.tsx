@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, forwardRef } from "react";
+import { useState, useCallback, useRef, useEffect, forwardRef } from "react";
 import { Upload, Image as ImageIcon, X, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -43,6 +43,27 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
         return combined;
       });
     }, []);
+
+    // Handle paste events globally
+    useEffect(() => {
+      const handlePaste = (e: ClipboardEvent) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        const files: File[] = [];
+        for (const item of Array.from(items)) {
+          if (item.type.startsWith("image/")) {
+            const file = item.getAsFile();
+            if (file) files.push(file);
+          }
+        }
+        if (files.length > 0) {
+          e.preventDefault();
+          addFiles(files);
+        }
+      };
+      document.addEventListener("paste", handlePaste);
+      return () => document.removeEventListener("paste", handlePaste);
+    }, [addFiles]);
 
     const fetchImageFromUrl = useCallback(async (url: string): Promise<File | null> => {
       try {
