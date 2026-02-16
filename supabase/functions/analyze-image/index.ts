@@ -22,7 +22,8 @@ serve(async (req) => {
       );
     }
 
-    const HIVE_API_KEY = Deno.env.get("HIVE_API_KEY");
+    const HIVE_API_KEY = Deno.env.get("HIVE_API_KEY")?.trim();
+    console.log(`HIVE_API_KEY loaded: ${HIVE_API_KEY ? `yes (${HIVE_API_KEY.length} chars, starts with "${HIVE_API_KEY.substring(0, 4)}")` : "no"}`);
 
     // If no Hive API key, use smart mock analysis
     if (!HIVE_API_KEY) {
