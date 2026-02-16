@@ -22,115 +22,130 @@ serve(async (req) => {
       );
     }
 
-    const HIVE_API_KEY = Deno.env.get("HIVE_API_KEY")?.trim();
-    console.log(`HIVE_API_KEY loaded: ${HIVE_API_KEY ? `yes (${HIVE_API_KEY.length} chars, starts with "${HIVE_API_KEY.substring(0, 4)}")` : "no"}`);
-
-    // If no Hive API key, use smart mock analysis
-    if (!HIVE_API_KEY) {
-      console.log("No HIVE_API_KEY set, returning mock analysis");
-      await new Promise((r) => setTimeout(r, 1500));
-
-      const isAI = Math.random() > 0.4;
-      const confidence = Math.floor(Math.random() * 15) + 85;
-
-      const result = {
-        verdict: isAI ? "ai" : "human",
-        confidence,
-        reasons: isAI
-          ? [
-              "Unnatural symmetry detected in facial features",
-              "Perfect gradient transitions uncommon in photographs",
-              "Lack of natural sensor noise in shadow regions",
-              "Metadata inconsistent with known camera models",
-            ]
-          : [
-              "Natural noise distribution consistent with camera sensor",
-              "EXIF data matches known camera model patterns",
-              "Micro-imperfections in lighting consistent with real capture",
-              "No repeating pattern artifacts detected",
-            ],
-        tips: [
-          "Check the image metadata with an EXIF viewer",
-          "Try a reverse image search on Google or TinEye",
-          "Look for subtle artifacts around hands, text, or edges",
-          "Compare with known authentic images from the same source",
-        ],
-      };
-
-      return new Response(JSON.stringify(result), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      return new Response(
+        JSON.stringify({ error: "AI service not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Real Hive Moderation API call
+    // Convert image to base64
     const imageBytes = await imageFile.arrayBuffer();
-    const blob = new Blob([imageBytes], { type: imageFile.type });
+    const base64Image = btoa(
+      new Uint8Array(imageBytes).reduce((data, byte) => data + String.fromCharCode(byte), "")
+    );
+    const mimeType = imageFile.type || "image/jpeg";
+    const dataUrl = `data:${mimeType};base64,${base64Image}`;
 
-    const hiveForm = new FormData();
-    hiveForm.append("media", blob, imageFile.name);
-
-    const hiveResponse = await fetch("https://api.thehive.ai/api/v2/task/sync", {
+    // Use Gemini vision to analyze the image
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        authorization: `token ${HIVE_API_KEY}`,
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
       },
-      body: hiveForm,
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert forensic image analyst specializing in detecting AI-generated images. Analyze the provided image and determine whether it was created by AI or captured by a real camera/human.
+
+You MUST respond with a JSON object using this exact tool call.`,
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Analyze this image. Is it AI-generated or a real photograph? Provide your verdict, confidence score, detailed forensic reasons, and verification tips.",
+              },
+              {
+                type: "image_url",
+                image_url: { url: dataUrl },
+              },
+            ],
+          },
+        ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "report_analysis",
+              description: "Report the AI vs human image analysis result",
+              parameters: {
+                type: "object",
+                properties: {
+                  verdict: {
+                    type: "string",
+                    enum: ["ai", "human"],
+                    description: "Whether the image is AI-generated or human-made",
+                  },
+                  confidence: {
+                    type: "number",
+                    description: "Confidence score from 50 to 99",
+                  },
+                  reasons: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "3-5 specific forensic reasons supporting the verdict",
+                  },
+                  tips: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "3-4 actionable tips for the user to manually verify",
+                  },
+                },
+                required: ["verdict", "confidence", "reasons", "tips"],
+                additionalProperties: false,
+              },
+            },
+          },
+        ],
+        tool_choice: { type: "function", function: { name: "report_analysis" } },
+      }),
     });
 
-    if (!hiveResponse.ok) {
-      const errText = await hiveResponse.text();
-      console.error(`Hive API error [${hiveResponse.status}]: ${errText}`);
+    if (!aiResponse.ok) {
+      const errText = await aiResponse.text();
+      console.error(`AI gateway error [${aiResponse.status}]: ${errText}`);
+
+      if (aiResponse.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Rate limit exceeded, please try again shortly" }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (aiResponse.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "AI usage limit reached" }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       return new Response(
-        JSON.stringify({ error: `Detection API error: ${hiveResponse.status}` }),
+        JSON.stringify({ error: "AI analysis failed" }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const hiveData = await hiveResponse.json();
+    const aiData = await aiResponse.json();
 
-    // Parse Hive response — look for ai_generated class
-    let aiScore = 0;
-    let humanScore = 0;
-
-    try {
-      const outputs = hiveData?.status?.[0]?.response?.output || [];
-      for (const output of outputs) {
-        for (const cls of output.classes || []) {
-          if (cls.class === "ai_generated") aiScore = cls.score;
-          if (cls.class === "not_ai_generated") humanScore = cls.score;
-        }
-      }
-    } catch {
-      console.warn("Could not parse Hive response, using raw data");
+    // Extract tool call result
+    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+    if (!toolCall?.function?.arguments) {
+      console.error("No tool call in AI response:", JSON.stringify(aiData));
+      return new Response(
+        JSON.stringify({ error: "Could not parse AI analysis" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    const isAI = aiScore > humanScore;
-    const confidence = Math.round((isAI ? aiScore : humanScore) * 100);
+    const result = JSON.parse(toolCall.function.arguments);
 
-    const result = {
-      verdict: isAI ? "ai" : "human",
-      confidence,
-      reasons: isAI
-        ? [
-            "AI generation patterns detected by neural analysis",
-            "Statistical anomalies in pixel distribution",
-            "Synthetic texture patterns identified",
-            "Compression artifacts inconsistent with camera capture",
-          ]
-        : [
-            "Natural sensor noise patterns detected",
-            "Image characteristics consistent with camera capture",
-            "No synthetic generation patterns found",
-            "Pixel distribution matches natural photography",
-          ],
-      tips: [
-        "Check the image metadata with an EXIF viewer",
-        "Try a reverse image search on Google or TinEye",
-        "Look for subtle artifacts around hands, text, or edges",
-        "Compare with known authentic images from the same source",
-      ],
-      raw: hiveData,
-    };
+    // Clamp confidence
+    result.confidence = Math.max(50, Math.min(99, Math.round(result.confidence)));
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
