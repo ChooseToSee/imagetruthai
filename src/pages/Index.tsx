@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import UploadSection from "@/components/UploadSection";
 import ResultsDisplay, { type AnalysisResult } from "@/components/ResultsDisplay";
+import BatchResultsDisplay, { type BatchItem } from "@/components/BatchResultsDisplay";
 import HowItWorks from "@/components/HowItWorks";
 import PricingSection from "@/components/PricingSection";
 import Footer from "@/components/Footer";
@@ -13,8 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 const Index = () => {
   const uploadRef = useRef<HTMLDivElement>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [singleResult, setSingleResult] = useState<{ result: AnalysisResult; preview: string } | null>(null);
+  const [batchResults, setBatchResults] = useState<BatchItem[] | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -22,70 +23,110 @@ const Index = () => {
     uploadRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  const handleAnalyze = useCallback(async (file: File) => {
-    setIsAnalyzing(true);
-    setResult(null);
+  const analyzeOne = async (file: File): Promise<{ result: AnalysisResult; preview: string }> => {
+    const preview = URL.createObjectURL(file);
+    const formData = new FormData();
+    formData.append("image", file);
 
-    const reader = new FileReader();
-    reader.onload = (e) => setPreview(e.target?.result as string);
-    reader.readAsDataURL(file);
+    const { data, error } = await supabase.functions.invoke("analyze-image", {
+      body: formData,
+    });
 
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
+    if (error) throw error;
+    const result = data as AnalysisResult;
 
-      const { data: fnData, error: fnError } = await supabase.functions.invoke(
-        "analyze-image",
-        { body: formData }
-      );
-
-      if (fnError) throw fnError;
-
-      const res = fnData as AnalysisResult;
-      setResult(res);
-
-      // Save to history if logged in
-      if (user) {
-        await supabase.from("scan_history").insert({
-          user_id: user.id,
-          file_name: file.name,
-          file_size: file.size,
-          verdict: res.verdict,
-          confidence: res.confidence,
-          reasons: res.reasons,
-          tips: res.tips,
-        });
-      }
-    } catch (err: any) {
-      toast({
-        title: "Analysis failed",
-        description: err.message || "Please try again later",
-        variant: "destructive",
+    // Save to history if logged in
+    if (user) {
+      await supabase.from("scan_history").insert({
+        user_id: user.id,
+        file_name: file.name,
+        file_size: file.size,
+        verdict: result.verdict,
+        confidence: result.confidence,
+        reasons: result.reasons,
+        tips: result.tips,
       });
-    } finally {
-      setIsAnalyzing(false);
     }
-  }, [user, toast]);
+
+    return { result, preview };
+  };
+
+  const handleAnalyze = useCallback(
+    async (files: File[]) => {
+      setIsAnalyzing(true);
+      setSingleResult(null);
+      setBatchResults(null);
+
+      try {
+        // Run all analyses in parallel
+        const settled = await Promise.allSettled(files.map((f) => analyzeOne(f)));
+
+        const successes: BatchItem[] = [];
+        let failures = 0;
+
+        settled.forEach((s, i) => {
+          if (s.status === "fulfilled") {
+            successes.push({
+              fileName: files[i].name,
+              preview: s.value.preview,
+              result: s.value.result,
+            });
+          } else {
+            failures++;
+          }
+        });
+
+        if (failures > 0) {
+          toast({
+            title: `${failures} image${failures > 1 ? "s" : ""} failed`,
+            description: "Some images could not be analyzed. Results shown for the rest.",
+            variant: "destructive",
+          });
+        }
+
+        if (successes.length === 0) {
+          toast({
+            title: "Analysis failed",
+            description: "None of the images could be analyzed. Please try again.",
+            variant: "destructive",
+          });
+        } else if (successes.length === 1) {
+          setSingleResult({ result: successes[0].result, preview: successes[0].preview });
+        } else {
+          setBatchResults(successes);
+        }
+      } catch (err: any) {
+        toast({
+          title: "Analysis failed",
+          description: err.message || "Please try again later",
+          variant: "destructive",
+        });
+      } finally {
+        setIsAnalyzing(false);
+      }
+    },
+    [user, toast]
+  );
 
   const handleReset = useCallback(() => {
-    setResult(null);
-    setPreview(null);
+    setSingleResult(null);
+    setBatchResults(null);
     scrollToUpload();
   }, [scrollToUpload]);
+
+  const showResults = singleResult || batchResults;
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <HeroSection onScrollToUpload={scrollToUpload} />
 
-      {result && preview ? (
-        <ResultsDisplay result={result} imagePreview={preview} onReset={handleReset} />
+      {singleResult ? (
+        <ResultsDisplay result={singleResult.result} imagePreview={singleResult.preview} onReset={handleReset} />
+      ) : batchResults ? (
+        <BatchResultsDisplay items={batchResults} onReset={handleReset} />
       ) : (
-        <UploadSection
-          ref={uploadRef}
-          onAnalyze={handleAnalyze}
-          isAnalyzing={isAnalyzing}
-        />
+        <UploadSection ref={uploadRef} onAnalyze={handleAnalyze} isAnalyzing={isAnalyzing} />
       )}
 
       <HowItWorks />
