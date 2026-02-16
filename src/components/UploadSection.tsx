@@ -44,13 +44,51 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
       });
     }, []);
 
+    const fetchImageFromUrl = useCallback(async (url: string): Promise<File | null> => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const blob = await res.blob();
+        if (!["image/jpeg", "image/png", "image/webp"].includes(blob.type)) return null;
+        const name = url.split("/").pop()?.split("?")[0] || "dropped-image";
+        return new File([blob], name, { type: blob.type });
+      } catch {
+        return null;
+      }
+    }, []);
+
     const handleDrop = useCallback(
-      (e: React.DragEvent) => {
+      async (e: React.DragEvent) => {
         e.preventDefault();
         setDragActive(false);
-        if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
+
+        // Case 1: actual files dropped
+        if (e.dataTransfer.files?.length) {
+          addFiles(e.dataTransfer.files);
+          return;
+        }
+
+        // Case 2: image URL dragged from a webpage
+        const url =
+          e.dataTransfer.getData("text/uri-list") ||
+          e.dataTransfer.getData("text/plain") ||
+          "";
+
+        // Also check for HTML img src
+        const html = e.dataTransfer.getData("text/html");
+        const srcMatch = html?.match(/<img[^>]+src="([^"]+)"/i);
+        const imageUrl = srcMatch?.[1] || url;
+
+        if (imageUrl && /^https?:\/\/.+/i.test(imageUrl)) {
+          const file = await fetchImageFromUrl(imageUrl);
+          if (file) {
+            addFiles([file]);
+          } else {
+            alert("Could not load that image. Try saving it locally first.");
+          }
+        }
       },
-      [addFiles]
+      [addFiles, fetchImageFromUrl]
     );
 
     const removeFile = (index: number) => {
