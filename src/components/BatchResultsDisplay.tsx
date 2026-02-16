@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, CheckCircle, Info, RotateCcw, ChevronDown, ChevronUp, BarChart3, Eye, EyeOff } from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, RotateCcw, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AnalysisResult } from "@/components/ResultsDisplay";
 
@@ -14,58 +14,8 @@ interface BatchResultsDisplayProps {
   onReset: () => void;
 }
 
-const HeatmapOverlay = ({ confidence, visible }: { confidence: number; visible: boolean }) => {
-  if (!visible) return null;
-  const intensity = confidence / 100;
-  return (
-    <div className="absolute inset-0 pointer-events-none rounded-lg overflow-hidden">
-      {/* Multi-layer heatmap */}
-      <div
-        className="absolute inset-0 mix-blend-screen animate-pulse"
-        style={{
-          background: `radial-gradient(ellipse 60% 50% at 35% 40%, hsl(0 72% 55% / ${intensity * 0.35}) 0%, transparent 70%)`,
-          animationDuration: "3s",
-        }}
-      />
-      <div
-        className="absolute inset-0 mix-blend-screen"
-        style={{
-          background: `radial-gradient(ellipse 45% 55% at 70% 55%, hsl(28 90% 55% / ${intensity * 0.3}) 0%, transparent 65%)`,
-        }}
-      />
-      <div
-        className="absolute inset-0 mix-blend-screen animate-pulse"
-        style={{
-          background: `radial-gradient(circle 30% at 50% 30%, hsl(0 72% 55% / ${intensity * 0.25}) 0%, transparent 70%)`,
-          animationDuration: "4s",
-        }}
-      />
-      {/* Grid lines */}
-      <div
-        className="absolute inset-0 opacity-20"
-        style={{
-          backgroundImage: `linear-gradient(hsl(174 72% 56% / 0.15) 1px, transparent 1px), linear-gradient(90deg, hsl(174 72% 56% / 0.15) 1px, transparent 1px)`,
-          backgroundSize: "20px 20px",
-        }}
-      />
-      {/* Scan line */}
-      <div className="absolute inset-x-0 h-px bg-primary/40 animate-scan-line" />
-      {/* Corner markers */}
-      <div className="absolute top-2 left-2 h-4 w-4 border-t-2 border-l-2 border-primary/50 rounded-tl" />
-      <div className="absolute top-2 right-2 h-4 w-4 border-t-2 border-r-2 border-primary/50 rounded-tr" />
-      <div className="absolute bottom-2 left-2 h-4 w-4 border-b-2 border-l-2 border-primary/50 rounded-bl" />
-      <div className="absolute bottom-2 right-2 h-4 w-4 border-b-2 border-r-2 border-primary/50 rounded-br" />
-      {/* Label */}
-      <div className="absolute top-2 left-1/2 -translate-x-1/2 rounded bg-destructive/80 px-1.5 py-0.5 text-[9px] font-bold text-destructive-foreground uppercase tracking-wider">
-        AI Anomalies Detected
-      </div>
-    </div>
-  );
-};
-
 const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
-  const [heatmapVisible, setHeatmapVisible] = useState<Record<number, boolean>>({});
 
   const aiCount = items.filter((i) => i.result.verdict === "ai").length;
   const humanCount = items.length - aiCount;
@@ -185,32 +135,12 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                   {isExpanded && (
                     <div className="border-t border-border px-4 pb-4 pt-3">
                       <div className="flex flex-col gap-4 sm:flex-row">
-                        <div className="relative shrink-0 overflow-hidden rounded-lg bg-muted">
+                        <div className="shrink-0 overflow-hidden rounded-lg bg-muted">
                           <img
                             src={item.preview}
                             alt={item.fileName}
                             className="h-48 w-full rounded-lg object-contain sm:w-48"
                           />
-                          {isAI && (
-                            <HeatmapOverlay
-                              confidence={item.result.confidence}
-                              visible={heatmapVisible[i] !== false}
-                            />
-                          )}
-                          {isAI && (
-                            <button
-                              onClick={() =>
-                                setHeatmapVisible((prev) => ({ ...prev, [i]: prev[i] === false }))
-                              }
-                              className="absolute bottom-2 right-2 z-10 flex items-center gap-1 rounded bg-background/80 px-1.5 py-0.5 text-[10px] text-muted-foreground backdrop-blur-sm transition-colors hover:text-foreground"
-                            >
-                              {heatmapVisible[i] === false ? (
-                                <><Eye className="h-3 w-3" /> Show heatmap</>
-                              ) : (
-                                <><EyeOff className="h-3 w-3" /> Hide heatmap</>
-                              )}
-                            </button>
-                          )}
                         </div>
 
                         <div className="flex-1 space-y-4">
