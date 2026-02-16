@@ -62,10 +62,13 @@ serve(async (req) => {
     }
 
     // Real Hive Moderation API call
-    const hiveForm = new FormData();
-    hiveForm.append("media", imageFile);
+    const imageBytes = await imageFile.arrayBuffer();
+    const blob = new Blob([imageBytes], { type: imageFile.type });
 
-    const hiveResponse = await fetch("https://api.hivemoderation.com/api/v1/task/sync", {
+    const hiveForm = new FormData();
+    hiveForm.append("media", blob, imageFile.name);
+
+    const hiveResponse = await fetch("https://api.thehive.ai/api/v2/task/sync", {
       method: "POST",
       headers: {
         Authorization: `Token ${HIVE_API_KEY}`,
