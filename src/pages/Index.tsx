@@ -21,7 +21,13 @@ const Index = () => {
   const { toast } = useToast();
 
   const scrollToUpload = useCallback(() => {
-    uploadRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Reset results first so the upload section renders, then scroll to it
+    setSingleResult(null);
+    setBatchResults(null);
+    // Use setTimeout to allow the upload section to render before scrolling
+    setTimeout(() => {
+      uploadRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 50);
   }, []);
 
   const analyzeOne = async (file: File): Promise<{ result: AnalysisResult; preview: string }> => {
