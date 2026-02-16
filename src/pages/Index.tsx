@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { compressImage } from "@/lib/compress-image";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import UploadSection from "@/components/UploadSection";
@@ -25,8 +26,9 @@ const Index = () => {
 
   const analyzeOne = async (file: File): Promise<{ result: AnalysisResult; preview: string }> => {
     const preview = URL.createObjectURL(file);
+    const compressed = await compressImage(file);
     const formData = new FormData();
-    formData.append("image", file);
+    formData.append("image", compressed);
 
     const { data, error } = await supabase.functions.invoke("analyze-image", {
       body: formData,
@@ -58,8 +60,14 @@ const Index = () => {
       setBatchResults(null);
 
       try {
-        // Run all analyses in parallel
-        const settled = await Promise.allSettled(files.map((f) => analyzeOne(f)));
+        // Run analyses with concurrency limit of 3 to avoid overwhelming edge functions
+        const settled: PromiseSettledResult<{ result: AnalysisResult; preview: string }>[] = [];
+        const concurrency = 3;
+        for (let i = 0; i < files.length; i += concurrency) {
+          const batch = files.slice(i, i + concurrency);
+          const batchResults = await Promise.allSettled(batch.map((f) => analyzeOne(f)));
+          settled.push(...batchResults);
+        }
 
         const successes: BatchItem[] = [];
         let failures = 0;

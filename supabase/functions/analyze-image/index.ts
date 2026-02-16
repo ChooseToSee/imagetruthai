@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,6 +23,14 @@ serve(async (req) => {
       );
     }
 
+    // Reject files > 2 MB to stay within memory limits
+    if (imageFile.size > 2 * 1024 * 1024) {
+      return new Response(
+        JSON.stringify({ error: "Image too large. Please upload an image under 2 MB." }),
+        { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       return new Response(
@@ -30,15 +39,16 @@ serve(async (req) => {
       );
     }
 
-    // Convert image to base64
-    const imageBytes = await imageFile.arrayBuffer();
-    const base64Image = btoa(
-      new Uint8Array(imageBytes).reduce((data, byte) => data + String.fromCharCode(byte), "")
-    );
+    // Convert image to base64 using Deno std (more memory-efficient than manual btoa)
+    const imageBytes = new Uint8Array(await imageFile.arrayBuffer());
+    const base64Image = base64Encode(imageBytes);
     const mimeType = imageFile.type || "image/jpeg";
     const dataUrl = `data:${mimeType};base64,${base64Image}`;
 
-    // Use Gemini vision to analyze the image
+    // Free the raw bytes
+    // @ts-ignore - help GC
+    const _ = imageBytes;
+
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -132,7 +142,6 @@ You MUST respond with a JSON object using this exact tool call.`,
 
     const aiData = await aiResponse.json();
 
-    // Extract tool call result
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall?.function?.arguments) {
       console.error("No tool call in AI response:", JSON.stringify(aiData));
@@ -143,8 +152,6 @@ You MUST respond with a JSON object using this exact tool call.`,
     }
 
     const result = JSON.parse(toolCall.function.arguments);
-
-    // Clamp confidence
     result.confidence = Math.max(50, Math.min(99, Math.round(result.confidence)));
 
     return new Response(JSON.stringify(result), {
