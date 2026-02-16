@@ -71,7 +71,7 @@ serve(async (req) => {
     const hiveResponse = await fetch("https://api.thehive.ai/api/v2/task/sync", {
       method: "POST",
       headers: {
-        Authorization: `Token ${HIVE_API_KEY}`,
+        authorization: `token ${HIVE_API_KEY}`,
       },
       body: hiveForm,
     });
