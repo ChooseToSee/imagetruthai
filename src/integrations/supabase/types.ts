@@ -14,7 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          is_pro: boolean
+          scans_today: number
+          scans_today_reset_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_pro?: boolean
+          scans_today?: number
+          scans_today_reset_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_pro?: boolean
+          scans_today?: number
+          scans_today_reset_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scan_history: {
+        Row: {
+          confidence: number
+          created_at: string
+          file_name: string
+          file_size: number
+          id: string
+          image_url: string | null
+          raw_response: Json | null
+          reasons: string[]
+          tips: string[]
+          user_id: string
+          verdict: string
+        }
+        Insert: {
+          confidence: number
+          created_at?: string
+          file_name: string
+          file_size: number
+          id?: string
+          image_url?: string | null
+          raw_response?: Json | null
+          reasons?: string[]
+          tips?: string[]
+          user_id: string
+          verdict: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          file_name?: string
+          file_size?: number
+          id?: string
+          image_url?: string | null
+          raw_response?: Json | null
+          reasons?: string[]
+          tips?: string[]
+          user_id?: string
+          verdict?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

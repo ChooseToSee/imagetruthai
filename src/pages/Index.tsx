@@ -1,4 +1,6 @@
 import { useRef, useState, useCallback } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import UploadSection from "@/components/UploadSection";
@@ -6,45 +8,15 @@ import ResultsDisplay, { type AnalysisResult } from "@/components/ResultsDisplay
 import HowItWorks from "@/components/HowItWorks";
 import PricingSection from "@/components/PricingSection";
 import Footer from "@/components/Footer";
-
-// Mock analysis — will be replaced with real API call
-const mockAnalyze = (): Promise<AnalysisResult> =>
-  new Promise((resolve) => {
-    setTimeout(() => {
-      const isAI = Math.random() > 0.4;
-      resolve({
-        verdict: isAI ? "ai" : "human",
-        confidence: isAI
-          ? Math.floor(Math.random() * 15) + 85
-          : Math.floor(Math.random() * 15) + 85,
-        reasons: isAI
-          ? [
-              "Unnatural symmetry detected in facial features",
-              "Perfect gradient transitions uncommon in photographs",
-              "Lack of natural sensor noise in shadow regions",
-              "Metadata inconsistent with known camera models",
-            ]
-          : [
-              "Natural noise distribution consistent with camera sensor",
-              "EXIF data matches known camera model (Canon EOS R5)",
-              "Micro-imperfections in lighting consistent with real capture",
-              "No repeating pattern artifacts detected",
-            ],
-        tips: [
-          "Check the image metadata with an EXIF viewer",
-          "Try a reverse image search on Google or TinEye",
-          "Look for subtle artifacts around hands, text, or edges",
-          "Compare with known authentic images from the same source",
-        ],
-      });
-    }, 2500);
-  });
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const uploadRef = useRef<HTMLDivElement>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const scrollToUpload = useCallback(() => {
     uploadRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -53,18 +25,47 @@ const Index = () => {
   const handleAnalyze = useCallback(async (file: File) => {
     setIsAnalyzing(true);
     setResult(null);
-    // Create preview
+
     const reader = new FileReader();
     reader.onload = (e) => setPreview(e.target?.result as string);
     reader.readAsDataURL(file);
 
     try {
-      const res = await mockAnalyze();
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const { data: fnData, error: fnError } = await supabase.functions.invoke(
+        "analyze-image",
+        { body: formData }
+      );
+
+      if (fnError) throw fnError;
+
+      const res = fnData as AnalysisResult;
       setResult(res);
+
+      // Save to history if logged in
+      if (user) {
+        await supabase.from("scan_history").insert({
+          user_id: user.id,
+          file_name: file.name,
+          file_size: file.size,
+          verdict: res.verdict,
+          confidence: res.confidence,
+          reasons: res.reasons,
+          tips: res.tips,
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: "Analysis failed",
+        description: err.message || "Please try again later",
+        variant: "destructive",
+      });
     } finally {
       setIsAnalyzing(false);
     }
-  }, []);
+  }, [user, toast]);
 
   const handleReset = useCallback(() => {
     setResult(null);
