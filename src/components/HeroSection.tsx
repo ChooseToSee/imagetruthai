@@ -32,8 +32,8 @@ const HeroSection = ({ onScrollToUpload }: HeroSectionProps) => {
           </h1>
 
           <h2
-            className="mb-6 font-display text-xl font-medium leading-snug text-muted-foreground opacity-0 animate-fade-up sm:text-2xl lg:text-3xl"
-            style={{ animationDelay: "0.1s" }}
+            className="mb-6 font-display text-xl font-medium leading-snug opacity-0 animate-fade-up sm:text-2xl lg:text-3xl"
+            style={{ animationDelay: "0.1s", color: "hsl(190 72% 42%)" }}
           >
             Instantly Check If an Image Is AI-Generated or Human-Made
           </h2>
