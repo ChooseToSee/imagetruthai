@@ -22,18 +22,21 @@ const HeroSection = ({ onScrollToUpload }: HeroSectionProps) => {
 
       <div className="container relative z-10 mx-auto px-4 py-20">
         <div className="mx-auto max-w-3xl text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Trusted by photographers, journalists & creators
-          </div>
+          {/* Trust badge temporarily hidden */}
 
           <h1
-            className="mb-6 font-display text-4xl font-bold leading-tight tracking-tight text-foreground opacity-0 animate-fade-up sm:text-5xl lg:text-6xl"
+            className="mb-4 font-display text-5xl font-bold leading-tight tracking-tight text-foreground opacity-0 animate-fade-up sm:text-6xl lg:text-7xl"
           >
-            Instantly Check If an Image Is{" "}
-            <span className="text-gradient-brand">AI-Generated</span>{" "}
-            or Human-Made
+            <span className="text-gradient-brand">AI</span> or{" "}
+            <span className="text-gradient-brand">Real</span>
           </h1>
+
+          <h2
+            className="mb-6 font-display text-xl font-medium leading-snug text-muted-foreground opacity-0 animate-fade-up sm:text-2xl lg:text-3xl"
+            style={{ animationDelay: "0.1s" }}
+          >
+            Instantly Check If an Image Is AI-Generated or Human-Made
+          </h2>
 
           <p
             className="mx-auto mb-10 max-w-xl text-lg leading-relaxed text-muted-foreground opacity-0 animate-fade-up"
