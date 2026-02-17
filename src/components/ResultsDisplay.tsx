@@ -1,11 +1,20 @@
-import { AlertTriangle, CheckCircle, Info, RotateCcw } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, CheckCircle, Info, RotateCcw, ChevronDown, ChevronUp, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+export interface ModelBreakdown {
+  model: string;
+  verdict: "ai" | "human";
+  confidence: number;
+  reasons: string[];
+}
 
 export interface AnalysisResult {
   verdict: "ai" | "human";
   confidence: number;
   reasons: string[];
   tips: string[];
+  modelBreakdown?: ModelBreakdown[];
 }
 
 interface ResultsDisplayProps {
@@ -14,8 +23,42 @@ interface ResultsDisplayProps {
   onReset: () => void;
 }
 
+const ModelCard = ({ m }: { m: ModelBreakdown }) => {
+  const isAI = m.verdict === "ai";
+  return (
+    <div className="rounded-lg border border-border bg-muted/30 p-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-semibold text-foreground">{m.model}</span>
+        <span className={`text-xs font-bold ${isAI ? "text-destructive" : "text-success"}`}>
+          {m.confidence}% {isAI ? "AI" : "Human"}
+        </span>
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted mb-2">
+        <div
+          className={`h-full rounded-full ${isAI ? "bg-destructive" : "bg-success"}`}
+          style={{ width: `${m.confidence}%`, float: isAI ? "right" : "left" }}
+        />
+      </div>
+      <ul className="space-y-1">
+        {m.reasons.slice(0, 3).map((r, i) => (
+          <li key={i} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
+            <div className={`mt-1 h-1 w-1 shrink-0 rounded-full ${isAI ? "bg-destructive" : "bg-success"}`} />
+            {r}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
 const ResultsDisplay = ({ result, imagePreview, onReset }: ResultsDisplayProps) => {
   const isAI = result.verdict === "ai";
+  const [showBreakdown, setShowBreakdown] = useState(false);
+
+  const modelsAgreed = result.modelBreakdown
+    ? result.modelBreakdown.filter((m) => m.verdict === result.verdict).length
+    : 0;
+  const totalModels = result.modelBreakdown?.length ?? 0;
 
   return (
     <section className="py-12">
@@ -35,14 +78,16 @@ const ResultsDisplay = ({ result, imagePreview, onReset }: ResultsDisplayProps) 
               ) : (
                 <CheckCircle className="h-5 w-5 text-success" />
               )}
-              <div>
+              <div className="flex-1">
                 <p className="font-display text-lg font-bold text-foreground">
                   {isAI
                     ? `${result.confidence}% Likely AI-Generated`
                     : `${result.confidence}% Likely Human-Created`}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {isAI
+                  {totalModels > 0
+                    ? `Consensus from ${totalModels} AI models — ${modelsAgreed}/${totalModels} agree`
+                    : isAI
                     ? "This image shows strong indicators of AI generation."
                     : "This image appears to be authentically captured or created by a human."}
                 </p>
@@ -57,7 +102,6 @@ const ResultsDisplay = ({ result, imagePreview, onReset }: ResultsDisplayProps) 
                   alt="Analyzed"
                   className="mx-auto max-h-64 rounded-lg object-contain"
                 />
-                {/* Simulated heatmap overlay for AI images */}
                 {isAI && (
                   <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-destructive/10 via-transparent to-warning/10 pointer-events-none" />
                 )}
@@ -90,10 +134,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset }: ResultsDisplayProps) 
                 </h3>
                 <ul className="space-y-2">
                   {result.reasons.map((reason, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-2 text-sm text-muted-foreground"
-                    >
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                       <div
                         className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${
                           isAI ? "bg-destructive" : "bg-success"
@@ -104,6 +145,33 @@ const ResultsDisplay = ({ result, imagePreview, onReset }: ResultsDisplayProps) 
                   ))}
                 </ul>
               </div>
+
+              {/* Model Breakdown (expandable) */}
+              {result.modelBreakdown && result.modelBreakdown.length > 0 && (
+                <div className="mb-6">
+                  <button
+                    onClick={() => setShowBreakdown(!showBreakdown)}
+                    className="flex w-full items-center gap-2 rounded-lg bg-muted/50 px-4 py-3 text-left transition-colors hover:bg-muted/80"
+                  >
+                    <Brain className="h-4 w-4 text-primary" />
+                    <span className="flex-1 text-xs font-semibold text-foreground">
+                      Per-Model Breakdown
+                    </span>
+                    {showBreakdown ? (
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                  {showBreakdown && (
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {result.modelBreakdown.map((m, i) => (
+                        <ModelCard key={i} m={m} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Tips */}
               <div className="rounded-lg bg-muted/50 p-4">
