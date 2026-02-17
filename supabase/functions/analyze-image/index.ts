@@ -160,72 +160,87 @@ async function analyzeWithGPT5(
   };
 }
 
-// ── Hive Moderation API ──────────────────────────────────────────────
-async function analyzeWithHive(imageBytes: Uint8Array, mimeType: string): Promise<ModelResult> {
-  const HIVE_API_KEY = Deno.env.get("HIVE_API_KEY");
-  if (!HIVE_API_KEY) throw new Error("HIVE_API_KEY not configured");
-
-  const formData = new FormData();
-  const blob = new Blob([imageBytes], { type: mimeType });
-  formData.append("media", blob, "image.jpg");
-
-  const res = await fetch("https://api.thehive.ai/api/v2/task/sync", {
+// ── Gemini 2.5 Pro via Lovable AI Gateway ────────────────────────────
+async function analyzeWithGeminiPro(
+  dataUrl: string,
+  apiKey: string
+): Promise<ModelResult> {
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
-    headers: { Authorization: `Token ${HIVE_API_KEY}` },
-    body: formData,
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-pro",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an expert forensic image analyst specializing in detecting AI-generated images. You perform deep, methodical analysis. Respond only via the provided tool.",
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Analyze this image thoroughly. Is it AI-generated or a real photograph? Provide your verdict, confidence score, and 3-5 specific forensic reasons.",
+            },
+            { type: "image_url", image_url: { url: dataUrl } },
+          ],
+        },
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "report_analysis",
+            description: "Report the AI vs human image analysis result",
+            parameters: {
+              type: "object",
+              properties: {
+                verdict: { type: "string", enum: ["ai", "human"] },
+                confidence: { type: "number", description: "50-99" },
+                reasons: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "3-5 forensic reasons",
+                },
+              },
+              required: ["verdict", "confidence", "reasons"],
+              additionalProperties: false,
+            },
+          },
+        },
+      ],
+      tool_choice: { type: "function", function: { name: "report_analysis" } },
+    }),
   });
 
   if (!res.ok) {
     const t = await res.text();
-    throw new Error(`Hive error [${res.status}]: ${t}`);
+    throw new Error(`Gemini Pro error [${res.status}]: ${t}`);
   }
 
   const data = await res.json();
+  const args = JSON.parse(data.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "{}");
 
-  // Parse Hive response — look for ai_generated model output
-  let aiScore = 0;
-  let notAiScore = 0;
-  const reasons: string[] = [];
-
-  const statuses = data?.status ?? [];
-  for (const s of statuses) {
-    const outputs = s?.response?.output ?? [];
-    for (const output of outputs) {
-      const classes = output?.classes ?? [];
-      for (const cls of classes) {
-        if (cls.class === "ai_generated") {
-          aiScore = cls.score ?? 0;
-        } else if (cls.class === "not_ai_generated") {
-          notAiScore = cls.score ?? 0;
-        }
-      }
-    }
-  }
-
-  const isAI = aiScore > notAiScore;
-  const confidence = Math.max(50, Math.min(99, Math.round((isAI ? aiScore : notAiScore) * 100)));
-
-  if (isAI) {
-    reasons.push(`Hive AI detection score: ${(aiScore * 100).toFixed(1)}%`);
-    reasons.push("Pattern analysis flagged synthetic generation artifacts");
-    reasons.push("Image characteristics match known AI model outputs");
-  } else {
-    reasons.push(`Hive authenticity score: ${(notAiScore * 100).toFixed(1)}%`);
-    reasons.push("No synthetic generation patterns detected");
-    reasons.push("Image characteristics consistent with camera capture");
-  }
-
-  return { model: "Hive AI", verdict: isAI ? "ai" : "human", confidence, reasons };
+  return {
+    model: "Gemini Pro",
+    verdict: args.verdict ?? "human",
+    confidence: Math.max(50, Math.min(99, Math.round(args.confidence ?? 50))),
+    reasons: args.reasons ?? [],
+  };
 }
 
 // ── Weighted consensus ───────────────────────────────────────────────
 function computeConsensus(
   results: ModelResult[]
 ): { verdict: "ai" | "human"; confidence: number; reasons: string[]; tips: string[] } {
-  // Weights: Hive (purpose-built) = 0.45, GPT-5 = 0.30, Gemini = 0.25
+  // Weights: Gemini Pro (deep analysis) = 0.40, GPT-5 = 0.35, Gemini Flash (fast) = 0.25
   const weights: Record<string, number> = {
-    "Hive AI": 0.45,
-    "GPT-5": 0.30,
+    "Gemini Pro": 0.40,
+    "GPT-5": 0.35,
     "Gemini Flash": 0.25,
   };
 
@@ -320,16 +335,16 @@ serve(async (req) => {
     const dataUrl = `data:${mimeType};base64,${base64Image}`;
 
     // Call all 3 models in parallel — each is resilient
-    const [geminiResult, gpt5Result, hiveResult] = await Promise.allSettled([
+    const [geminiResult, gpt5Result, geminiProResult] = await Promise.allSettled([
       analyzeWithGemini(dataUrl, LOVABLE_API_KEY),
       analyzeWithGPT5(dataUrl, LOVABLE_API_KEY),
-      analyzeWithHive(imageBytes, mimeType),
+      analyzeWithGeminiPro(dataUrl, LOVABLE_API_KEY),
     ]);
 
     const successfulResults: ModelResult[] = [];
     const modelBreakdown: ModelResult[] = [];
 
-    for (const r of [geminiResult, gpt5Result, hiveResult]) {
+    for (const r of [geminiResult, gpt5Result, geminiProResult]) {
       if (r.status === "fulfilled") {
         successfulResults.push(r.value);
         modelBreakdown.push(r.value);
