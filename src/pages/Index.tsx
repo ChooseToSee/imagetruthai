@@ -12,8 +12,8 @@ import PricingSection from "@/components/PricingSection";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 
-// Sample demo result
-const DEMO_RESULT: AnalysisResult = {
+// Sample demo results
+const DEMO_AI_RESULT: AnalysisResult = {
   verdict: "ai",
   confidence: 94,
   reasons: [
@@ -30,13 +30,37 @@ const DEMO_RESULT: AnalysisResult = {
   ],
 };
 
-const DEMO_PREVIEW = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80";
+const DEMO_REAL_RESULT: AnalysisResult = {
+  verdict: "human",
+  confidence: 91,
+  reasons: [
+    "Natural sensor noise pattern consistent with a CMOS camera sensor",
+    "EXIF metadata includes camera model, lens info, and GPS coordinates",
+    "Micro-texture details in skin and fabric are consistent with optical capture",
+    "Depth-of-field bokeh shows authentic lens characteristics",
+  ],
+  tips: [
+    "Real photos typically contain rich EXIF metadata from the camera",
+    "Look for natural imperfections — slight motion blur, lens flare, dust spots",
+    "Authentic photos have varied noise grain that differs from AI smoothness",
+    "Check for consistent perspective and lighting across the scene",
+  ],
+};
+
+const DEMO_AI_PREVIEW = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80";
+const DEMO_REAL_PREVIEW = "https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?w=400&q=80";
+
+const DEMOS = [
+  { result: DEMO_AI_RESULT, preview: DEMO_AI_PREVIEW },
+  { result: DEMO_REAL_RESULT, preview: DEMO_REAL_PREVIEW },
+];
 
 const Index = () => {
   const uploadRef = useRef<HTMLDivElement>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [singleResult, setSingleResult] = useState<{ result: AnalysisResult; preview: string } | null>(null);
   const [batchResults, setBatchResults] = useState<BatchItem[] | null>(null);
+  const [demoIndex, setDemoIndex] = useState(0);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -49,12 +73,13 @@ const Index = () => {
   }, []);
 
   const handleDemo = useCallback(() => {
-    setSingleResult({ result: DEMO_RESULT, preview: DEMO_PREVIEW });
-    // Scroll to results
+    const demo = DEMOS[demoIndex];
+    setSingleResult({ result: demo.result, preview: demo.preview });
+    setDemoIndex((prev) => (prev + 1) % DEMOS.length);
     setTimeout(() => {
       window.scrollTo({ top: 600, behavior: "smooth" });
     }, 100);
-  }, []);
+  }, [demoIndex]);
 
   const analyzeOne = async (file: File): Promise<{ result: AnalysisResult; preview: string }> => {
     const preview = URL.createObjectURL(file);
