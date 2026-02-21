@@ -27,13 +27,13 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
   return (
     <section className="relative flex min-h-[100vh] items-center overflow-hidden pt-16">
       {/* Image montage background */}
-      <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-1 opacity-20">
+      <div className="absolute inset-0 grid h-full w-full grid-cols-3 grid-rows-2 gap-1">
         {montageImages.map((img, i) => (
           <motion.div
             key={i}
             className="relative overflow-hidden"
             initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: 1, scale: 1 }}
+            animate={{ opacity: 0.35, scale: 1 }}
             transition={{ duration: 1.2, delay: i * 0.15, ease: "easeOut" }}
           >
             <img
@@ -54,8 +54,7 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
       </div>
 
       {/* Gradient overlays */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
-      <div className="absolute inset-0 bg-gradient-hero" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/70 to-background" />
 
       <div className="container relative z-10 mx-auto px-4 py-20">
         <div className="mx-auto max-w-3xl text-center">
