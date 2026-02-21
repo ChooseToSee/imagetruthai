@@ -13,8 +13,8 @@ const montageImages = [
   { src: montage1, label: "Real", isAI: false },
   { src: montage2, label: "AI", isAI: true },
   { src: montage3, label: "Real", isAI: false },
-  { src: montage4, label: "AI", isAI: true },
   { src: montage5, label: "Real", isAI: false },
+  { src: montage4, label: "AI", isAI: true },
   { src: montage6, label: "AI", isAI: true },
 ];
 
