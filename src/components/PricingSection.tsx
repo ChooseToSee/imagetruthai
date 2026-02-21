@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
 const plans = [
@@ -38,23 +39,39 @@ const PricingSection = () => {
     <section id="pricing" className="py-24">
       <div className="container mx-auto px-4">
         <div className="mb-16 text-center">
-          <h2 className="mb-3 font-display text-3xl font-bold text-foreground">
+          <motion.h2
+            className="mb-3 font-display text-3xl font-bold text-foreground"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
             Simple Pricing
-          </h2>
-          <p className="text-muted-foreground">
+          </motion.h2>
+          <motion.p
+            className="text-muted-foreground"
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+          >
             Start free — upgrade when you need more power.
-          </p>
+          </motion.p>
         </div>
 
         <div className="mx-auto grid max-w-3xl gap-8 md:grid-cols-2">
-          {plans.map((plan) => (
-            <div
+          {plans.map((plan, i) => (
+            <motion.div
               key={plan.name}
               className={`relative rounded-xl border p-8 transition-all ${
                 plan.highlighted
                   ? "border-primary/40 bg-card shadow-glow"
                   : "border-border bg-card shadow-card"
               }`}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.15 }}
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
             >
               {plan.highlighted && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-0.5 text-xs font-semibold text-primary-foreground">
@@ -91,7 +108,7 @@ const PricingSection = () => {
               >
                 {plan.cta}
               </Button>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
