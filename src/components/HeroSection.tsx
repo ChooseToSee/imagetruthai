@@ -33,7 +33,7 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
             key={i}
             className="relative overflow-hidden"
             initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: 0.35, scale: 1 }}
+            animate={{ opacity: 0.55, scale: 1 }}
             transition={{ duration: 1.2, delay: i * 0.15, ease: "easeOut" }}
           >
             <img
