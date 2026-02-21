@@ -36,10 +36,21 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
             animate={{ opacity: 0.55, scale: 1 }}
             transition={{ duration: 1.2, delay: i * 0.15, ease: "easeOut" }}
           >
-            <img
+            <motion.img
               src={img.src}
               alt=""
               className="h-full w-full object-cover"
+              animate={{
+                scale: [1, 1.08, 1],
+                x: [0, i % 2 === 0 ? 8 : -8, 0],
+                y: [0, i % 3 === 0 ? 6 : -6, 0],
+              }}
+              transition={{
+                duration: 12 + i * 2,
+                repeat: Infinity,
+                repeatType: "mirror",
+                ease: "easeInOut",
+              }}
             />
             {/* AI/Real label overlay */}
             <div className={`absolute top-2 right-2 rounded-full px-2 py-0.5 text-[10px] font-bold ${
