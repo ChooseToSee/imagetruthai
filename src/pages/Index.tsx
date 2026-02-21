@@ -12,6 +12,26 @@ import PricingSection from "@/components/PricingSection";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 
+// Sample demo result
+const DEMO_RESULT: AnalysisResult = {
+  verdict: "ai",
+  confidence: 94,
+  reasons: [
+    "Uniform noise pattern consistent with diffusion-based generation (DALL·E / Stable Diffusion)",
+    "Skin texture lacks natural micro-details typically found in real photographs",
+    "Lighting reflections in the eyes show synthetic uniformity",
+    "Metadata contains no camera EXIF data — common in AI-generated outputs",
+  ],
+  tips: [
+    "Check for unnatural symmetry in facial features",
+    "Zoom into hands and fingers — AI often struggles with these",
+    "Look for repeating patterns in background textures",
+    "Reverse-image-search to check for known AI-generated content",
+  ],
+};
+
+const DEMO_PREVIEW = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80";
+
 const Index = () => {
   const uploadRef = useRef<HTMLDivElement>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -21,13 +41,19 @@ const Index = () => {
   const { toast } = useToast();
 
   const scrollToUpload = useCallback(() => {
-    // Reset results first so the upload section renders, then scroll to it
     setSingleResult(null);
     setBatchResults(null);
-    // Use setTimeout to allow the upload section to render before scrolling
     setTimeout(() => {
       uploadRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 50);
+  }, []);
+
+  const handleDemo = useCallback(() => {
+    setSingleResult({ result: DEMO_RESULT, preview: DEMO_PREVIEW });
+    // Scroll to results
+    setTimeout(() => {
+      window.scrollTo({ top: 600, behavior: "smooth" });
+    }, 100);
   }, []);
 
   const analyzeOne = async (file: File): Promise<{ result: AnalysisResult; preview: string }> => {
@@ -43,7 +69,6 @@ const Index = () => {
     if (error) throw error;
     const result = data as AnalysisResult;
 
-    // Save to history if logged in
     if (user) {
       await supabase.from("scan_history").insert({
         user_id: user.id,
@@ -66,7 +91,6 @@ const Index = () => {
       setBatchResults(null);
 
       try {
-        // Run analyses with concurrency limit of 3 to avoid overwhelming edge functions
         const settled: PromiseSettledResult<{ result: AnalysisResult; preview: string }>[] = [];
         const concurrency = 3;
         for (let i = 0; i < files.length; i += concurrency) {
@@ -128,12 +152,10 @@ const Index = () => {
     scrollToUpload();
   }, [scrollToUpload]);
 
-  const showResults = singleResult || batchResults;
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <HeroSection onScrollToUpload={scrollToUpload} />
+      <HeroSection onScrollToUpload={scrollToUpload} onDemo={handleDemo} />
 
       {singleResult ? (
         <ResultsDisplay result={singleResult.result} imagePreview={singleResult.preview} onReset={handleReset} />
