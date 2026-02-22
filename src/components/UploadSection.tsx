@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect, forwardRef } from "react";
 import { Upload, Image as ImageIcon, X, Loader2, Plus, Link as LinkIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { usePlan } from "@/contexts/PlanContext";
 
 interface UploadSectionProps {
   onAnalyze: (files: File[]) => void;
@@ -20,6 +21,7 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
     const [urlInput, setUrlInput] = useState("");
     const [urlLoading, setUrlLoading] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
+    const { plan, limits } = usePlan();
 
     const addFiles = useCallback((newFiles: FileList | File[]) => {
       const filesToAdd = Array.from(newFiles);
@@ -156,7 +158,13 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
             >
-              Drop up to <span className="text-primary font-semibold">10 images</span> below — we'll analyze them all in one batch.
+              {plan === "free" ? (
+                <>Analyze <span className="text-primary font-semibold">1 image at a time</span> — {limits.scansPerDay} scans per day on the Free plan.</>
+              ) : plan === "plus" ? (
+                <>Drop up to <span className="text-primary font-semibold">{limits.batchLimit} images</span> — {limits.scansPerDay} scans/day with multi-model consensus.</>
+              ) : (
+                <>Drop up to <span className="text-primary font-semibold">{limits.batchLimit} images</span> — unlimited scans with full analysis suite.</>
+              )}
             </motion.p>
 
             {/* URL paste input */}
@@ -230,7 +238,7 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
                       Drop or click to upload
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      JPG, PNG, or WEBP — max 10 MB each · up to 10 images
+                      JPG, PNG, or WEBP — max 10 MB{plan === "free" ? " · 1 image" : ` · up to ${limits.batchLimit} images`}
                     </p>
                   </div>
                 </div>
