@@ -23,14 +23,20 @@ export async function analyzeImageStream(
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-  const resp = await fetch(`${supabaseUrl}/functions/v1/analyze-image`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${supabaseKey}`,
-      "x-stream": "true",
-    },
-    body: formData,
-  });
+  let resp: Response;
+  try {
+    resp = await fetch(`${supabaseUrl}/functions/v1/analyze-image`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${supabaseKey}`,
+        "x-stream": "true",
+      },
+      body: formData,
+    });
+  } catch (fetchError: any) {
+    console.error("Fetch network error:", fetchError);
+    throw new Error(`Network error: ${fetchError.message}. Please check your connection and try again.`);
+  }
 
   if (!resp.ok) {
     if (resp.status === 402) {
