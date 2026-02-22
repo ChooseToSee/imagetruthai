@@ -115,6 +115,18 @@ const Index = () => {
 
   const saveToHistory = async (file: File, result: AnalysisResult) => {
     if (!user) return;
+
+    // Upload image to storage
+    let image_url: string | null = null;
+    const filePath = `${user.id}/${crypto.randomUUID()}-${file.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from("scan-images")
+      .upload(filePath, file, { contentType: file.type, upsert: false });
+    if (!uploadError) {
+      const { data: urlData } = supabase.storage.from("scan-images").getPublicUrl(filePath);
+      image_url = urlData.publicUrl;
+    }
+
     await supabase.from("scan_history").insert({
       user_id: user.id,
       file_name: file.name,
@@ -123,6 +135,7 @@ const Index = () => {
       confidence: result.confidence,
       reasons: result.reasons,
       tips: result.tips,
+      image_url,
     });
   };
 

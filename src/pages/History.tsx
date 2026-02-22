@@ -14,6 +14,7 @@ interface ScanRecord {
   confidence: number;
   reasons: string[];
   created_at: string;
+  image_url: string | null;
 }
 
 const History = () => {
@@ -27,7 +28,7 @@ const History = () => {
     const fetchScans = async () => {
       const { data, error } = await supabase
         .from("scan_history")
-        .select("id, file_name, verdict, confidence, reasons, created_at")
+        .select("id, file_name, verdict, confidence, reasons, created_at, image_url")
         .order("created_at", { ascending: false })
         .limit(50);
       if (error) {
@@ -79,16 +80,28 @@ const History = () => {
                 className="flex items-center justify-between rounded-lg border border-border bg-card p-4"
               >
                 <div className="flex items-center gap-3">
-                  {scan.verdict === "ai" ? (
+                  {scan.image_url ? (
+                    <img
+                      src={scan.image_url}
+                      alt={scan.file_name}
+                      className="h-12 w-12 rounded-md object-cover"
+                    />
+                  ) : scan.verdict === "ai" ? (
                     <AlertTriangle className="h-5 w-5 text-destructive" />
                   ) : (
                     <CheckCircle className="h-5 w-5 text-success" />
                   )}
                   <div>
-                    <p className="text-sm font-medium text-foreground">{scan.file_name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-foreground">{scan.file_name}</p>
+                      {scan.verdict === "ai" ? (
+                        <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">AI</span>
+                      ) : (
+                        <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">Human</span>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      {scan.confidence}% {scan.verdict === "ai" ? "AI-Generated" : "Human-Created"} ·{" "}
-                      {new Date(scan.created_at).toLocaleDateString()}
+                      {scan.confidence}% confidence · {new Date(scan.created_at).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
