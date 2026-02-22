@@ -87,6 +87,16 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
+            className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-medium text-primary"
+          >
+            <TrendingUp className="h-3.5 w-3.5" />
+            3 AI Models for Detection
+          </motion.div>
+          <br />
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.05 }}
             className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-medium text-primary"
           >
             <Shield className="h-3.5 w-3.5" />
@@ -216,7 +226,7 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
             </div>
             <div className="flex items-center gap-2">
               <TrendingUp className="h-3.5 w-3.5 text-primary" />
-              3 AI Models for Detection
+              No Account Required
             </div>
           </motion.div>
         </div>
