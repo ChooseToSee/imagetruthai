@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { shareContent } from "@/lib/share";
 
 export interface ModelBreakdown {
   model: string;
@@ -83,12 +84,8 @@ const ResultsDisplay = ({ result, imagePreview, onReset }: ResultsDisplayProps) 
 
   const handleShare = async () => {
     const text = `ImageTruth AI verdict: ${result.confidence}% likely ${isAI ? "AI-generated" : "human-created"}. ${result.reasons[0]}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: "ImageTruth AI Result", text, url: window.location.href });
-      } catch { /* user cancelled */ }
-    } else {
-      await navigator.clipboard.writeText(text);
+    const res = await shareContent(text, "ImageTruth AI Result");
+    if (res === "copied") {
       setCopied(true);
       toast({ title: "Copied to clipboard!", description: "Share the result with anyone." });
       setTimeout(() => setCopied(false), 2000);
