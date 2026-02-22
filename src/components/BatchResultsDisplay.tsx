@@ -24,7 +24,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
   const handleShareItem = async (item: BatchItem, index: number) => {
     const isAI = item.result.verdict === "ai";
     const text = `ImageTruth AI: "${item.fileName}" is ${item.result.confidence}% likely ${isAI ? "AI-generated" : "human-created"}. ${item.result.reasons[0]}`;
-    const res = await shareContent(text, "ImageTruth AI Result");
+    const res = await shareContent(text, "ImageTruth AI Result", "");
     if (res === "copied") {
       setCopiedIndex(index);
       toast({ title: "Copied to clipboard!" });
