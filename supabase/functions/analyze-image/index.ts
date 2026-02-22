@@ -27,29 +27,34 @@ const USER_PROMPT =
 
 const GEMINI_PRO_SYSTEM = "You are an expert forensic image analyst specializing in detecting AI-generated images and image manipulation. You perform deep, methodical analysis. You MUST respond with valid JSON only, no markdown, no code fences.";
 
-// ── Google Gemini API call ──────────────────────────────────────────
-async function analyzeWithGemini(
+// ── Lovable AI Gateway call (for Gemini models) ────────────────────
+async function analyzeWithGateway(
   model: string,
   modelLabel: string,
   systemOverride: string | null,
-  base64Image: string,
-  mimeType: string,
+  dataUrl: string,
   apiKey: string
 ): Promise<ModelResult> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-  const res = await fetch(url, {
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
-      systemInstruction: { parts: [{ text: systemOverride ?? SYSTEM_PROMPT }] },
-      contents: [{
-        parts: [
-          { text: USER_PROMPT },
-          { inlineData: { mimeType, data: base64Image } },
-        ],
-      }],
-      generationConfig: { temperature: 0.2, maxOutputTokens: 2000 },
+      model,
+      messages: [
+        { role: "system", content: systemOverride ?? SYSTEM_PROMPT },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: USER_PROMPT },
+            { type: "image_url", image_url: { url: dataUrl } },
+          ],
+        },
+      ],
+      temperature: 0.2,
+      max_tokens: 2000,
     }),
   });
 
@@ -61,7 +66,7 @@ async function analyzeWithGemini(
   }
 
   const data = await res.json();
-  const content = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
+  const content = data.choices?.[0]?.message?.content ?? "{}";
 
   let jsonStr = content.trim();
   if (jsonStr.startsWith("```")) {
@@ -277,10 +282,10 @@ serve(async (req) => {
       );
     }
 
-    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 
-    if (!GOOGLE_API_KEY && !OPENAI_API_KEY) {
+    if (!LOVABLE_API_KEY && !OPENAI_API_KEY) {
       return new Response(JSON.stringify({ error: "AI service not configured — missing API keys" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -299,14 +304,14 @@ serve(async (req) => {
     type ModelTask = { run: () => Promise<ModelResult>; label: string };
     const tasks: ModelTask[] = [];
 
-    if (GOOGLE_API_KEY) {
+    if (LOVABLE_API_KEY) {
       tasks.push({
         label: "Gemini Flash",
-        run: () => analyzeWithGemini("gemini-2.5-flash", "Gemini Flash", null, base64Image, mimeType, GOOGLE_API_KEY),
+        run: () => analyzeWithGateway("google/gemini-2.5-flash", "Gemini Flash", null, dataUrl, LOVABLE_API_KEY),
       });
       tasks.push({
         label: "Gemini Pro",
-        run: () => analyzeWithGemini("gemini-2.0-flash", "Gemini Pro", GEMINI_PRO_SYSTEM, base64Image, mimeType, GOOGLE_API_KEY),
+        run: () => analyzeWithGateway("google/gemini-2.5-pro", "Gemini Pro", GEMINI_PRO_SYSTEM, dataUrl, LOVABLE_API_KEY),
       });
     }
     if (OPENAI_API_KEY) {
