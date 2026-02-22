@@ -16,8 +16,8 @@ const Footer = () => {
             always use your own judgment alongside automated analysis.
           </p>
           <div className="flex gap-6 text-xs text-muted-foreground">
-            <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
-            <a href="#" className="hover:text-foreground transition-colors">Terms</a>
+            <a href="/privacy" className="hover:text-foreground transition-colors">Privacy</a>
+            <a href="/terms" className="hover:text-foreground transition-colors">Terms</a>
             <a href="/contact" className="hover:text-foreground transition-colors">Contact</a>
           </div>
           <p className="text-[11px] text-muted-foreground/50">
