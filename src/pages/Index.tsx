@@ -29,6 +29,29 @@ const DEMO_AI_RESULT: AnalysisResult = {
     "Look for repeating patterns in background textures",
     "Reverse-image-search to check for known AI-generated content",
   ],
+  modelBreakdown: [
+    {
+      model: "Gemini Pro",
+      verdict: "ai",
+      confidence: 96,
+      reasons: ["Diffusion artifacts in hair strands", "Synthetic lighting uniformity", "No lens aberration detected"],
+      manipulation: { edited: false, confidence: 85, reasons: ["Uniform compression throughout", "No splicing boundaries found", "Consistent noise floor"] },
+    },
+    {
+      model: "GPT-5",
+      verdict: "ai",
+      confidence: 93,
+      reasons: ["Skin texture too smooth for optical capture", "Eye reflections lack environment detail", "Background shows repetitive micro-patterns"],
+      manipulation: { edited: false, confidence: 78, reasons: ["No clone-stamp artifacts", "Uniform error-level analysis", "No re-saving compression shifts"] },
+    },
+    {
+      model: "Gemini Flash",
+      verdict: "ai",
+      confidence: 91,
+      reasons: ["AI-typical symmetry in facial geometry", "Missing camera sensor noise", "Metadata absent"],
+      manipulation: { edited: false, confidence: 80, reasons: ["No edge halos detected", "Lighting direction consistent", "No patched regions"] },
+    },
+  ],
   manipulation: {
     edited: false,
     confidence: 82,
@@ -60,6 +83,29 @@ const DEMO_REAL_RESULT: AnalysisResult = {
     "Look for natural imperfections — slight motion blur, lens flare, dust spots",
     "Authentic photos have varied noise grain that differs from AI smoothness",
     "Check for consistent perspective and lighting across the scene",
+  ],
+  modelBreakdown: [
+    {
+      model: "Gemini Pro",
+      verdict: "human",
+      confidence: 93,
+      reasons: ["Natural sensor noise grain detected", "EXIF metadata present with camera info", "Authentic lens bokeh characteristics"],
+      manipulation: { edited: true, confidence: 75, reasons: ["Color grading adjustments detected", "JPEG quality varies between regions", "Contrast curve has been modified"] },
+    },
+    {
+      model: "GPT-5",
+      verdict: "human",
+      confidence: 89,
+      reasons: ["Micro-texture in fabric consistent with real capture", "Natural depth-of-field falloff", "Slight motion blur in background"],
+      manipulation: { edited: true, confidence: 70, reasons: ["Saturation boost visible in skin tones", "Vignette effect applied to corners", "Sharpening artifacts on edges"] },
+    },
+    {
+      model: "Gemini Flash",
+      verdict: "human",
+      confidence: 88,
+      reasons: ["Camera sensor noise matches CMOS pattern", "GPS data in metadata", "Natural chromatic aberration present"],
+      manipulation: { edited: false, confidence: 68, reasons: ["No splicing boundaries found", "Compression is consistent", "No clone-stamp artifacts"] },
+    },
   ],
   manipulation: {
     edited: true,
