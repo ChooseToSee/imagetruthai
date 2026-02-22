@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { AlertTriangle, CheckCircle, Info, RotateCcw, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, RotateCcw, ChevronDown, ChevronUp, BarChart3, Share2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AnalysisResult } from "@/components/ResultsDisplay";
+import { shareContent } from "@/lib/share";
+import { useToast } from "@/hooks/use-toast";
 
 export interface BatchItem {
   fileName: string;
@@ -16,6 +18,19 @@ interface BatchResultsDisplayProps {
 
 const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const { toast } = useToast();
+
+  const handleShareItem = async (item: BatchItem, index: number) => {
+    const isAI = item.result.verdict === "ai";
+    const text = `ImageTruth AI: "${item.fileName}" is ${item.result.confidence}% likely ${isAI ? "AI-generated" : "human-created"}. ${item.result.reasons[0]}`;
+    const res = await shareContent(text, "ImageTruth AI Result");
+    if (res === "copied") {
+      setCopiedIndex(index);
+      toast({ title: "Copied to clipboard!" });
+      setTimeout(() => setCopiedIndex(null), 2000);
+    }
+  };
 
   const aiCount = items.filter((i) => i.result.verdict === "ai").length;
   const humanCount = items.length - aiCount;
@@ -123,6 +138,14 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                         />
                       </div>
                     </div>
+
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleShareItem(item, i); }}
+                      className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      title="Share result"
+                    >
+                      {copiedIndex === i ? <Check className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
+                    </button>
 
                     {isExpanded ? (
                       <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />

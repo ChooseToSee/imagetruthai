@@ -1,13 +1,29 @@
-import { Shield, Menu, X, History, LogOut } from "lucide-react";
+import { Shield, Menu, X, History, LogOut, Share2, Check } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { shareContent } from "@/lib/share";
+import { useToast } from "@/hooks/use-toast";
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [shareIcon, setShareIcon] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleShare = async () => {
+    const result = await shareContent(
+      "Check out ImageTruth AI — detect AI-generated and edited images instantly!",
+      "ImageTruth AI"
+    );
+    if (result === "copied") {
+      setShareIcon(true);
+      toast({ title: "Link copied!", description: "Share it with anyone." });
+      setTimeout(() => setShareIcon(false), 2000);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -31,6 +47,9 @@ const Navbar = () => {
           <a href="/#pricing" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
             Pricing
           </a>
+          <Button variant="ghost" size="icon" onClick={handleShare} className="h-8 w-8 text-muted-foreground" title="Share ImageTruth AI">
+            {shareIcon ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+          </Button>
           {user ? (
             <>
               <Link to="/history" className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground">
@@ -62,6 +81,9 @@ const Navbar = () => {
           <div className="flex flex-col gap-3 p-4">
             <a href="/#how-it-works" className="text-sm text-muted-foreground">How It Works</a>
             <a href="/#pricing" className="text-sm text-muted-foreground">Pricing</a>
+            <button onClick={handleShare} className="flex items-center gap-2 text-sm text-muted-foreground">
+              {shareIcon ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />} Share
+            </button>
             {user ? (
               <>
                 <Link to="/history" className="text-sm text-muted-foreground">History</Link>
