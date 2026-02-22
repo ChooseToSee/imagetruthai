@@ -19,91 +19,25 @@ interface ModelResult {
   };
 }
 
-const TOOL_SCHEMA_OPENAI = {
-  type: "function",
-  function: {
-    name: "report_analysis",
-    description: "Report the combined AI detection and manipulation analysis result",
-    parameters: {
-      type: "object",
-      properties: {
-        verdict: { type: "string", enum: ["ai", "human"] },
-        confidence: { type: "number", description: "50-99" },
-        reasons: {
-          type: "array",
-          items: { type: "string" },
-          description: "3-5 forensic reasons for AI vs human verdict",
-        },
-        manipulation: {
-          type: "object",
-          properties: {
-            edited: { type: "boolean", description: "Whether the image has been edited/manipulated" },
-            confidence: { type: "number", description: "50-99" },
-            reasons: {
-              type: "array",
-              items: { type: "string" },
-              description: "3-5 reasons for manipulation verdict",
-            },
-          },
-          required: ["edited", "confidence", "reasons"],
-          additionalProperties: false,
-        },
-      },
-      required: ["verdict", "confidence", "reasons", "manipulation"],
-      additionalProperties: false,
-    },
-  },
-};
-
-// Google Gemini uses a different tool format
-const TOOL_SCHEMA_GOOGLE = {
-  function_declarations: [{
-    name: "report_analysis",
-    description: "Report the combined AI detection and manipulation analysis result",
-    parameters: {
-      type: "object",
-      properties: {
-        verdict: { type: "string", enum: ["ai", "human"] },
-        confidence: { type: "number", description: "50-99" },
-        reasons: {
-          type: "array",
-          items: { type: "string" },
-          description: "3-5 forensic reasons for AI vs human verdict",
-        },
-        manipulation: {
-          type: "object",
-          properties: {
-            edited: { type: "boolean", description: "Whether the image has been edited/manipulated" },
-            confidence: { type: "number", description: "50-99" },
-            reasons: {
-              type: "array",
-              items: { type: "string" },
-              description: "3-5 reasons for manipulation verdict",
-            },
-          },
-          required: ["edited", "confidence", "reasons"],
-        },
-      },
-      required: ["verdict", "confidence", "reasons", "manipulation"],
-    },
-  }],
-};
+const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 const SYSTEM_PROMPT =
-  "You are an expert forensic image analyst specializing in two tasks: (1) detecting AI-generated images vs real photographs, and (2) detecting image manipulation/editing (Photoshop, filters, splicing, clone stamping, content-aware fill, etc.). Respond only via the provided tool.";
+  "You are an expert forensic image analyst specializing in two tasks: (1) detecting AI-generated images vs real photographs, and (2) detecting image manipulation/editing (Photoshop, filters, splicing, clone stamping, content-aware fill, etc.). You MUST respond with valid JSON only, no markdown, no code fences.";
 
 const USER_PROMPT =
-  "Analyze this image for TWO things:\n1. AI DETECTION: Is this image AI-generated or a real photograph? Provide your verdict, confidence score (50-99), and 3-5 specific forensic reasons.\n2. MANIPULATION DETECTION: Has this image been edited or manipulated by an image editor (e.g., Photoshop, retouching, splicing, filters, clone stamping, content-aware fill)? Look for inconsistent lighting, JPEG compression artifacts, cloned regions, unnatural edges, mismatched noise patterns, and metadata anomalies. Provide edited (true/false), confidence (50-99), and 3-5 reasons.";
+  'Analyze this image for TWO things:\n1. AI DETECTION: Is this image AI-generated or a real photograph? Provide your verdict, confidence score (50-99), and 3-5 specific forensic reasons.\n2. MANIPULATION DETECTION: Has this image been edited or manipulated by an image editor (e.g., Photoshop, retouching, splicing, filters, clone stamping, content-aware fill)? Look for inconsistent lighting, JPEG compression artifacts, cloned regions, unnatural edges, mismatched noise patterns, and metadata anomalies. Provide edited (true/false), confidence (50-99), and 3-5 reasons.\n\nRespond with ONLY this JSON structure (no markdown, no code fences):\n{"verdict":"ai"|"human","confidence":number,"reasons":["..."],"manipulation":{"edited":boolean,"confidence":number,"reasons":["..."]}}';
 
-// ── OpenAI direct API call ───────────────────────────────────────────
-async function analyzeWithOpenAI(
+const GEMINI_PRO_SYSTEM = "You are an expert forensic image analyst specializing in detecting AI-generated images and image manipulation. You perform deep, methodical analysis. You MUST respond with valid JSON only, no markdown, no code fences.";
+
+// ── Lovable AI Gateway call (OpenAI-compatible) ─────────────────────
+async function analyzeWithGateway(
   model: string,
   modelLabel: string,
   systemOverride: string | null,
   dataUrl: string,
   apiKey: string
 ): Promise<ModelResult> {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  const res = await fetch(GATEWAY_URL, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -121,8 +55,8 @@ async function analyzeWithOpenAI(
           ],
         },
       ],
-      tools: [TOOL_SCHEMA_OPENAI],
-      tool_choice: { type: "function", function: { name: "report_analysis" } },
+      temperature: 0.2,
+      max_tokens: 2000,
     }),
   });
 
@@ -132,45 +66,15 @@ async function analyzeWithOpenAI(
   }
 
   const data = await res.json();
-  const args = JSON.parse(data.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "{}");
-  return parseModelResult(modelLabel, args);
-}
-
-// ── Google Gemini direct API call ────────────────────────────────────
-async function analyzeWithGoogle(
-  model: string,
-  modelLabel: string,
-  systemOverride: string | null,
-  base64Image: string,
-  mimeType: string,
-  apiKey: string
-): Promise<ModelResult> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      system_instruction: { parts: [{ text: systemOverride ?? SYSTEM_PROMPT }] },
-      contents: [{
-        parts: [
-          { text: USER_PROMPT },
-          { inline_data: { mime_type: mimeType, data: base64Image } },
-        ],
-      }],
-      tools: [TOOL_SCHEMA_GOOGLE],
-      tool_config: { function_calling_config: { mode: "ANY", allowed_function_names: ["report_analysis"] } },
-    }),
-  });
-
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(`${modelLabel} error [${res.status}]: ${t}`);
+  const content = data.choices?.[0]?.message?.content ?? "{}";
+  
+  // Parse JSON from response, handling possible markdown code fences
+  let jsonStr = content.trim();
+  if (jsonStr.startsWith("```")) {
+    jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
   }
-
-  const data = await res.json();
-  const functionCall = data.candidates?.[0]?.content?.parts?.find((p: any) => p.functionCall);
-  const args = functionCall?.functionCall?.args ?? {};
+  
+  const args = JSON.parse(jsonStr);
   return parseModelResult(modelLabel, args);
 }
 
@@ -330,9 +234,8 @@ serve(async (req) => {
       );
     }
 
-    const GOOGLE_AI_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!GOOGLE_AI_API_KEY || !OPENAI_API_KEY) {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
       return new Response(JSON.stringify({ error: "AI service not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -345,23 +248,26 @@ serve(async (req) => {
     const dataUrl = `data:${mimeType};base64,${base64Image}`;
 
     // Check if client wants streaming
-    const acceptHeader = req.headers.get("x-stream") || "";
-    const wantsStream = acceptHeader === "true";
+    const wantsStream = req.headers.get("x-stream") === "true";
 
-    const GEMINI_PRO_SYSTEM = "You are an expert forensic image analyst specializing in detecting AI-generated images and image manipulation. You perform deep, methodical analysis. Respond only via the provided tool.";
+    const models = [
+      { model: "google/gemini-2.5-flash", label: "Gemini Flash", system: null },
+      { model: "openai/gpt-5", label: "GPT-5", system: null },
+      { model: "google/gemini-2.5-pro", label: "Gemini Pro", system: GEMINI_PRO_SYSTEM },
+    ];
 
     if (!wantsStream) {
-      // Original non-streaming path
-      const [geminiResult, gpt5Result, geminiProResult] = await Promise.allSettled([
-        analyzeWithGoogle("gemini-2.5-flash", "Gemini Flash", null, base64Image, mimeType, GOOGLE_AI_API_KEY),
-        analyzeWithOpenAI("gpt-4.1", "GPT-5", null, dataUrl, OPENAI_API_KEY),
-        analyzeWithGoogle("gemini-2.5-pro", "Gemini Pro", GEMINI_PRO_SYSTEM, base64Image, mimeType, GOOGLE_AI_API_KEY),
-      ]);
+      // Non-streaming path
+      const results = await Promise.allSettled(
+        models.map(({ model, label, system }) =>
+          analyzeWithGateway(model, label, system, dataUrl, LOVABLE_API_KEY)
+        )
+      );
 
       const successfulResults: ModelResult[] = [];
       const modelBreakdown: ModelResult[] = [];
 
-      for (const r of [geminiResult, gpt5Result, geminiProResult]) {
+      for (const r of results) {
         if (r.status === "fulfilled") {
           successfulResults.push(r.value);
           modelBreakdown.push(r.value);
@@ -392,33 +298,17 @@ serve(async (req) => {
           controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
         };
 
-        const models = [
-          { provider: "google" as const, model: "gemini-2.5-flash", label: "Gemini Flash", system: null },
-          { provider: "openai" as const, model: "gpt-4.1", label: "GPT-5", system: null },
-          {
-            provider: "google" as const,
-            model: "gemini-2.5-pro",
-            label: "Gemini Pro",
-            system: GEMINI_PRO_SYSTEM,
-          },
-        ];
-
         const successfulResults: ModelResult[] = [];
         const modelBreakdown: ModelResult[] = [];
 
-        // Fire all model calls in parallel, stream each result as it arrives
-        const promises = models.map(async ({ provider, model, label, system }) => {
+        const promises = models.map(async ({ model, label, system }) => {
           try {
-            const result = provider === "google"
-              ? await analyzeWithGoogle(model, label, system, base64Image, mimeType, GOOGLE_AI_API_KEY!)
-              : await analyzeWithOpenAI(model, label, system, dataUrl, OPENAI_API_KEY!);
+            const result = await analyzeWithGateway(model, label, system, dataUrl, LOVABLE_API_KEY!);
             successfulResults.push(result);
             modelBreakdown.push(result);
 
-            // Send the individual model result
             send("model", result);
 
-            // Send updated interim consensus
             const interim = computeConsensus([...successfulResults]);
             send("consensus", {
               ...interim,
@@ -437,7 +327,6 @@ serve(async (req) => {
         if (successfulResults.length === 0) {
           send("error", { error: "All analysis models failed" });
         } else {
-          // Send final consensus
           const final = computeConsensus(successfulResults);
           send("done", { ...final, modelBreakdown });
         }
@@ -460,12 +349,6 @@ serve(async (req) => {
     if (error.message?.includes("429") || error.status === 429) {
       return new Response(JSON.stringify({ error: "Rate limit exceeded, please try again shortly" }), {
         status: 429,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    if (error.message?.includes("402") || error.status === 402) {
-      return new Response(JSON.stringify({ error: "AI usage limit reached" }), {
-        status: 402,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
