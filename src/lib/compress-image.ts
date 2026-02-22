@@ -4,8 +4,8 @@
  * to keep payloads well under edge function memory limits.
  */
 export async function compressImage(file: File, maxDim = 1024, quality = 0.7): Promise<File> {
-  // Skip if already small enough (< 500 KB)
-  if (file.size < 500 * 1024) return file;
+  // Always compress to ensure we stay under the 2MB edge function limit
+  if (file.size < 200 * 1024) return file;
 
   return new Promise((resolve, reject) => {
     const img = new Image();
