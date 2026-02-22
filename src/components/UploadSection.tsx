@@ -167,6 +167,32 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
               )}
             </motion.p>
 
+            {/* Upgrade prompt */}
+            {plan === "free" && (
+              <motion.p
+                className="mb-2 text-xs text-muted-foreground"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.15 }}
+              >
+                Need batch uploads & more scans?{" "}
+                <a href="#pricing" className="font-semibold text-primary hover:underline">Upgrade to Plus</a>
+              </motion.p>
+            )}
+            {plan === "plus" && (
+              <motion.p
+                className="mb-2 text-xs text-muted-foreground"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.15 }}
+              >
+                Want unlimited scans, PDF reports & API access?{" "}
+                <a href="#pricing" className="font-semibold text-primary hover:underline">Go Pro</a>
+              </motion.p>
+            )}
+
             {/* URL paste input */}
             <motion.div
               className="mb-6 flex items-center gap-2 rounded-lg border border-border bg-card p-2"

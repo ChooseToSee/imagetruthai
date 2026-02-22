@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import AnimatedCounter from "@/components/AnimatedCounter";
+import { usePlan } from "@/contexts/PlanContext";
 import montage1 from "@/assets/montage-1.jpg";
 import montage2 from "@/assets/montage-2.jpg";
 import montage3 from "@/assets/montage-3.jpg";
@@ -28,6 +29,7 @@ const headlines = ["AI", "Edited"];
 
 const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
   const [headlineIndex, setHeadlineIndex] = useState(0);
+  const { plan, limits } = usePlan();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -205,8 +207,12 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
               Detects Photoshop & Editing
             </div>
             <div className="flex items-center gap-2">
-              <Camera className="h-3.5 w-3.5 text-success" />
-              5 Free Scans Daily
+            <Camera className="h-3.5 w-3.5 text-success" />
+              {plan === "free"
+                ? `${limits.scansPerDay} Free Scans Daily`
+                : plan === "plus"
+                ? `${limits.scansPerDay} Scans Daily`
+                : "Unlimited Scans"}
             </div>
             <div className="flex items-center gap-2">
               <TrendingUp className="h-3.5 w-3.5 text-primary" />
