@@ -28,6 +28,21 @@ const DEMO_AI_RESULT: AnalysisResult = {
     "Look for repeating patterns in background textures",
     "Reverse-image-search to check for known AI-generated content",
   ],
+  manipulation: {
+    edited: false,
+    confidence: 82,
+    reasons: [
+      "No splicing artifacts or inconsistent compression levels detected",
+      "Noise pattern is uniform across the entire image (typical of AI output)",
+      "No signs of clone stamping or content-aware fill",
+    ],
+    tips: [
+      "Look for mismatched lighting directions across the image",
+      "Check edges around subjects for unnatural halos or artifacts",
+      "Inspect backgrounds for cloned or repeated patterns",
+      "Use an error-level analysis (ELA) tool for deeper investigation",
+    ],
+  },
 };
 
 const DEMO_REAL_RESULT: AnalysisResult = {
@@ -45,6 +60,21 @@ const DEMO_REAL_RESULT: AnalysisResult = {
     "Authentic photos have varied noise grain that differs from AI smoothness",
     "Check for consistent perspective and lighting across the scene",
   ],
+  manipulation: {
+    edited: true,
+    confidence: 73,
+    reasons: [
+      "Slight color grading adjustments detected — consistent with Lightroom/Instagram filters",
+      "JPEG compression levels vary between regions, suggesting re-saving",
+      "Minor exposure and contrast adjustments visible in histogram analysis",
+    ],
+    tips: [
+      "Look for mismatched lighting directions across the image",
+      "Check edges around subjects for unnatural halos or artifacts",
+      "Inspect backgrounds for cloned or repeated patterns",
+      "Use an error-level analysis (ELA) tool for deeper investigation",
+    ],
+  },
 };
 
 const DEMO_AI_PREVIEW = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80";
