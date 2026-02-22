@@ -12,83 +12,59 @@ interface ModelResult {
   verdict: "ai" | "human";
   confidence: number;
   reasons: string[];
-}
-
-// ── Gemini Flash via Lovable AI Gateway ──────────────────────────────
-async function analyzeWithGemini(
-  dataUrl: string,
-  apiKey: string
-): Promise<ModelResult> {
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are an expert forensic image analyst specializing in detecting AI-generated images. Respond only via the provided tool.",
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Analyze this image. Is it AI-generated or a real photograph? Provide your verdict, confidence score, and 3-5 specific forensic reasons.",
-            },
-            { type: "image_url", image_url: { url: dataUrl } },
-          ],
-        },
-      ],
-      tools: [
-        {
-          type: "function",
-          function: {
-            name: "report_analysis",
-            description: "Report the AI vs human image analysis result",
-            parameters: {
-              type: "object",
-              properties: {
-                verdict: { type: "string", enum: ["ai", "human"] },
-                confidence: { type: "number", description: "50-99" },
-                reasons: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "3-5 forensic reasons",
-                },
-              },
-              required: ["verdict", "confidence", "reasons"],
-              additionalProperties: false,
-            },
-          },
-        },
-      ],
-      tool_choice: { type: "function", function: { name: "report_analysis" } },
-    }),
-  });
-
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(`Gemini error [${res.status}]: ${t}`);
-  }
-
-  const data = await res.json();
-  const args = JSON.parse(data.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "{}");
-
-  return {
-    model: "Gemini Flash",
-    verdict: args.verdict ?? "human",
-    confidence: Math.max(50, Math.min(99, Math.round(args.confidence ?? 50))),
-    reasons: args.reasons ?? [],
+  manipulation: {
+    edited: boolean;
+    confidence: number;
+    reasons: string[];
   };
 }
 
-// ── GPT-5 via Lovable AI Gateway ─────────────────────────────────────
-async function analyzeWithGPT5(
+const TOOL_SCHEMA = {
+  type: "function",
+  function: {
+    name: "report_analysis",
+    description: "Report the combined AI detection and manipulation analysis result",
+    parameters: {
+      type: "object",
+      properties: {
+        verdict: { type: "string", enum: ["ai", "human"] },
+        confidence: { type: "number", description: "50-99" },
+        reasons: {
+          type: "array",
+          items: { type: "string" },
+          description: "3-5 forensic reasons for AI vs human verdict",
+        },
+        manipulation: {
+          type: "object",
+          properties: {
+            edited: { type: "boolean", description: "Whether the image has been edited/manipulated" },
+            confidence: { type: "number", description: "50-99" },
+            reasons: {
+              type: "array",
+              items: { type: "string" },
+              description: "3-5 reasons for manipulation verdict",
+            },
+          },
+          required: ["edited", "confidence", "reasons"],
+          additionalProperties: false,
+        },
+      },
+      required: ["verdict", "confidence", "reasons", "manipulation"],
+      additionalProperties: false,
+    },
+  },
+};
+
+const SYSTEM_PROMPT =
+  "You are an expert forensic image analyst specializing in two tasks: (1) detecting AI-generated images vs real photographs, and (2) detecting image manipulation/editing (Photoshop, filters, splicing, clone stamping, content-aware fill, etc.). Respond only via the provided tool.";
+
+const USER_PROMPT =
+  "Analyze this image for TWO things:\n1. AI DETECTION: Is this image AI-generated or a real photograph? Provide your verdict, confidence score (50-99), and 3-5 specific forensic reasons.\n2. MANIPULATION DETECTION: Has this image been edited or manipulated by an image editor (e.g., Photoshop, retouching, splicing, filters, clone stamping, content-aware fill)? Look for inconsistent lighting, JPEG compression artifacts, cloned regions, unnatural edges, mismatched noise patterns, and metadata anomalies. Provide edited (true/false), confidence (50-99), and 3-5 reasons.";
+
+async function analyzeWithModel(
+  model: string,
+  modelLabel: string,
+  systemOverride: string | null,
   dataUrl: string,
   apiKey: string
 ): Promise<ModelResult> {
@@ -99,155 +75,57 @@ async function analyzeWithGPT5(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "openai/gpt-5",
+      model,
       messages: [
-        {
-          role: "system",
-          content:
-            "You are an expert forensic image analyst. Determine if images are AI-generated or human-made. Respond only via the provided tool.",
-        },
+        { role: "system", content: systemOverride ?? SYSTEM_PROMPT },
         {
           role: "user",
           content: [
-            {
-              type: "text",
-              text: "Analyze this image carefully. Is it AI-generated or a real photograph? Provide your verdict, confidence score, and 3-5 forensic reasons.",
-            },
+            { type: "text", text: USER_PROMPT },
             { type: "image_url", image_url: { url: dataUrl } },
           ],
         },
       ],
-      tools: [
-        {
-          type: "function",
-          function: {
-            name: "report_analysis",
-            description: "Report the AI vs human image analysis result",
-            parameters: {
-              type: "object",
-              properties: {
-                verdict: { type: "string", enum: ["ai", "human"] },
-                confidence: { type: "number", description: "50-99" },
-                reasons: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "3-5 forensic reasons",
-                },
-              },
-              required: ["verdict", "confidence", "reasons"],
-              additionalProperties: false,
-            },
-          },
-        },
-      ],
+      tools: [TOOL_SCHEMA],
       tool_choice: { type: "function", function: { name: "report_analysis" } },
     }),
   });
 
   if (!res.ok) {
     const t = await res.text();
-    throw new Error(`GPT-5 error [${res.status}]: ${t}`);
+    throw new Error(`${modelLabel} error [${res.status}]: ${t}`);
   }
 
   const data = await res.json();
   const args = JSON.parse(data.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "{}");
 
-  return {
-    model: "GPT-5",
-    verdict: args.verdict ?? "human",
-    confidence: Math.max(50, Math.min(99, Math.round(args.confidence ?? 50))),
-    reasons: args.reasons ?? [],
-  };
-}
+  const clamp = (v: number) => Math.max(50, Math.min(99, Math.round(v ?? 50)));
 
-// ── Gemini 2.5 Pro via Lovable AI Gateway ────────────────────────────
-async function analyzeWithGeminiPro(
-  dataUrl: string,
-  apiKey: string
-): Promise<ModelResult> {
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
+  return {
+    model: modelLabel,
+    verdict: args.verdict ?? "human",
+    confidence: clamp(args.confidence),
+    reasons: args.reasons ?? [],
+    manipulation: {
+      edited: args.manipulation?.edited ?? false,
+      confidence: clamp(args.manipulation?.confidence),
+      reasons: args.manipulation?.reasons ?? [],
     },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-pro",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are an expert forensic image analyst specializing in detecting AI-generated images. You perform deep, methodical analysis. Respond only via the provided tool.",
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Analyze this image thoroughly. Is it AI-generated or a real photograph? Provide your verdict, confidence score, and 3-5 specific forensic reasons.",
-            },
-            { type: "image_url", image_url: { url: dataUrl } },
-          ],
-        },
-      ],
-      tools: [
-        {
-          type: "function",
-          function: {
-            name: "report_analysis",
-            description: "Report the AI vs human image analysis result",
-            parameters: {
-              type: "object",
-              properties: {
-                verdict: { type: "string", enum: ["ai", "human"] },
-                confidence: { type: "number", description: "50-99" },
-                reasons: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "3-5 forensic reasons",
-                },
-              },
-              required: ["verdict", "confidence", "reasons"],
-              additionalProperties: false,
-            },
-          },
-        },
-      ],
-      tool_choice: { type: "function", function: { name: "report_analysis" } },
-    }),
-  });
-
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(`Gemini Pro error [${res.status}]: ${t}`);
-  }
-
-  const data = await res.json();
-  const args = JSON.parse(data.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "{}");
-
-  return {
-    model: "Gemini Pro",
-    verdict: args.verdict ?? "human",
-    confidence: Math.max(50, Math.min(99, Math.round(args.confidence ?? 50))),
-    reasons: args.reasons ?? [],
   };
 }
 
 // ── Weighted consensus ───────────────────────────────────────────────
-function computeConsensus(
-  results: ModelResult[]
-): { verdict: "ai" | "human"; confidence: number; reasons: string[]; tips: string[] } {
-  // Weights: Gemini Pro (deep analysis) = 0.40, GPT-5 = 0.35, Gemini Flash (fast) = 0.25
+function computeConsensus(results: ModelResult[]) {
   const weights: Record<string, number> = {
     "Gemini Pro": 0.40,
     "GPT-5": 0.35,
     "Gemini Flash": 0.25,
   };
 
+  // --- AI detection consensus ---
   let aiWeightedScore = 0;
   let humanWeightedScore = 0;
   let totalWeight = 0;
-  const allReasons: string[] = [];
 
   for (const r of results) {
     const w = weights[r.model] ?? 0.25;
@@ -262,7 +140,6 @@ function computeConsensus(
     }
   }
 
-  // Normalize
   if (totalWeight > 0) {
     aiWeightedScore /= totalWeight;
     humanWeightedScore /= totalWeight;
@@ -271,7 +148,7 @@ function computeConsensus(
   const verdict: "ai" | "human" = aiWeightedScore >= humanWeightedScore ? "ai" : "human";
   const confidence = Math.max(50, Math.min(99, Math.round(Math.max(aiWeightedScore, humanWeightedScore) * 100)));
 
-  // Collect top reasons from the model closest to the consensus
+  const allReasons: string[] = [];
   const aligned = results.filter((r) => r.verdict === verdict);
   for (const r of aligned) {
     for (const reason of r.reasons.slice(0, 2)) {
@@ -279,12 +156,52 @@ function computeConsensus(
     }
   }
 
-  // Agreement indicator
   const agreementCount = results.filter((r) => r.verdict === verdict).length;
   if (agreementCount === results.length) {
     allReasons.unshift(`All ${results.length} models agree: image is ${verdict === "ai" ? "AI-generated" : "human-created"}`);
   } else {
     allReasons.unshift(`${agreementCount}/${results.length} models lean ${verdict === "ai" ? "AI-generated" : "human-created"}`);
+  }
+
+  // --- Manipulation consensus ---
+  let editedWeightedScore = 0;
+  let cleanWeightedScore = 0;
+  let manipTotalWeight = 0;
+
+  for (const r of results) {
+    const w = weights[r.model] ?? 0.25;
+    manipTotalWeight += w;
+    const score = r.manipulation.confidence / 100;
+    if (r.manipulation.edited) {
+      editedWeightedScore += score * w;
+      cleanWeightedScore += (1 - score) * w;
+    } else {
+      cleanWeightedScore += score * w;
+      editedWeightedScore += (1 - score) * w;
+    }
+  }
+
+  if (manipTotalWeight > 0) {
+    editedWeightedScore /= manipTotalWeight;
+    cleanWeightedScore /= manipTotalWeight;
+  }
+
+  const manipEdited = editedWeightedScore >= cleanWeightedScore;
+  const manipConfidence = Math.max(50, Math.min(99, Math.round(Math.max(editedWeightedScore, cleanWeightedScore) * 100)));
+
+  const manipReasons: string[] = [];
+  const manipAligned = results.filter((r) => r.manipulation.edited === manipEdited);
+  for (const r of manipAligned) {
+    for (const reason of r.manipulation.reasons.slice(0, 2)) {
+      manipReasons.push(reason);
+    }
+  }
+
+  const manipAgreement = manipAligned.length;
+  if (manipAgreement === results.length) {
+    manipReasons.unshift(`All ${results.length} models agree: image is ${manipEdited ? "edited" : "unmodified"}`);
+  } else {
+    manipReasons.unshift(`${manipAgreement}/${results.length} models lean ${manipEdited ? "edited" : "unmodified"}`);
   }
 
   const tips = [
@@ -294,7 +211,25 @@ function computeConsensus(
     "Reverse image search to check for original sources",
   ];
 
-  return { verdict, confidence, reasons: allReasons.slice(0, 5), tips };
+  const manipTips = [
+    "Look for mismatched lighting directions across the image",
+    "Check edges around subjects for unnatural halos or artifacts",
+    "Inspect backgrounds for cloned or repeated patterns",
+    "Use an error-level analysis (ELA) tool for deeper investigation",
+  ];
+
+  return {
+    verdict,
+    confidence,
+    reasons: allReasons.slice(0, 5),
+    tips,
+    manipulation: {
+      edited: manipEdited,
+      confidence: manipConfidence,
+      reasons: manipReasons.slice(0, 5),
+      tips: manipTips,
+    },
+  };
 }
 
 // ── Main handler ─────────────────────────────────────────────────────
@@ -334,11 +269,12 @@ serve(async (req) => {
     const mimeType = imageFile.type || "image/jpeg";
     const dataUrl = `data:${mimeType};base64,${base64Image}`;
 
-    // Call all 3 models in parallel — each is resilient
     const [geminiResult, gpt5Result, geminiProResult] = await Promise.allSettled([
-      analyzeWithGemini(dataUrl, LOVABLE_API_KEY),
-      analyzeWithGPT5(dataUrl, LOVABLE_API_KEY),
-      analyzeWithGeminiPro(dataUrl, LOVABLE_API_KEY),
+      analyzeWithModel("google/gemini-2.5-flash", "Gemini Flash", null, dataUrl, LOVABLE_API_KEY),
+      analyzeWithModel("openai/gpt-5", "GPT-5", null, dataUrl, LOVABLE_API_KEY),
+      analyzeWithModel("google/gemini-2.5-pro", "Gemini Pro",
+        "You are an expert forensic image analyst specializing in detecting AI-generated images and image manipulation. You perform deep, methodical analysis. Respond only via the provided tool.",
+        dataUrl, LOVABLE_API_KEY),
     ]);
 
     const successfulResults: ModelResult[] = [];
