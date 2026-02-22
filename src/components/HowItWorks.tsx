@@ -9,13 +9,13 @@ const steps = [
   },
   {
     icon: Cpu,
-    title: "AI Analysis",
-    description: "Our multi-model detection engine scans for artifacts, noise patterns, and metadata anomalies.",
+    title: "Dual-Layer Analysis",
+    description: "Our multi-model engine detects AI generation and identifies editing artifacts like splicing, retouching, and clone-stamping.",
   },
   {
     icon: ShieldCheck,
-    title: "Get Verdict",
-    description: "Receive a clear confidence score with detailed reasoning and shareable results in seconds.",
+    title: "Get Verdicts",
+    description: "Receive separate AI-detection and edit-detection confidence scores with detailed forensic reasoning.",
   },
 ];
 
