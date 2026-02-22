@@ -1,6 +1,7 @@
 import { Upload, Zap, Shield, Eye, Camera, TrendingUp, Pencil } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import { usePlan } from "@/contexts/PlanContext";
@@ -30,6 +31,24 @@ const headlines = ["AI", "Edited"];
 const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
   const [headlineIndex, setHeadlineIndex] = useState(0);
   const { plan, limits } = usePlan();
+
+  const { data: stats } = useQuery({
+    queryKey: ["site-stats"],
+    queryFn: async () => {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const res = await fetch(`${supabaseUrl}/functions/v1/get-stats`, {
+        headers: { Authorization: `Bearer ${supabaseKey}` },
+      });
+      if (!res.ok) throw new Error("Failed to fetch stats");
+      return res.json() as Promise<{ totalScans: number; uniqueUsers: number; avgAccuracy: number }>;
+    },
+    staleTime: 60_000,
+  });
+
+  const displayScans = Math.max(stats?.totalScans ?? 0, 0);
+  const displayUsers = Math.max(stats?.uniqueUsers ?? 0, 0);
+  const displayAccuracy = stats?.avgAccuracy || 96;
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -177,21 +196,21 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
           >
             <div className="text-center">
               <div className="font-display text-2xl font-bold text-foreground sm:text-3xl">
-                <AnimatedCounter target={2500000} suffix="+" />
+                <AnimatedCounter target={displayScans} suffix="+" />
               </div>
               <p className="mt-1 text-xs text-muted-foreground">Images Analyzed</p>
             </div>
             <div className="text-center">
               <div className="font-display text-2xl font-bold text-primary sm:text-3xl">
-                <AnimatedCounter target={96} suffix="%" />
+                <AnimatedCounter target={displayAccuracy} suffix="%" />
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">Accuracy Rate</p>
+              <p className="mt-1 text-xs text-muted-foreground">Avg Accuracy</p>
             </div>
             <div className="text-center">
               <div className="font-display text-2xl font-bold text-foreground sm:text-3xl">
-                <AnimatedCounter target={150000} suffix="+" />
+                <AnimatedCounter target={displayUsers} suffix="+" />
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">Users Worldwide</p>
+              <p className="mt-1 text-xs text-muted-foreground">Users</p>
             </div>
             <div className="text-center">
               <div className="font-display text-2xl font-bold text-success sm:text-3xl">
