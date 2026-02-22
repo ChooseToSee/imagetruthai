@@ -38,6 +38,7 @@ interface ResultsDisplayProps {
   result: AnalysisResult;
   imagePreview: string;
   onReset: () => void;
+  streamProgress?: { completed: number; total: number };
 }
 
 const ModelCard = ({ m }: { m: ModelBreakdown }) => {
@@ -68,11 +69,12 @@ const ModelCard = ({ m }: { m: ModelBreakdown }) => {
   );
 };
 
-const ResultsDisplay = ({ result, imagePreview, onReset }: ResultsDisplayProps) => {
+const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress }: ResultsDisplayProps) => {
   const isAI = result.verdict === "ai";
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+  const isStreaming = !!streamProgress;
 
   const manipulation = result.manipulation;
   const isEdited = manipulation?.edited ?? false;
@@ -125,8 +127,26 @@ const ResultsDisplay = ({ result, imagePreview, onReset }: ResultsDisplayProps) 
                   transition={{ duration: 2, repeat: 1, ease: "easeInOut" }}
                 />
               </motion.div>
-            </div>
 
+              {/* Streaming progress */}
+              {isStreaming && (
+                <div className="mb-4 flex items-center gap-3 rounded-lg bg-primary/5 border border-primary/10 px-4 py-3">
+                  <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">
+                      Analyzing… {streamProgress.completed}/{streamProgress.total} models complete
+                    </p>
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <motion.div
+                        className="h-full rounded-full bg-primary"
+                        animate={{ width: `${(streamProgress.completed / streamProgress.total) * 100}%` }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             {/* Tabbed results */}
             <Tabs defaultValue="ai-detection" className="px-6 pb-6">
               <TabsList className="grid w-full grid-cols-2 mb-4">

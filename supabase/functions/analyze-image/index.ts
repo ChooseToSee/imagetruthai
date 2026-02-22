@@ -122,7 +122,6 @@ function computeConsensus(results: ModelResult[]) {
     "Gemini Flash": 0.25,
   };
 
-  // --- AI detection consensus ---
   let aiWeightedScore = 0;
   let humanWeightedScore = 0;
   let totalWeight = 0;
@@ -269,42 +268,113 @@ serve(async (req) => {
     const mimeType = imageFile.type || "image/jpeg";
     const dataUrl = `data:${mimeType};base64,${base64Image}`;
 
-    const [geminiResult, gpt5Result, geminiProResult] = await Promise.allSettled([
-      analyzeWithModel("google/gemini-2.5-flash", "Gemini Flash", null, dataUrl, LOVABLE_API_KEY),
-      analyzeWithModel("openai/gpt-5", "GPT-5", null, dataUrl, LOVABLE_API_KEY),
-      analyzeWithModel("google/gemini-2.5-pro", "Gemini Pro",
-        "You are an expert forensic image analyst specializing in detecting AI-generated images and image manipulation. You perform deep, methodical analysis. Respond only via the provided tool.",
-        dataUrl, LOVABLE_API_KEY),
-    ]);
+    // Check if client wants streaming
+    const acceptHeader = req.headers.get("x-stream") || "";
+    const wantsStream = acceptHeader === "true";
 
-    const successfulResults: ModelResult[] = [];
-    const modelBreakdown: ModelResult[] = [];
+    if (!wantsStream) {
+      // Original non-streaming path
+      const [geminiResult, gpt5Result, geminiProResult] = await Promise.allSettled([
+        analyzeWithModel("google/gemini-2.5-flash", "Gemini Flash", null, dataUrl, LOVABLE_API_KEY),
+        analyzeWithModel("openai/gpt-5", "GPT-5", null, dataUrl, LOVABLE_API_KEY),
+        analyzeWithModel("google/gemini-2.5-pro", "Gemini Pro",
+          "You are an expert forensic image analyst specializing in detecting AI-generated images and image manipulation. You perform deep, methodical analysis. Respond only via the provided tool.",
+          dataUrl, LOVABLE_API_KEY),
+      ]);
 
-    for (const r of [geminiResult, gpt5Result, geminiProResult]) {
-      if (r.status === "fulfilled") {
-        successfulResults.push(r.value);
-        modelBreakdown.push(r.value);
-      } else {
-        console.error("Model failed:", r.reason);
+      const successfulResults: ModelResult[] = [];
+      const modelBreakdown: ModelResult[] = [];
+
+      for (const r of [geminiResult, gpt5Result, geminiProResult]) {
+        if (r.status === "fulfilled") {
+          successfulResults.push(r.value);
+          modelBreakdown.push(r.value);
+        } else {
+          console.error("Model failed:", r.reason);
+        }
       }
+
+      if (successfulResults.length === 0) {
+        return new Response(JSON.stringify({ error: "All analysis models failed" }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const consensus = computeConsensus(successfulResults);
+      return new Response(
+        JSON.stringify({ ...consensus, modelBreakdown }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    if (successfulResults.length === 0) {
-      return new Response(JSON.stringify({ error: "All analysis models failed" }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // ── Streaming SSE path ─────────────────────────────────────────
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        const send = (event: string, data: unknown) => {
+          controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+        };
 
-    const consensus = computeConsensus(successfulResults);
+        const models = [
+          { model: "google/gemini-2.5-flash", label: "Gemini Flash", system: null },
+          { model: "openai/gpt-5", label: "GPT-5", system: null },
+          {
+            model: "google/gemini-2.5-pro",
+            label: "Gemini Pro",
+            system: "You are an expert forensic image analyst specializing in detecting AI-generated images and image manipulation. You perform deep, methodical analysis. Respond only via the provided tool.",
+          },
+        ];
 
-    return new Response(
-      JSON.stringify({
-        ...consensus,
-        modelBreakdown,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+        const successfulResults: ModelResult[] = [];
+        const modelBreakdown: ModelResult[] = [];
+
+        // Fire all model calls in parallel, stream each result as it arrives
+        const promises = models.map(async ({ model, label, system }) => {
+          try {
+            const result = await analyzeWithModel(model, label, system, dataUrl, LOVABLE_API_KEY!);
+            successfulResults.push(result);
+            modelBreakdown.push(result);
+
+            // Send the individual model result
+            send("model", result);
+
+            // Send updated interim consensus
+            const interim = computeConsensus([...successfulResults]);
+            send("consensus", {
+              ...interim,
+              modelBreakdown: [...modelBreakdown],
+              modelsCompleted: successfulResults.length,
+              modelsTotal: models.length,
+            });
+          } catch (err) {
+            console.error(`${label} failed:`, err);
+            send("model_error", { model: label, error: err.message });
+          }
+        });
+
+        await Promise.allSettled(promises);
+
+        if (successfulResults.length === 0) {
+          send("error", { error: "All analysis models failed" });
+        } else {
+          // Send final consensus
+          const final = computeConsensus(successfulResults);
+          send("done", { ...final, modelBreakdown });
+        }
+
+        controller.close();
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
   } catch (error) {
     console.error("analyze-image error:", error);
 

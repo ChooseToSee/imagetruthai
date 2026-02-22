@@ -2,6 +2,7 @@ import { useRef, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/lib/compress-image";
+import { analyzeImageStream, type StreamConsensus } from "@/lib/analyze-stream";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import UploadSection from "@/components/UploadSection";
@@ -91,6 +92,7 @@ const Index = () => {
   const [singleResult, setSingleResult] = useState<{ result: AnalysisResult; preview: string } | null>(null);
   const [batchResults, setBatchResults] = useState<BatchItem[] | null>(null);
   const [demoIndex, setDemoIndex] = useState(0);
+  const [streamProgress, setStreamProgress] = useState<{ completed: number; total: number } | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -111,7 +113,44 @@ const Index = () => {
     }, 100);
   }, [demoIndex]);
 
-  const analyzeOne = async (file: File): Promise<{ result: AnalysisResult; preview: string }> => {
+  const saveToHistory = async (file: File, result: AnalysisResult) => {
+    if (!user) return;
+    await supabase.from("scan_history").insert({
+      user_id: user.id,
+      file_name: file.name,
+      file_size: file.size,
+      verdict: result.verdict,
+      confidence: result.confidence,
+      reasons: result.reasons,
+      tips: result.tips,
+    });
+  };
+
+  const analyzeOneStreaming = async (file: File, preview: string) => {
+    const compressed = await compressImage(file);
+
+    setStreamProgress({ completed: 0, total: 3 });
+
+    await analyzeImageStream(compressed, {
+      onModel: () => {},
+      onConsensus: (consensus) => {
+        setStreamProgress({ completed: consensus.modelsCompleted, total: consensus.modelsTotal });
+        // Show interim results live
+        setSingleResult({ result: consensus, preview });
+      },
+      onDone: (finalResult) => {
+        setSingleResult({ result: finalResult, preview });
+        setStreamProgress(null);
+        saveToHistory(file, finalResult);
+      },
+      onError: (error) => {
+        toast({ title: "Analysis failed", description: error, variant: "destructive" });
+        setStreamProgress(null);
+      },
+    });
+  };
+
+  const analyzeOneFallback = async (file: File): Promise<{ result: AnalysisResult; preview: string }> => {
     const preview = URL.createObjectURL(file);
     const compressed = await compressImage(file);
     const formData = new FormData();
@@ -123,19 +162,7 @@ const Index = () => {
 
     if (error) throw error;
     const result = data as AnalysisResult;
-
-    if (user) {
-      await supabase.from("scan_history").insert({
-        user_id: user.id,
-        file_name: file.name,
-        file_size: file.size,
-        verdict: result.verdict,
-        confidence: result.confidence,
-        reasons: result.reasons,
-        tips: result.tips,
-      });
-    }
-
+    await saveToHistory(file, result);
     return { result, preview };
   };
 
@@ -146,47 +173,54 @@ const Index = () => {
       setBatchResults(null);
 
       try {
-        const settled: PromiseSettledResult<{ result: AnalysisResult; preview: string }>[] = [];
-        const concurrency = 3;
-        for (let i = 0; i < files.length; i += concurrency) {
-          const batch = files.slice(i, i + concurrency);
-          const batchResults = await Promise.allSettled(batch.map((f) => analyzeOne(f)));
-          settled.push(...batchResults);
-        }
-
-        const successes: BatchItem[] = [];
-        let failures = 0;
-
-        settled.forEach((s, i) => {
-          if (s.status === "fulfilled") {
-            successes.push({
-              fileName: files[i].name,
-              preview: s.value.preview,
-              result: s.value.result,
-            });
-          } else {
-            failures++;
-          }
-        });
-
-        if (failures > 0) {
-          toast({
-            title: `${failures} image${failures > 1 ? "s" : ""} failed`,
-            description: "Some images could not be analyzed. Results shown for the rest.",
-            variant: "destructive",
-          });
-        }
-
-        if (successes.length === 0) {
-          toast({
-            title: "Analysis failed",
-            description: "None of the images could be analyzed. Please try again.",
-            variant: "destructive",
-          });
-        } else if (successes.length === 1) {
-          setSingleResult({ result: successes[0].result, preview: successes[0].preview });
+        if (files.length === 1) {
+          // Single image: use streaming for progressive results
+          const preview = URL.createObjectURL(files[0]);
+          await analyzeOneStreaming(files[0], preview);
         } else {
-          setBatchResults(successes);
+          // Batch: use original approach
+          const settled: PromiseSettledResult<{ result: AnalysisResult; preview: string }>[] = [];
+          const concurrency = 3;
+          for (let i = 0; i < files.length; i += concurrency) {
+            const batch = files.slice(i, i + concurrency);
+            const batchResults = await Promise.allSettled(batch.map((f) => analyzeOneFallback(f)));
+            settled.push(...batchResults);
+          }
+
+          const successes: BatchItem[] = [];
+          let failures = 0;
+
+          settled.forEach((s, i) => {
+            if (s.status === "fulfilled") {
+              successes.push({
+                fileName: files[i].name,
+                preview: s.value.preview,
+                result: s.value.result,
+              });
+            } else {
+              failures++;
+            }
+          });
+
+          if (failures > 0) {
+            toast({
+              title: `${failures} image${failures > 1 ? "s" : ""} failed`,
+              description: "Some images could not be analyzed. Results shown for the rest.",
+              variant: "destructive",
+            });
+          }
+
+          if (successes.length === 0) {
+            toast({
+              title: "Analysis failed",
+              description: "None of the images could be analyzed. Please try again.",
+              variant: "destructive",
+            });
+          } else if (successes.length === 1) {
+            setSingleResult({ result: successes[0].result, preview: successes[0].preview });
+          } else {
+            setBatchResults(successes);
+          }
         }
       } catch (err: any) {
         toast({
@@ -196,6 +230,7 @@ const Index = () => {
         });
       } finally {
         setIsAnalyzing(false);
+        setStreamProgress(null);
       }
     },
     [user, toast]
@@ -213,7 +248,12 @@ const Index = () => {
       <HeroSection onScrollToUpload={scrollToUpload} onDemo={handleDemo} />
 
       {singleResult ? (
-        <ResultsDisplay result={singleResult.result} imagePreview={singleResult.preview} onReset={handleReset} />
+        <ResultsDisplay
+          result={singleResult.result}
+          imagePreview={singleResult.preview}
+          onReset={handleReset}
+          streamProgress={streamProgress ?? undefined}
+        />
       ) : batchResults ? (
         <BatchResultsDisplay items={batchResults} onReset={handleReset} />
       ) : (
