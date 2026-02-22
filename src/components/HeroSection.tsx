@@ -1,5 +1,4 @@
 import { Upload, Zap, Shield, Eye, Camera, TrendingUp, Pencil } from "lucide-react";
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import AnimatedCounter from "@/components/AnimatedCounter";
@@ -24,17 +23,7 @@ interface HeroSectionProps {
   onDemo: () => void;
 }
 
-const headlines = ["AI", "Edited", "Real"];
-
 const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
-  const [headlineIndex, setHeadlineIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setHeadlineIndex((prev) => (prev + 1) % headlines.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
   return (
     <section className="relative flex min-h-[100vh] items-center overflow-hidden pt-16">
       {/* Image montage background */}
@@ -97,17 +86,7 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <motion.span
-              key={headlineIndex}
-              className="inline-block text-gradient-brand"
-              initial={{ opacity: 0, y: 12, filter: "blur(4px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -12, filter: "blur(4px)" }}
-              transition={{ duration: 0.5 }}
-            >
-              {headlines[headlineIndex]}
-            </motion.span>{" "}
-            or{" "}
+            <span className="text-gradient-brand">AI</span> or{" "}
             <span className="text-gradient-brand">Real</span>
             <span className="text-primary">?</span>
           </motion.h1>
