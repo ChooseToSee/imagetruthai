@@ -218,11 +218,11 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                         <div className="flex-1">
                           <Tabs defaultValue="ai-detection">
                             <TabsList className="grid w-full grid-cols-2 mb-3 h-10 bg-muted/80 border border-border">
-                              <TabsTrigger value="ai-detection" className="gap-1.5 text-xs font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                              <TabsTrigger value="ai-detection" className="gap-1.5 text-xs font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:bg-card data-[state=inactive]:text-foreground data-[state=inactive]:border data-[state=inactive]:border-border data-[state=inactive]:hover:bg-accent">
                                 <Brain className="h-3.5 w-3.5" />
                                 AI Detection
                               </TabsTrigger>
-                              <TabsTrigger value="edit-detection" className="gap-1.5 text-xs font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                              <TabsTrigger value="edit-detection" className="gap-1.5 text-xs font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:bg-card data-[state=inactive]:text-foreground data-[state=inactive]:border data-[state=inactive]:border-border data-[state=inactive]:hover:bg-accent">
                                 <Pencil className="h-3.5 w-3.5" />
                                 Edit Detection
                               </TabsTrigger>

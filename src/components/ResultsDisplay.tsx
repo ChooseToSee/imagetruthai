@@ -151,11 +151,11 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress }: Resul
             {/* Tabbed results */}
             <Tabs defaultValue="ai-detection" className="px-6 pb-6">
               <TabsList className="grid w-full grid-cols-2 mb-4 h-11 bg-muted/80 border border-border">
-                <TabsTrigger value="ai-detection" className="gap-2 text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                <TabsTrigger value="ai-detection" className="gap-2 text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:bg-card data-[state=inactive]:text-foreground data-[state=inactive]:border data-[state=inactive]:border-border data-[state=inactive]:hover:bg-accent">
                   <Brain className="h-4 w-4" />
                   AI Detection
                 </TabsTrigger>
-                <TabsTrigger value="edit-detection" className="gap-2 text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                <TabsTrigger value="edit-detection" className="gap-2 text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:bg-card data-[state=inactive]:text-foreground data-[state=inactive]:border data-[state=inactive]:border-border data-[state=inactive]:hover:bg-accent">
                   <Pencil className="h-4 w-4" />
                   Edit Detection
                 </TabsTrigger>
