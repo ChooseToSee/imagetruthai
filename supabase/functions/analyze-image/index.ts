@@ -19,8 +19,6 @@ interface ModelResult {
   };
 }
 
-const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-
 const SYSTEM_PROMPT =
   "You are an expert forensic image analyst specializing in two tasks: (1) detecting AI-generated images vs real photographs, and (2) detecting image manipulation/editing (Photoshop, filters, splicing, clone stamping, content-aware fill, etc.). You MUST respond with valid JSON only, no markdown, no code fences.";
 
@@ -29,15 +27,59 @@ const USER_PROMPT =
 
 const GEMINI_PRO_SYSTEM = "You are an expert forensic image analyst specializing in detecting AI-generated images and image manipulation. You perform deep, methodical analysis. You MUST respond with valid JSON only, no markdown, no code fences.";
 
-// ── Lovable AI Gateway call (OpenAI-compatible) ─────────────────────
-async function analyzeWithGateway(
+// ── Google Gemini API call ──────────────────────────────────────────
+async function analyzeWithGemini(
   model: string,
   modelLabel: string,
   systemOverride: string | null,
+  base64Image: string,
+  mimeType: string,
+  apiKey: string
+): Promise<ModelResult> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: systemOverride ?? SYSTEM_PROMPT }] },
+      contents: [{
+        parts: [
+          { text: USER_PROMPT },
+          { inlineData: { mimeType, data: base64Image } },
+        ],
+      }],
+      generationConfig: { temperature: 0.2, maxOutputTokens: 2000 },
+    }),
+  });
+
+  if (!res.ok) {
+    const t = await res.text();
+    const err = new Error(`${modelLabel} error [${res.status}]: ${t}`);
+    (err as any).status = res.status;
+    throw err;
+  }
+
+  const data = await res.json();
+  const content = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
+
+  let jsonStr = content.trim();
+  if (jsonStr.startsWith("```")) {
+    jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
+  }
+
+  const args = JSON.parse(jsonStr);
+  return parseModelResult(modelLabel, args);
+}
+
+// ── OpenAI API call ─────────────────────────────────────────────────
+async function analyzeWithOpenAI(
+  model: string,
+  modelLabel: string,
   dataUrl: string,
   apiKey: string
 ): Promise<ModelResult> {
-  const res = await fetch(GATEWAY_URL, {
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -46,7 +88,7 @@ async function analyzeWithGateway(
     body: JSON.stringify({
       model,
       messages: [
-        { role: "system", content: systemOverride ?? SYSTEM_PROMPT },
+        { role: "system", content: SYSTEM_PROMPT },
         {
           role: "user",
           content: [
@@ -69,13 +111,12 @@ async function analyzeWithGateway(
 
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content ?? "{}";
-  
-  // Parse JSON from response, handling possible markdown code fences
+
   let jsonStr = content.trim();
   if (jsonStr.startsWith("```")) {
     jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
   }
-  
+
   const args = JSON.parse(jsonStr);
   return parseModelResult(modelLabel, args);
 }
@@ -236,9 +277,11 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "AI service not configured" }), {
+    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+
+    if (!GOOGLE_API_KEY && !OPENAI_API_KEY) {
+      return new Response(JSON.stringify({ error: "AI service not configured — missing API keys" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -252,19 +295,37 @@ serve(async (req) => {
     // Check if client wants streaming
     const wantsStream = req.headers.get("x-stream") === "true";
 
-    const models = [
-      { model: "google/gemini-2.5-flash", label: "Gemini Flash", system: null },
-      { model: "openai/gpt-5", label: "GPT-5", system: null },
-      { model: "google/gemini-2.5-pro", label: "Gemini Pro", system: GEMINI_PRO_SYSTEM },
-    ];
+    // Build model tasks based on available keys
+    type ModelTask = { run: () => Promise<ModelResult>; label: string };
+    const tasks: ModelTask[] = [];
+
+    if (GOOGLE_API_KEY) {
+      tasks.push({
+        label: "Gemini Flash",
+        run: () => analyzeWithGemini("gemini-2.5-flash-preview-05-20", "Gemini Flash", null, base64Image, mimeType, GOOGLE_API_KEY),
+      });
+      tasks.push({
+        label: "Gemini Pro",
+        run: () => analyzeWithGemini("gemini-2.5-pro-preview-05-06", "Gemini Pro", GEMINI_PRO_SYSTEM, base64Image, mimeType, GOOGLE_API_KEY),
+      });
+    }
+    if (OPENAI_API_KEY) {
+      tasks.push({
+        label: "GPT-5",
+        run: () => analyzeWithOpenAI("gpt-5", "GPT-5", dataUrl, OPENAI_API_KEY),
+      });
+    }
+
+    if (tasks.length === 0) {
+      return new Response(JSON.stringify({ error: "No API keys configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!wantsStream) {
       // Non-streaming path
-      const results = await Promise.allSettled(
-        models.map(({ model, label, system }) =>
-          analyzeWithGateway(model, label, system, dataUrl, LOVABLE_API_KEY)
-        )
-      );
+      const results = await Promise.allSettled(tasks.map((t) => t.run()));
 
       const successfulResults: ModelResult[] = [];
       const modelBreakdown: ModelResult[] = [];
@@ -278,19 +339,8 @@ serve(async (req) => {
         }
       }
 
-      // Check if all failures are 402 (payment required)
-      const allPaymentRequired = results.every(
-        (r) => r.status === "rejected" && (r.reason?.status === 402 || r.reason?.message?.includes("402"))
-      );
-
       if (successfulResults.length === 0) {
-        if (allPaymentRequired) {
-          return new Response(JSON.stringify({ error: "AI credits exhausted. Please add Lovable AI credits in Settings → Workspace → Usage." }), {
-            status: 402,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        return new Response(JSON.stringify({ error: "All analysis models failed" }), {
+        return new Response(JSON.stringify({ error: "All analysis models failed. Please check your API keys." }), {
           status: 502,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -314,9 +364,9 @@ serve(async (req) => {
         const successfulResults: ModelResult[] = [];
         const modelBreakdown: ModelResult[] = [];
 
-        const promises = models.map(async ({ model, label, system }) => {
+        const promises = tasks.map(async (task) => {
           try {
-            const result = await analyzeWithGateway(model, label, system, dataUrl, LOVABLE_API_KEY!);
+            const result = await task.run();
             successfulResults.push(result);
             modelBreakdown.push(result);
 
@@ -327,11 +377,11 @@ serve(async (req) => {
               ...interim,
               modelBreakdown: [...modelBreakdown],
               modelsCompleted: successfulResults.length,
-              modelsTotal: models.length,
+              modelsTotal: tasks.length,
             });
           } catch (err) {
-            console.error(`${label} failed:`, err);
-            send("model_error", { model: label, error: err.message });
+            console.error(`${task.label} failed:`, err);
+            send("model_error", { model: task.label, error: err.message });
           }
         });
 
