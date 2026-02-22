@@ -150,13 +150,13 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress }: Resul
             </div>
             {/* Tabbed results */}
             <Tabs defaultValue="ai-detection" className="px-6 pb-6">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="ai-detection" className="gap-2 text-xs">
-                  <Brain className="h-3.5 w-3.5" />
+              <TabsList className="grid w-full grid-cols-2 mb-4 h-11 bg-muted/80 border border-border">
+                <TabsTrigger value="ai-detection" className="gap-2 text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <Brain className="h-4 w-4" />
                   AI Detection
                 </TabsTrigger>
-                <TabsTrigger value="edit-detection" className="gap-2 text-xs">
-                  <Pencil className="h-3.5 w-3.5" />
+                <TabsTrigger value="edit-detection" className="gap-2 text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                  <Pencil className="h-4 w-4" />
                   Edit Detection
                 </TabsTrigger>
               </TabsList>

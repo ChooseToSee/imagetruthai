@@ -217,13 +217,13 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
 
                         <div className="flex-1">
                           <Tabs defaultValue="ai-detection">
-                            <TabsList className="grid w-full grid-cols-2 mb-3">
-                              <TabsTrigger value="ai-detection" className="gap-1.5 text-xs">
-                                <Brain className="h-3 w-3" />
+                            <TabsList className="grid w-full grid-cols-2 mb-3 h-10 bg-muted/80 border border-border">
+                              <TabsTrigger value="ai-detection" className="gap-1.5 text-xs font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                                <Brain className="h-3.5 w-3.5" />
                                 AI Detection
                               </TabsTrigger>
-                              <TabsTrigger value="edit-detection" className="gap-1.5 text-xs">
-                                <Pencil className="h-3 w-3" />
+                              <TabsTrigger value="edit-detection" className="gap-1.5 text-xs font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md">
+                                <Pencil className="h-3.5 w-3.5" />
                                 Edit Detection
                               </TabsTrigger>
                             </TabsList>
