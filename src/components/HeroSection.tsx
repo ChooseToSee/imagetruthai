@@ -194,24 +194,28 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
           >
-            <div className="text-center">
-              <div className="font-display text-2xl font-bold text-foreground sm:text-3xl">
-                <AnimatedCounter target={displayScans} suffix="+" />
+            {displayScans >= 1000 && (
+              <div className="text-center">
+                <div className="font-display text-2xl font-bold text-foreground sm:text-3xl">
+                  <AnimatedCounter target={displayScans} suffix="+" />
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">Images Analyzed</p>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">Images Analyzed</p>
-            </div>
+            )}
             <div className="text-center">
               <div className="font-display text-2xl font-bold text-primary sm:text-3xl">
                 <AnimatedCounter target={displayAccuracy} suffix="%" />
               </div>
               <p className="mt-1 text-xs text-muted-foreground">Avg Accuracy</p>
             </div>
-            <div className="text-center">
-              <div className="font-display text-2xl font-bold text-foreground sm:text-3xl">
-                <AnimatedCounter target={displayUsers} suffix="+" />
+            {displayUsers >= 100 && (
+              <div className="text-center">
+                <div className="font-display text-2xl font-bold text-foreground sm:text-3xl">
+                  <AnimatedCounter target={displayUsers} suffix="+" />
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">Users</p>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">Users</p>
-            </div>
+            )}
             <div className="text-center">
               <div className="font-display text-2xl font-bold text-success sm:text-3xl">
                 &lt;3s
