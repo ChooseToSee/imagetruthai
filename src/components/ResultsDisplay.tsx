@@ -72,6 +72,7 @@ const ModelCard = ({ m }: { m: ModelBreakdown }) => {
 const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress }: ResultsDisplayProps) => {
   const isAI = result.verdict === "ai";
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const [showEditBreakdown, setShowEditBreakdown] = useState(false);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
   const isStreaming = !!streamProgress;
@@ -350,6 +351,59 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress }: Resul
                         ))}
                       </ul>
                     </div>
+
+                    {/* Per-Model Edit Breakdown */}
+                    {result.modelBreakdown && result.modelBreakdown.some(m => m.manipulation) && (
+                      <div className="mb-4">
+                        <button
+                          onClick={() => setShowEditBreakdown(!showEditBreakdown)}
+                          className="flex w-full items-center gap-2 rounded-lg bg-muted/50 px-4 py-3 text-left transition-colors hover:bg-muted/80"
+                        >
+                          <Pencil className="h-4 w-4 text-primary" />
+                          <span className="flex-1 text-xs font-semibold text-foreground">Per-Model Edit Breakdown</span>
+                          {showEditBreakdown ? (
+                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </button>
+                        {showEditBreakdown && (
+                          <motion.div
+                            className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                          >
+                            {result.modelBreakdown.filter(m => m.manipulation).map((m, i) => {
+                              const manip = m.manipulation!;
+                              return (
+                                <div key={i} className="rounded-lg border border-border bg-muted/30 p-3">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-semibold text-foreground">{m.model}</span>
+                                    <span className={`text-xs font-bold ${manip.edited ? "text-warning" : "text-success"}`}>
+                                      {manip.confidence}% {manip.edited ? "Edited" : "Original"}
+                                    </span>
+                                  </div>
+                                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted mb-2">
+                                    <div
+                                      className={`h-full rounded-full ${manip.edited ? "bg-warning" : "bg-success"}`}
+                                      style={{ width: `${manip.confidence}%`, float: manip.edited ? "right" : "left" }}
+                                    />
+                                  </div>
+                                  <ul className="space-y-1">
+                                    {manip.reasons.slice(0, 3).map((r, j) => (
+                                      <li key={j} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
+                                        <div className={`mt-1 h-1 w-1 shrink-0 rounded-full ${manip.edited ? "bg-warning" : "bg-success"}`} />
+                                        {r}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              );
+                            })}
+                          </motion.div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Manipulation tips */}
                     <div className="rounded-lg bg-muted/50 p-4">
