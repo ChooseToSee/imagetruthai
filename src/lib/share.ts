@@ -1,16 +1,19 @@
 export async function shareContent(
   text: string,
   title: string = "ImageTruth AI",
-  url: string = window.location.href
+  url?: string
 ): Promise<"shared" | "copied"> {
   if (navigator.share) {
     try {
-      await navigator.share({ title, text, url });
+      const shareData: ShareData = { title, text };
+      if (url) shareData.url = url;
+      await navigator.share(shareData);
       return "shared";
     } catch {
       // User cancelled or error — fall back to clipboard
     }
   }
-  await navigator.clipboard.writeText(`${text}\n${url}`);
+  const clipText = url ? `${text}\n${url}` : text;
+  await navigator.clipboard.writeText(clipText);
   return "copied";
 }

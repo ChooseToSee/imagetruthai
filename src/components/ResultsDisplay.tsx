@@ -83,8 +83,11 @@ const ResultsDisplay = ({ result, imagePreview, onReset }: ResultsDisplayProps) 
   const totalModels = result.modelBreakdown?.length ?? 0;
 
   const handleShare = async () => {
-    const text = `ImageTruth AI verdict: ${result.confidence}% likely ${isAI ? "AI-generated" : "human-created"}. ${result.reasons[0]}`;
-    const res = await shareContent(text, "ImageTruth AI Result");
+    const editInfo = manipulation
+      ? ` | Edit detection: ${manipulation.confidence}% likely ${isEdited ? "edited" : "unmodified"}.`
+      : "";
+    const text = `ImageTruth AI verdict: ${result.confidence}% likely ${isAI ? "AI-generated" : "human-created"}. ${result.reasons[0]}${editInfo}`;
+    const res = await shareContent(text, "ImageTruth AI Result", "");
     if (res === "copied") {
       setCopied(true);
       toast({ title: "Copied to clipboard!", description: "Share the result with anyone." });

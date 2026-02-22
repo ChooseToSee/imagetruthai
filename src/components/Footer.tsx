@@ -18,7 +18,7 @@ const Footer = () => {
           <div className="flex gap-6 text-xs text-muted-foreground">
             <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
             <a href="#" className="hover:text-foreground transition-colors">Terms</a>
-            <a href="#" className="hover:text-foreground transition-colors">Contact</a>
+            <a href="/contact" className="hover:text-foreground transition-colors">Contact</a>
           </div>
           <p className="text-[11px] text-muted-foreground/50">
             © 2026 ImageTruth AI. All rights reserved.
