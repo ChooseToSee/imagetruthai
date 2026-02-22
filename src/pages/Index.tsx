@@ -141,7 +141,11 @@ const Index = () => {
 
   const analyzeOneStreaming = async (file: File, preview: string) => {
     const compressed = await compressImage(file);
-
+    console.log(`Original: ${(file.size/1024).toFixed(0)}KB, Compressed: ${(compressed.size/1024).toFixed(0)}KB`);
+    
+    if (compressed.size > 2 * 1024 * 1024) {
+      throw new Error("Image is too large even after compression. Please use a smaller image.");
+    }
     setStreamProgress({ completed: 0, total: 3 });
 
     await analyzeImageStream(compressed, {
