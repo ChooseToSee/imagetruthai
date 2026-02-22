@@ -33,6 +33,12 @@ export async function analyzeImageStream(
   });
 
   if (!resp.ok) {
+    if (resp.status === 402) {
+      throw new Error("Service temporarily unavailable — please try again later.");
+    }
+    if (resp.status === 429) {
+      throw new Error("Too many requests — please wait a moment and try again.");
+    }
     const text = await resp.text();
     let msg = "Analysis failed";
     try {

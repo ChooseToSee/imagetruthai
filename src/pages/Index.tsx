@@ -236,9 +236,12 @@ const Index = () => {
           }
         }
       } catch (err: any) {
+        const msg = err.message || "Please try again later";
+        const isCredits = msg.includes("temporarily unavailable");
+        const isRate = msg.includes("Too many requests");
         toast({
-          title: "Analysis failed",
-          description: err.message || "Please try again later",
+          title: isCredits ? "Service unavailable" : isRate ? "Slow down" : "Analysis failed",
+          description: msg,
           variant: "destructive",
         });
       } finally {
