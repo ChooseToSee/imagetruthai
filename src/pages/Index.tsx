@@ -197,11 +197,15 @@ const Index = () => {
         } else {
           // Batch: use original approach
           const settled: PromiseSettledResult<{ result: AnalysisResult; preview: string }>[] = [];
-          const concurrency = 3;
+          const concurrency = 2;
           for (let i = 0; i < files.length; i += concurrency) {
             const batch = files.slice(i, i + concurrency);
             const batchResults = await Promise.allSettled(batch.map((f) => analyzeOneFallback(f)));
             settled.push(...batchResults);
+            // Small delay between batches to avoid rate limits
+            if (i + concurrency < files.length) {
+              await new Promise((r) => setTimeout(r, 1000));
+            }
           }
 
           const successes: BatchItem[] = [];
