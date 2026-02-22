@@ -234,6 +234,17 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
               </Button>
             </motion.div>
 
+            {/* Upload hint */}
+            <motion.p
+              className="mb-3 text-sm text-muted-foreground"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.18 }}
+            >
+              Drag & drop an image below, click to browse files, or paste from clipboard (<kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-xs font-mono">⌘V</kbd>)
+            </motion.p>
+
             {/* Upload slots grid */}
             <motion.div
               className="rounded-xl border border-border bg-card p-6 shadow-card"
