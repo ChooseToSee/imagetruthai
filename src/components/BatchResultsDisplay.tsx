@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { AlertTriangle, CheckCircle, Info, RotateCcw, ChevronDown, ChevronUp, BarChart3, Share2, Check } from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, RotateCcw, ChevronDown, ChevronUp, BarChart3, Share2, Check, Brain, Pencil, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { AnalysisResult } from "@/components/ResultsDisplay";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { AnalysisResult, ModelBreakdown } from "@/components/ResultsDisplay";
 import { shareContent } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,14 +17,46 @@ interface BatchResultsDisplayProps {
   onReset: () => void;
 }
 
+const ModelCard = ({ m }: { m: ModelBreakdown }) => {
+  const isAI = m.verdict === "ai";
+  return (
+    <div className="rounded-lg border border-border bg-muted/30 p-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-semibold text-foreground">{m.model}</span>
+        <span className={`text-xs font-bold ${isAI ? "text-destructive" : "text-success"}`}>
+          {m.confidence}% {isAI ? "AI" : "Human"}
+        </span>
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted mb-2">
+        <div
+          className={`h-full rounded-full ${isAI ? "bg-destructive" : "bg-success"}`}
+          style={{ width: `${m.confidence}%`, float: isAI ? "right" : "left" }}
+        />
+      </div>
+      <ul className="space-y-1">
+        {m.reasons.slice(0, 3).map((r, i) => (
+          <li key={i} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
+            <div className={`mt-1 h-1 w-1 shrink-0 rounded-full ${isAI ? "bg-destructive" : "bg-success"}`} />
+            {r}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
 const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [showBreakdown, setShowBreakdown] = useState<number | null>(null);
   const { toast } = useToast();
 
   const handleShareItem = async (item: BatchItem, index: number) => {
     const isAI = item.result.verdict === "ai";
-    const text = `ImageTruth AI: "${item.fileName}" is ${item.result.confidence}% likely ${isAI ? "AI-generated" : "human-created"}. ${item.result.reasons[0]}`;
+    const editInfo = item.result.manipulation
+      ? ` | Edit: ${item.result.manipulation.confidence}% ${item.result.manipulation.edited ? "edited" : "unmodified"}`
+      : "";
+    const text = `ImageTruth AI: "${item.fileName}" is ${item.result.confidence}% likely ${isAI ? "AI-generated" : "human-created"}. ${item.result.reasons[0]}${editInfo}`;
     const res = await shareContent(text, "ImageTruth AI Result", "", item.preview);
     if (res === "copied") {
       setCopiedIndex(index);
@@ -90,6 +123,8 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
             {items.map((item, i) => {
               const isAI = item.result.verdict === "ai";
               const isExpanded = expandedIndex === i;
+              const manipulation = item.result.manipulation;
+              const isEdited = manipulation?.edited ?? false;
 
               return (
                 <div
@@ -123,6 +158,19 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                         >
                           {item.result.confidence}% {isAI ? "AI" : "Human"}
                         </span>
+                        {manipulation && (
+                          <>
+                            <span className="text-muted-foreground text-[10px]">·</span>
+                            {isEdited ? (
+                              <Pencil className="h-3 w-3 text-warning" />
+                            ) : (
+                              <ShieldCheck className="h-3 w-3 text-success" />
+                            )}
+                            <span className={`text-[10px] font-medium ${isEdited ? "text-warning" : "text-success"}`}>
+                              {isEdited ? "Edited" : "Original"}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
 
@@ -166,43 +214,139 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                           />
                         </div>
 
-                        <div className="flex-1 space-y-4">
-                          {/* Reasons */}
-                          <div>
-                            <h4 className="mb-2 text-xs font-semibold text-foreground">
-                              Analysis Details
-                            </h4>
-                            <ul className="space-y-1.5">
-                              {item.result.reasons.map((reason, ri) => (
-                                <li
-                                  key={ri}
-                                  className="flex items-start gap-2 text-xs text-muted-foreground"
-                                >
-                                  <div
-                                    className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${
-                                      isAI ? "bg-destructive" : "bg-success"
-                                    }`}
-                                  />
-                                  {reason}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
+                        <div className="flex-1">
+                          <Tabs defaultValue="ai-detection">
+                            <TabsList className="grid w-full grid-cols-2 mb-3">
+                              <TabsTrigger value="ai-detection" className="gap-1.5 text-xs">
+                                <Brain className="h-3 w-3" />
+                                AI Detection
+                              </TabsTrigger>
+                              <TabsTrigger value="edit-detection" className="gap-1.5 text-xs">
+                                <Pencil className="h-3 w-3" />
+                                Edit Detection
+                              </TabsTrigger>
+                            </TabsList>
 
-                          {/* Tips */}
-                          <div className="rounded-lg bg-muted/50 p-3">
-                            <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-foreground">
-                              <Info className="h-3 w-3 text-primary" />
-                              Tips
-                            </div>
-                            <ul className="space-y-0.5">
-                              {item.result.tips.map((tip, ti) => (
-                                <li key={ti} className="text-[11px] text-muted-foreground">
-                                  • {tip}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
+                            {/* AI Detection Tab */}
+                            <TabsContent value="ai-detection" className="space-y-3">
+                              <div>
+                                <h4 className="mb-2 text-xs font-semibold text-foreground">
+                                  Analysis Details
+                                </h4>
+                                <ul className="space-y-1.5">
+                                  {item.result.reasons.map((reason, ri) => (
+                                    <li
+                                      key={ri}
+                                      className="flex items-start gap-2 text-xs text-muted-foreground"
+                                    >
+                                      <div
+                                        className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${
+                                          isAI ? "bg-destructive" : "bg-success"
+                                        }`}
+                                      />
+                                      {reason}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+
+                              {/* Per-model breakdown */}
+                              {item.result.modelBreakdown && item.result.modelBreakdown.length > 0 && (
+                                <div>
+                                  <button
+                                    onClick={() => setShowBreakdown(showBreakdown === i ? null : i)}
+                                    className="flex w-full items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-left transition-colors hover:bg-muted/80"
+                                  >
+                                    <Brain className="h-3.5 w-3.5 text-primary" />
+                                    <span className="flex-1 text-[11px] font-semibold text-foreground">Per-Model Breakdown</span>
+                                    {showBreakdown === i ? (
+                                      <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
+                                    ) : (
+                                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                                    )}
+                                  </button>
+                                  {showBreakdown === i && (
+                                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                                      {item.result.modelBreakdown.map((m, mi) => (
+                                        <ModelCard key={mi} m={m} />
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Tips */}
+                              <div className="rounded-lg bg-muted/50 p-3">
+                                <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-foreground">
+                                  <Info className="h-3 w-3 text-primary" />
+                                  Tips
+                                </div>
+                                <ul className="space-y-0.5">
+                                  {item.result.tips.map((tip, ti) => (
+                                    <li key={ti} className="text-[11px] text-muted-foreground">
+                                      • {tip}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </TabsContent>
+
+                            {/* Edit Detection Tab */}
+                            <TabsContent value="edit-detection">
+                              {manipulation ? (
+                                <div className="space-y-3">
+                                  <div className={`flex items-center gap-3 rounded-lg px-3 py-2 ${
+                                    isEdited
+                                      ? "bg-warning/10 border border-warning/20"
+                                      : "bg-success/10 border border-success/20"
+                                  }`}>
+                                    {isEdited ? (
+                                      <Pencil className="h-4 w-4 text-warning shrink-0" />
+                                    ) : (
+                                      <ShieldCheck className="h-4 w-4 text-success shrink-0" />
+                                    )}
+                                    <div>
+                                      <p className="text-sm font-bold text-foreground">
+                                        {isEdited
+                                          ? `${manipulation.confidence}% Likely Edited`
+                                          : `${manipulation.confidence}% Likely Unmodified`}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <h4 className="mb-2 text-xs font-semibold text-foreground">Edit Analysis</h4>
+                                    <ul className="space-y-1.5">
+                                      {manipulation.reasons.map((reason, ri) => (
+                                        <li key={ri} className="flex items-start gap-2 text-xs text-muted-foreground">
+                                          <div className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${isEdited ? "bg-warning" : "bg-success"}`} />
+                                          {reason}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+
+                                  {manipulation.tips && manipulation.tips.length > 0 && (
+                                    <div className="rounded-lg bg-muted/50 p-3">
+                                      <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-foreground">
+                                        <Info className="h-3 w-3 text-primary" />
+                                        Edit Detection Tips
+                                      </div>
+                                      <ul className="space-y-0.5">
+                                        {manipulation.tips.map((tip, ti) => (
+                                          <li key={ti} className="text-[11px] text-muted-foreground">• {tip}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="py-6 text-center text-xs text-muted-foreground">
+                                  Manipulation analysis not available for this scan.
+                                </div>
+                              )}
+                            </TabsContent>
+                          </Tabs>
                         </div>
                       </div>
                     </div>
