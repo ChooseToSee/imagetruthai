@@ -23,6 +23,8 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
     const inputRef = useRef<HTMLInputElement>(null);
     const { plan, limits } = usePlan();
 
+    const maxSlots = limits.batchLimit;
+
     const addFiles = useCallback((newFiles: FileList | File[]) => {
       const filesToAdd = Array.from(newFiles);
       const validFiles: FilePreview[] = [];
@@ -41,13 +43,13 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
 
       setSelectedFiles((prev) => {
         const combined = [...prev, ...validFiles];
-        if (combined.length > 10) {
-          alert("Maximum 10 images per batch");
-          return combined.slice(0, 10);
+        if (combined.length > maxSlots) {
+          alert(`Maximum ${maxSlots} image${maxSlots > 1 ? "s" : ""} on your plan`);
+          return combined.slice(0, maxSlots);
         }
         return combined;
       });
-    }, []);
+    }, [maxSlots]);
 
     // Handle paste events globally
     useEffect(() => {
@@ -139,6 +141,18 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
       setSelectedFiles([]);
     };
 
+    // Determine grid columns based on slot count
+    const gridCols =
+      maxSlots === 1
+        ? "grid-cols-1 max-w-[240px] mx-auto"
+        : maxSlots <= 5
+        ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-5"
+        : "grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-5";
+
+    // For pro tier, only show up to 10 visual slots at a time (filled + some empty)
+    const visibleSlotCount = maxSlots <= 10 ? maxSlots : Math.max(selectedFiles.length + 2, 10);
+    const emptySlots = Math.max(0, Math.min(maxSlots, visibleSlotCount) - selectedFiles.length);
+
     return (
       <section ref={ref} id="upload" className="py-24">
         <div className="container mx-auto px-4">
@@ -220,123 +234,94 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
               </Button>
             </motion.div>
 
-            {selectedFiles.length === 0 ? (
-              <motion.div
-                className={`relative cursor-pointer rounded-xl border-2 border-dashed p-16 transition-all ${
-                  dragActive
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/40 hover:bg-muted/30"
-                }`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragActive(true);
-                }}
-                onDragLeave={() => setDragActive(false)}
-                onDrop={handleDrop}
-                onClick={() => inputRef.current?.click()}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2 }}
-                whileHover={{ scale: 1.01 }}
-              >
-                <input
-                  ref={inputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files?.length) addFiles(e.target.files);
-                    e.target.value = "";
-                  }}
-                />
-                <div className="flex flex-col items-center gap-4">
-                  <motion.div
-                    className="rounded-full bg-primary/10 p-4"
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    <Upload className="h-8 w-8 text-primary" />
-                  </motion.div>
-                  <div>
-                    <p className="text-lg font-medium text-foreground">
-                      Drop or click to upload
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      JPG, PNG, or WEBP — max 10 MB{plan === "free" ? " · 1 image" : ` · up to ${limits.batchLimit} images`}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                className="rounded-xl border border-border bg-card p-6 shadow-card"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                {/* Image grid */}
-                <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                  <AnimatePresence>
-                    {selectedFiles.map((fp, i) => (
-                      <motion.div
-                        key={fp.preview}
-                        className="group relative overflow-hidden rounded-lg border border-border bg-muted aspect-square"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <img
-                          src={fp.preview}
-                          alt={fp.file.name}
-                          className="h-full w-full object-cover"
-                        />
-                        {!isAnalyzing && (
-                          <button
-                            onClick={() => removeFile(i)}
-                            className="absolute top-1 right-1 rounded-full bg-background/80 p-1 opacity-0 transition-opacity group-hover:opacity-100"
-                          >
-                            <X className="h-3.5 w-3.5 text-foreground" />
-                          </button>
-                        )}
-                        {isAnalyzing && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm">
-                            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                          </div>
-                        )}
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
+            {/* Upload slots grid */}
+            <motion.div
+              className="rounded-xl border border-border bg-card p-6 shadow-card"
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragActive(true);
+              }}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={handleDrop}
+            >
+              <div className={`grid gap-3 ${gridCols}`}>
+                <AnimatePresence>
+                  {/* Filled slots */}
+                  {selectedFiles.map((fp, i) => (
+                    <motion.div
+                      key={fp.preview}
+                      className="group relative overflow-hidden rounded-lg border border-border bg-muted aspect-square"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <img
+                        src={fp.preview}
+                        alt={fp.file.name}
+                        className="h-full w-full object-cover"
+                      />
+                      {!isAnalyzing && (
+                        <button
+                          onClick={() => removeFile(i)}
+                          className="absolute top-1 right-1 rounded-full bg-background/80 p-1 opacity-0 transition-opacity group-hover:opacity-100"
+                        >
+                          <X className="h-3.5 w-3.5 text-foreground" />
+                        </button>
+                      )}
+                      {isAnalyzing && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm">
+                          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                        </div>
+                      )}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
 
-                  {selectedFiles.length < 10 && !isAnalyzing && (
-                    <button
+                {/* Empty slots */}
+                {!isAnalyzing &&
+                  Array.from({ length: emptySlots }).map((_, i) => (
+                    <motion.button
+                      key={`empty-${i}`}
                       onClick={() => inputRef.current?.click()}
-                      className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                      className={`flex aspect-square items-center justify-center rounded-lg border-2 border-dashed transition-colors ${
+                        dragActive
+                          ? "border-primary bg-primary/5"
+                          : "border-border text-muted-foreground hover:border-primary/40 hover:text-primary"
+                      }`}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.15, delay: i * 0.03 }}
                     >
                       <Plus className="h-6 w-6" />
-                    </button>
-                  )}
-                </div>
+                    </motion.button>
+                  ))}
+              </div>
 
-                <input
-                  ref={inputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files?.length) addFiles(e.target.files);
-                    e.target.value = "";
-                  }}
-                />
+              <input
+                ref={inputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple={maxSlots > 1}
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files?.length) addFiles(e.target.files);
+                  e.target.value = "";
+                }}
+              />
 
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    <ImageIcon className="mr-1.5 inline h-4 w-4" />
-                    {selectedFiles.length} image{selectedFiles.length !== 1 ? "s" : ""} selected
-                  </p>
-                  <div className="flex gap-2">
+              {/* Footer actions */}
+              <div className="mt-4 flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  <ImageIcon className="mr-1.5 inline h-4 w-4" />
+                  {selectedFiles.length}/{maxSlots} slot{maxSlots !== 1 ? "s" : ""} used
+                </p>
+                <div className="flex gap-2">
+                  {selectedFiles.length > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -344,25 +329,32 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
                       disabled={isAnalyzing}
                     >
                       <X className="mr-1 h-4 w-4" />
-                      Clear All
+                      Clear
                     </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => onAnalyze(selectedFiles.map((f) => f.file))}
-                      disabled={isAnalyzing}
-                      className="shadow-glow"
-                    >
-                      {isAnalyzing ? (
-                        <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Upload className="mr-1 h-4 w-4" />
-                      )}
-                      Analyze {selectedFiles.length > 1 ? `All ${selectedFiles.length}` : ""}
-                    </Button>
-                  </div>
+                  )}
+                  <Button
+                    size="sm"
+                    onClick={() => onAnalyze(selectedFiles.map((f) => f.file))}
+                    disabled={isAnalyzing || selectedFiles.length === 0}
+                    className="shadow-glow"
+                  >
+                    {isAnalyzing ? (
+                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="mr-1 h-4 w-4" />
+                    )}
+                    Analyze {selectedFiles.length > 1 ? `All ${selectedFiles.length}` : ""}
+                  </Button>
                 </div>
-              </motion.div>
-            )}
+              </div>
+            </motion.div>
+
+            <p className="mt-3 text-xs text-muted-foreground">
+              JPG, PNG, or WEBP — max 10 MB per image
+              {plan !== "pro" && (
+                <> · <a href="#pricing" className="text-primary hover:underline">Upgrade for more slots</a></>
+              )}
+            </p>
           </div>
         </div>
       </section>
