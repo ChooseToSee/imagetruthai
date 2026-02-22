@@ -1,4 +1,5 @@
-import { Upload, Zap, Shield, Eye, Camera, TrendingUp } from "lucide-react";
+import { Upload, Zap, Shield, Eye, Camera, TrendingUp, Pencil } from "lucide-react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import AnimatedCounter from "@/components/AnimatedCounter";
@@ -23,7 +24,17 @@ interface HeroSectionProps {
   onDemo: () => void;
 }
 
+const headlines = ["AI", "Edited", "Real"];
+
 const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
+  const [headlineIndex, setHeadlineIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHeadlineIndex((prev) => (prev + 1) % headlines.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
   return (
     <section className="relative flex min-h-[100vh] items-center overflow-hidden pt-16">
       {/* Image montage background */}
@@ -86,7 +97,17 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <span className="text-gradient-brand">AI</span> or{" "}
+            <motion.span
+              key={headlineIndex}
+              className="inline-block text-gradient-brand"
+              initial={{ opacity: 0, y: 12, filter: "blur(4px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, y: -12, filter: "blur(4px)" }}
+              transition={{ duration: 0.5 }}
+            >
+              {headlines[headlineIndex]}
+            </motion.span>{" "}
+            or{" "}
             <span className="text-gradient-brand">Real</span>
             <span className="text-primary">?</span>
           </motion.h1>
@@ -98,7 +119,7 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            Instantly Check If an Image Is AI-Generated or Human-Made
+            Detect AI-Generated <span className="text-primary">&</span> Edited Images Instantly
           </motion.h2>
 
           <motion.p
@@ -107,8 +128,8 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
           >
-            Protect your art, verify news sources — fast & accurate.
-            Upload any image and get a clear verdict in seconds.
+            Protect your art, verify news sources, spot manipulated photos — fast & accurate.
+            Upload any image and get a dual-layer forensic verdict in seconds.
           </motion.p>
 
           <motion.div
@@ -179,6 +200,10 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
             <div className="flex items-center gap-2">
               <Eye className="h-3.5 w-3.5 text-primary" />
               Works with DALL·E, Midjourney, Flux, SD
+            </div>
+            <div className="flex items-center gap-2">
+              <Pencil className="h-3.5 w-3.5 text-warning" />
+              Detects Photoshop & Editing
             </div>
             <div className="flex items-center gap-2">
               <Camera className="h-3.5 w-3.5 text-success" />
