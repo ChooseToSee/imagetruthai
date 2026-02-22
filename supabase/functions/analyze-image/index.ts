@@ -312,7 +312,7 @@ serve(async (req) => {
     if (OPENAI_API_KEY) {
       tasks.push({
         label: "GPT-5",
-        run: () => analyzeWithOpenAI("gpt-5", "GPT-5", dataUrl, OPENAI_API_KEY),
+        run: () => analyzeWithOpenAI("gpt-5-mini", "GPT-5", dataUrl, OPENAI_API_KEY),
       });
     }
 
