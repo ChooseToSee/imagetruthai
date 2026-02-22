@@ -97,7 +97,7 @@ async function analyzeWithOpenAI(
           ],
         },
       ],
-      temperature: 0.2,
+      // gpt-5-mini does not support custom temperature
       max_completion_tokens: 2000,
     }),
   });
@@ -306,7 +306,7 @@ serve(async (req) => {
       });
       tasks.push({
         label: "Gemini Pro",
-        run: () => analyzeWithGemini("gemini-2.5-pro", "Gemini Pro", GEMINI_PRO_SYSTEM, base64Image, mimeType, GOOGLE_API_KEY),
+        run: () => analyzeWithGemini("gemini-2.0-flash", "Gemini Pro", GEMINI_PRO_SYSTEM, base64Image, mimeType, GOOGLE_API_KEY),
       });
     }
     if (OPENAI_API_KEY) {
