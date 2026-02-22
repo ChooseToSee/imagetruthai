@@ -62,7 +62,9 @@ async function analyzeWithGateway(
 
   if (!res.ok) {
     const t = await res.text();
-    throw new Error(`${modelLabel} error [${res.status}]: ${t}`);
+    const err = new Error(`${modelLabel} error [${res.status}]: ${t}`);
+    (err as any).status = res.status;
+    throw err;
   }
 
   const data = await res.json();
@@ -276,7 +278,18 @@ serve(async (req) => {
         }
       }
 
+      // Check if all failures are 402 (payment required)
+      const allPaymentRequired = results.every(
+        (r) => r.status === "rejected" && (r.reason?.status === 402 || r.reason?.message?.includes("402"))
+      );
+
       if (successfulResults.length === 0) {
+        if (allPaymentRequired) {
+          return new Response(JSON.stringify({ error: "AI credits exhausted. Please add Lovable AI credits in Settings → Workspace → Usage." }), {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
         return new Response(JSON.stringify({ error: "All analysis models failed" }), {
           status: 502,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
