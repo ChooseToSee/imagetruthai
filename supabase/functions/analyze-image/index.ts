@@ -302,11 +302,11 @@ serve(async (req) => {
     if (GOOGLE_API_KEY) {
       tasks.push({
         label: "Gemini Flash",
-        run: () => analyzeWithGemini("gemini-2.5-flash-preview-05-20", "Gemini Flash", null, base64Image, mimeType, GOOGLE_API_KEY),
+        run: () => analyzeWithGemini("gemini-2.5-flash", "Gemini Flash", null, base64Image, mimeType, GOOGLE_API_KEY),
       });
       tasks.push({
         label: "Gemini Pro",
-        run: () => analyzeWithGemini("gemini-2.5-pro-preview-05-06", "Gemini Pro", GEMINI_PRO_SYSTEM, base64Image, mimeType, GOOGLE_API_KEY),
+        run: () => analyzeWithGemini("gemini-2.5-pro", "Gemini Pro", GEMINI_PRO_SYSTEM, base64Image, mimeType, GOOGLE_API_KEY),
       });
     }
     if (OPENAI_API_KEY) {
