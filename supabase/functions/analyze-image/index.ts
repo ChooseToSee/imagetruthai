@@ -50,7 +50,7 @@ async function analyzeWithGoogleAI(
     ],
     generationConfig: {
       temperature: 0.2,
-      maxOutputTokens: 2000,
+      maxOutputTokens: 4000,
     },
   };
 
@@ -105,7 +105,7 @@ async function analyzeWithOpenAI(
         },
       ],
       // gpt-5-mini does not support custom temperature
-      max_completion_tokens: 2000,
+      max_completion_tokens: 4000,
     }),
   });
 
