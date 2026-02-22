@@ -8,7 +8,7 @@ const plans = [
     price: "$0",
     period: "forever",
     features: [
-      "5 scans per day",
+      "3 scans per day",
       "Single image upload",
       "Basic analysis report",
       "Community support",
@@ -17,17 +17,33 @@ const plans = [
     highlighted: false,
   },
   {
-    name: "Pro",
-    price: "$9",
+    name: "Plus",
+    price: "$7",
     period: "/month",
-    yearly: "$79/year",
+    yearly: "$59/year",
+    features: [
+      "50 scans per day",
+      "Batch upload (up to 5)",
+      "30-day scan history",
+      "Full detailed reports",
+      "Email support",
+    ],
+    cta: "Start Plus",
+    highlighted: false,
+  },
+  {
+    name: "Pro",
+    price: "$19",
+    period: "/month",
+    yearly: "$159/year",
     features: [
       "Unlimited scans",
-      "Batch upload (up to 10)",
-      "Detailed analysis + heatmap",
+      "Batch upload (up to 20)",
+      "Heatmap visualization",
       "Exportable PDF reports",
-      "API access",
-      "Priority analysis queue",
+      "API access (1k calls/mo)",
+      "Social media integration",
+      "Priority support",
     ],
     cta: "Start Pro Trial",
     highlighted: true,
@@ -58,7 +74,7 @@ const PricingSection = () => {
           </motion.p>
         </div>
 
-        <div className="mx-auto grid max-w-3xl gap-8 md:grid-cols-2">
+        <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-3">
           {plans.map((plan, i) => (
             <motion.div
               key={plan.name}
