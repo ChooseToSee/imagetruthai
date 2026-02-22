@@ -216,7 +216,7 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
             </div>
             <div className="flex items-center gap-2">
               <TrendingUp className="h-3.5 w-3.5 text-primary" />
-              No Account Required
+              3 AI Models for Detection
             </div>
           </motion.div>
         </div>
