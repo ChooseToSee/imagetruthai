@@ -31,42 +31,24 @@ const DEMO_AI_RESULT: AnalysisResult = {
   ],
   modelBreakdown: [
     {
-      model: "Gemini Pro",
+      model: "Hive",
       verdict: "ai",
       confidence: 96,
-      reasons: ["Diffusion artifacts in hair strands", "Synthetic lighting uniformity", "No lens aberration detected"],
-      manipulation: { edited: false, confidence: 85, reasons: ["Uniform compression throughout", "No splicing boundaries found", "Consistent noise floor"] },
+      reasons: ["Hive classifier detected 96.2% AI generation probability", "Likely source identified: stable_diffusion", "CNN-based detection trained on millions of AI-generated images"],
     },
     {
-      model: "GPT-5",
+      model: "SightEngine",
       verdict: "ai",
       confidence: 93,
-      reasons: ["Skin texture too smooth for optical capture", "Eye reflections lack environment detail", "Background shows repetitive micro-patterns"],
-      manipulation: { edited: false, confidence: 78, reasons: ["No clone-stamp artifacts", "Uniform error-level analysis", "No re-saving compression shifts"] },
+      reasons: ["SightEngine scored 93.1% AI generation probability", "Pixel-level analysis detected synthetic generation patterns", "Purpose-trained classifier for diffusion and GAN detection"],
     },
     {
-      model: "Gemini Flash",
+      model: "AI or Not",
       verdict: "ai",
       confidence: 91,
-      reasons: ["AI-typical symmetry in facial geometry", "Missing camera sensor noise", "Metadata absent"],
-      manipulation: { edited: false, confidence: 80, reasons: ["No edge halos detected", "Lighting direction consistent", "No patched regions"] },
+      reasons: ["AI or Not verdict: AI-generated with 91.4% confidence", "Top suspected generator: stable diffusion", "Specialized classifier trained to identify AI synthesis patterns"],
     },
   ],
-  manipulation: {
-    edited: false,
-    confidence: 82,
-    reasons: [
-      "No splicing artifacts or inconsistent compression levels detected",
-      "Noise pattern is uniform across the entire image (typical of AI output)",
-      "No signs of clone stamping or content-aware fill",
-    ],
-    tips: [
-      "Look for mismatched lighting directions across the image",
-      "Check edges around subjects for unnatural halos or artifacts",
-      "Inspect backgrounds for cloned or repeated patterns",
-      "Use an error-level analysis (ELA) tool for deeper investigation",
-    ],
-  },
 };
 
 const DEMO_REAL_RESULT: AnalysisResult = {
@@ -86,42 +68,24 @@ const DEMO_REAL_RESULT: AnalysisResult = {
   ],
   modelBreakdown: [
     {
-      model: "Gemini Pro",
+      model: "Hive",
       verdict: "human",
       confidence: 93,
-      reasons: ["Natural sensor noise grain detected", "EXIF metadata present with camera info", "Authentic lens bokeh characteristics"],
-      manipulation: { edited: true, confidence: 75, reasons: ["Color grading adjustments detected", "JPEG quality varies between regions", "Contrast curve has been modified"] },
+      reasons: ["Hive classifier detected 93.0% authentic probability", "Image characteristics consistent with real camera capture", "No AI generation patterns detected by Hive's neural network"],
     },
     {
-      model: "GPT-5",
+      model: "SightEngine",
       verdict: "human",
       confidence: 89,
-      reasons: ["Micro-texture in fabric consistent with real capture", "Natural depth-of-field falloff", "Slight motion blur in background"],
-      manipulation: { edited: true, confidence: 70, reasons: ["Saturation boost visible in skin tones", "Vignette effect applied to corners", "Sharpening artifacts on edges"] },
+      reasons: ["SightEngine scored 89.2% authentic probability", "Image pixel patterns consistent with optical camera capture", "No synthetic generation artifacts detected"],
     },
     {
-      model: "Gemini Flash",
+      model: "AI or Not",
       verdict: "human",
       confidence: 88,
-      reasons: ["Camera sensor noise matches CMOS pattern", "GPS data in metadata", "Natural chromatic aberration present"],
-      manipulation: { edited: false, confidence: 68, reasons: ["No splicing boundaries found", "Compression is consistent", "No clone-stamp artifacts"] },
+      reasons: ["AI or Not verdict: Human-created with 88.5% confidence", "Image characteristics match authentic photographic content", "No AI generator signatures detected"],
     },
   ],
-  manipulation: {
-    edited: true,
-    confidence: 73,
-    reasons: [
-      "Slight color grading adjustments detected — consistent with Lightroom/Instagram filters",
-      "JPEG compression levels vary between regions, suggesting re-saving",
-      "Minor exposure and contrast adjustments visible in histogram analysis",
-    ],
-    tips: [
-      "Look for mismatched lighting directions across the image",
-      "Check edges around subjects for unnatural halos or artifacts",
-      "Inspect backgrounds for cloned or repeated patterns",
-      "Use an error-level analysis (ELA) tool for deeper investigation",
-    ],
-  },
 };
 
 const DEMO_AI_PREVIEW = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80";
