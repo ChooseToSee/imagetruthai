@@ -12,143 +12,202 @@ interface ModelResult {
   verdict: "ai" | "human";
   confidence: number;
   reasons: string[];
-  manipulation: {
+  manipulation?: {
     edited: boolean;
     confidence: number;
     reasons: string[];
   };
 }
 
-const SYSTEM_PROMPT =
-  "You are an expert forensic image analyst specializing in two tasks: (1) detecting AI-generated images vs real photographs, and (2) detecting image manipulation/editing (Photoshop, filters, splicing, clone stamping, content-aware fill, etc.). You MUST respond with valid JSON only, no markdown, no code fences.";
-
-const USER_PROMPT =
-  'Analyze this image for TWO things:\n1. AI DETECTION: Is this image AI-generated or a real photograph? Provide your verdict, confidence score (50-99), and 3-5 specific forensic reasons.\n2. MANIPULATION DETECTION: Has this image been edited or manipulated by an image editor (e.g., Photoshop, retouching, splicing, filters, clone stamping, content-aware fill)? Look for inconsistent lighting, JPEG compression artifacts, cloned regions, unnatural edges, mismatched noise patterns, and metadata anomalies. Provide edited (true/false), confidence (50-99), and 3-5 reasons.\n\nRespond with ONLY this JSON structure (no markdown, no code fences):\n{"verdict":"ai"|"human","confidence":number,"reasons":["..."],"manipulation":{"edited":boolean,"confidence":number,"reasons":["..."]}}';
-
-const GEMINI_PRO_SYSTEM = "You are an expert forensic image analyst specializing in detecting AI-generated images and image manipulation. You perform deep, methodical analysis. You MUST respond with valid JSON only, no markdown, no code fences.";
-
-// ── Google AI (Gemini) direct call ──────────────────────────────────
-async function analyzeWithGoogleAI(
-  model: string,
-  modelLabel: string,
-  systemOverride: string | null,
-  base64Image: string,
+// ── Hive Moderation ─────────────────────────────────────────────────
+async function analyzeWithHive(
+  imageBytes: Uint8Array,
   mimeType: string,
   apiKey: string
 ): Promise<ModelResult> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const blob = new Blob([imageBytes], { type: mimeType });
+  const formData = new FormData();
+  formData.append("media", blob, "image.jpg");
 
-  const body: any = {
-    contents: [
-      {
-        role: "user",
-        parts: [
-          { text: (systemOverride ?? SYSTEM_PROMPT) + "\n\n" + USER_PROMPT },
-          { inline_data: { mime_type: mimeType, data: base64Image } },
-        ],
-      },
-    ],
-    generationConfig: {
-      temperature: 0.2,
-      maxOutputTokens: 1500,
-    },
-  };
-
-  const res = await fetch(url, {
+  const res = await fetch("https://api.hivemoderation.com/api/v2/task/sync", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    headers: { authorization: `token ${apiKey}` },
+    body: formData,
   });
 
   if (!res.ok) {
     const t = await res.text();
-    const err = new Error(`${modelLabel} error [${res.status}]: ${t}`);
-    (err as any).status = res.status;
-    throw err;
+    throw new Error(`Hive error [${res.status}]: ${t}`);
   }
 
   const data = await res.json();
-  const content = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
 
-  let jsonStr = content.trim();
-  if (jsonStr.startsWith("```")) {
-    jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
+  // Parse Hive response: status[0].response.output[0].classes
+  const output = data?.status?.[0]?.response?.output;
+  if (!output || output.length === 0) {
+    throw new Error("Hive returned no output");
   }
 
-  const args = JSON.parse(jsonStr);
-  return parseModelResult(modelLabel, args);
+  let aiScore = 0.5;
+  let source = "";
+  const reasons: string[] = [];
+
+  for (const item of output) {
+    const classes = item.classes || [];
+    for (const cls of classes) {
+      if (cls.class === "ai_generated" && cls.score !== undefined) {
+        aiScore = cls.score;
+      }
+      if (cls.class === "not_ai_generated" && cls.score !== undefined) {
+        // Complementary score, but ai_generated is primary
+      }
+      // Source identification (Midjourney, DALL-E, etc.)
+      if (
+        cls.class !== "ai_generated" &&
+        cls.class !== "not_ai_generated" &&
+        cls.score > 0.3
+      ) {
+        source = cls.class;
+      }
+    }
+  }
+
+  const confidence = Math.max(50, Math.min(99, Math.round(Math.max(aiScore, 1 - aiScore) * 100)));
+  const verdict: "ai" | "human" = aiScore >= 0.5 ? "ai" : "human";
+
+  if (verdict === "ai") {
+    reasons.push(`Hive classifier detected ${(aiScore * 100).toFixed(1)}% AI generation probability`);
+    if (source) reasons.push(`Likely source identified: ${source}`);
+    reasons.push("CNN-based detection trained on millions of AI-generated images");
+  } else {
+    reasons.push(`Hive classifier detected ${((1 - aiScore) * 100).toFixed(1)}% probability of authentic origin`);
+    reasons.push("Image characteristics consistent with real camera capture");
+    reasons.push("No AI generation patterns detected by Hive's neural network");
+  }
+
+  return { model: "Hive", verdict, confidence, reasons };
 }
 
-// ── OpenAI API call ─────────────────────────────────────────────────
-async function analyzeWithOpenAI(
-  model: string,
-  modelLabel: string,
-  dataUrl: string,
+// ── SightEngine ─────────────────────────────────────────────────────
+async function analyzeWithSightEngine(
+  imageBytes: Uint8Array,
+  mimeType: string,
+  apiUser: string,
+  apiSecret: string
+): Promise<ModelResult> {
+  const blob = new Blob([imageBytes], { type: mimeType });
+  const formData = new FormData();
+  formData.append("media", blob, "image.jpg");
+  formData.append("models", "genai");
+  formData.append("api_user", apiUser);
+  formData.append("api_secret", apiSecret);
+
+  const res = await fetch("https://api.sightengine.com/1.0/check.json", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(`SightEngine error [${res.status}]: ${t}`);
+  }
+
+  const data = await res.json();
+
+  if (data.status !== "success") {
+    throw new Error(`SightEngine failed: ${JSON.stringify(data)}`);
+  }
+
+  const aiGenerated = data?.type?.ai_generated ?? 0.5;
+  const confidence = Math.max(50, Math.min(99, Math.round(Math.max(aiGenerated, 1 - aiGenerated) * 100)));
+  const verdict: "ai" | "human" = aiGenerated >= 0.5 ? "ai" : "human";
+
+  const reasons: string[] = [];
+  if (verdict === "ai") {
+    reasons.push(`SightEngine scored ${(aiGenerated * 100).toFixed(1)}% AI generation probability`);
+    reasons.push("Pixel-level analysis detected synthetic generation patterns");
+    reasons.push("Purpose-trained classifier for diffusion and GAN detection");
+  } else {
+    reasons.push(`SightEngine scored ${((1 - aiGenerated) * 100).toFixed(1)}% authentic probability`);
+    reasons.push("Image pixel patterns consistent with optical camera capture");
+    reasons.push("No synthetic generation artifacts detected");
+  }
+
+  return { model: "SightEngine", verdict, confidence, reasons };
+}
+
+// ── AI or Not ───────────────────────────────────────────────────────
+async function analyzeWithAIorNot(
+  imageBytes: Uint8Array,
+  mimeType: string,
   apiKey: string
 ): Promise<ModelResult> {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  const blob = new Blob([imageBytes], { type: mimeType });
+  const formData = new FormData();
+  formData.append("image", blob, "image.jpg");
+  // Only request ai_generated report for speed
+  formData.append("only", "ai_generated");
+
+  const res = await fetch("https://api.aiornot.com/v2/image/sync", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: [
-            { type: "text", text: USER_PROMPT },
-            { type: "image_url", image_url: { url: dataUrl } },
-          ],
-        },
-      ],
-      // gpt-5-mini does not support custom temperature
-      max_completion_tokens: 1500,
-    }),
+    headers: { Authorization: `Bearer ${apiKey}` },
+    body: formData,
   });
 
   if (!res.ok) {
     const t = await res.text();
-    const err = new Error(`${modelLabel} error [${res.status}]: ${t}`);
-    (err as any).status = res.status;
-    throw err;
+    throw new Error(`AI or Not error [${res.status}]: ${t}`);
   }
 
   const data = await res.json();
-  const content = data.choices?.[0]?.message?.content ?? "{}";
 
-  let jsonStr = content.trim();
-  if (jsonStr.startsWith("```")) {
-    jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
+  const report = data?.report?.ai_generated;
+  if (!report) {
+    throw new Error("AI or Not returned no ai_generated report");
   }
 
-  const args = JSON.parse(jsonStr);
-  return parseModelResult(modelLabel, args);
-}
+  const verdictRaw = report.verdict; // "ai" or "human"
+  const aiConf = report.ai?.confidence ?? 0.5;
+  const humanConf = report.human?.confidence ?? 0.5;
 
-function parseModelResult(modelLabel: string, args: any): ModelResult {
-  const clamp = (v: number) => Math.max(50, Math.min(99, Math.round(v ?? 50)));
-  return {
-    model: modelLabel,
-    verdict: args.verdict ?? "human",
-    confidence: clamp(args.confidence),
-    reasons: args.reasons ?? [],
-    manipulation: {
-      edited: args.manipulation?.edited ?? false,
-      confidence: clamp(args.manipulation?.confidence),
-      reasons: args.manipulation?.reasons ?? [],
-    },
-  };
+  const verdict: "ai" | "human" = verdictRaw === "ai" ? "ai" : "human";
+  const rawConf = verdict === "ai" ? aiConf : humanConf;
+  const confidence = Math.max(50, Math.min(99, Math.round(rawConf * 100)));
+
+  const reasons: string[] = [];
+
+  // Extract generator info
+  const generator = report.generator;
+  let topGenerator = "";
+  if (generator && typeof generator === "object") {
+    let maxScore = 0;
+    for (const [name, score] of Object.entries(generator)) {
+      if (typeof score === "number" && score > maxScore) {
+        maxScore = score;
+        topGenerator = name;
+      }
+    }
+  }
+
+  if (verdict === "ai") {
+    reasons.push(`AI or Not verdict: AI-generated with ${(aiConf * 100).toFixed(1)}% confidence`);
+    if (topGenerator) reasons.push(`Top suspected generator: ${topGenerator.replace(/_/g, " ")}`);
+    reasons.push("Specialized classifier trained to identify AI synthesis patterns");
+  } else {
+    reasons.push(`AI or Not verdict: Human-created with ${(humanConf * 100).toFixed(1)}% confidence`);
+    reasons.push("Image characteristics match authentic photographic content");
+    reasons.push("No AI generator signatures detected");
+  }
+
+  return { model: "AI or Not", verdict, confidence, reasons };
 }
 
 // ── Weighted consensus ───────────────────────────────────────────────
 function computeConsensus(results: ModelResult[]) {
   const weights: Record<string, number> = {
-    "Gemini Pro": 0.40,
-    "GPT-5": 0.35,
-    "Gemini Flash": 0.25,
+    Hive: 0.40,
+    SightEngine: 0.30,
+    "AI or Not": 0.30,
   };
 
   let aiWeightedScore = 0;
@@ -156,7 +215,7 @@ function computeConsensus(results: ModelResult[]) {
   let totalWeight = 0;
 
   for (const r of results) {
-    const w = weights[r.model] ?? 0.25;
+    const w = weights[r.model] ?? 0.30;
     totalWeight += w;
     const score = r.confidence / 100;
     if (r.verdict === "ai") {
@@ -184,66 +243,18 @@ function computeConsensus(results: ModelResult[]) {
     }
   }
 
-  const agreementCount = results.filter((r) => r.verdict === verdict).length;
+  const agreementCount = aligned.length;
   if (agreementCount === results.length) {
-    allReasons.unshift(`All ${results.length} models agree: image is ${verdict === "ai" ? "AI-generated" : "human-created"}`);
+    allReasons.unshift(`All ${results.length} classifiers agree: image is ${verdict === "ai" ? "AI-generated" : "human-created"}`);
   } else {
-    allReasons.unshift(`${agreementCount}/${results.length} models lean ${verdict === "ai" ? "AI-generated" : "human-created"}`);
-  }
-
-  // --- Manipulation consensus ---
-  let editedWeightedScore = 0;
-  let cleanWeightedScore = 0;
-  let manipTotalWeight = 0;
-
-  for (const r of results) {
-    const w = weights[r.model] ?? 0.25;
-    manipTotalWeight += w;
-    const score = r.manipulation.confidence / 100;
-    if (r.manipulation.edited) {
-      editedWeightedScore += score * w;
-      cleanWeightedScore += (1 - score) * w;
-    } else {
-      cleanWeightedScore += score * w;
-      editedWeightedScore += (1 - score) * w;
-    }
-  }
-
-  if (manipTotalWeight > 0) {
-    editedWeightedScore /= manipTotalWeight;
-    cleanWeightedScore /= manipTotalWeight;
-  }
-
-  const manipEdited = editedWeightedScore >= cleanWeightedScore;
-  const manipConfidence = Math.max(50, Math.min(99, Math.round(Math.max(editedWeightedScore, cleanWeightedScore) * 100)));
-
-  const manipReasons: string[] = [];
-  const manipAligned = results.filter((r) => r.manipulation.edited === manipEdited);
-  for (const r of manipAligned) {
-    for (const reason of r.manipulation.reasons.slice(0, 2)) {
-      manipReasons.push(reason);
-    }
-  }
-
-  const manipAgreement = manipAligned.length;
-  if (manipAgreement === results.length) {
-    manipReasons.unshift(`All ${results.length} models agree: image is ${manipEdited ? "edited" : "unmodified"}`);
-  } else {
-    manipReasons.unshift(`${manipAgreement}/${results.length} models lean ${manipEdited ? "edited" : "unmodified"}`);
+    allReasons.unshift(`${agreementCount}/${results.length} classifiers lean ${verdict === "ai" ? "AI-generated" : "human-created"}`);
   }
 
   const tips = [
-    "Check for inconsistencies in small details like fingers, text, or reflections",
-    "Zoom in on edges and textures — AI often produces unnaturally smooth surfaces",
-    "Look at the image metadata using an EXIF viewer for camera info",
+    "These results are from purpose-trained classifiers, not general AI models",
     "Reverse image search to check for original sources",
-  ];
-
-  const manipTips = [
-    "Look for mismatched lighting directions across the image",
-    "Check edges around subjects for unnatural halos or artifacts",
-    "Inspect backgrounds for cloned or repeated patterns",
-    "Use an error-level analysis (ELA) tool for deeper investigation",
+    "Check for metadata like EXIF camera info using an EXIF viewer",
+    "No single detector is 100% accurate — use results as guidance",
   ];
 
   return {
@@ -251,12 +262,6 @@ function computeConsensus(results: ModelResult[]) {
     confidence,
     reasons: allReasons.slice(0, 5),
     tips,
-    manipulation: {
-      edited: manipEdited,
-      confidence: manipConfidence,
-      reasons: manipReasons.slice(0, 5),
-      tips: manipTips,
-    },
   };
 }
 
@@ -284,54 +289,47 @@ serve(async (req) => {
       );
     }
 
-    const GOOGLE_AI_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-
-    if (!GOOGLE_AI_API_KEY && !OPENAI_API_KEY) {
-      return new Response(JSON.stringify({ error: "AI service not configured — missing API keys" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const HIVE_API_KEY = Deno.env.get("HIVE_API_KEY");
+    const SIGHTENGINE_API_USER = Deno.env.get("SIGHTENGINE_API_USER");
+    const SIGHTENGINE_API_SECRET = Deno.env.get("SIGHTENGINE_API_SECRET");
+    const AIORNOT_API_KEY = Deno.env.get("AIORNOT_API_KEY");
 
     const imageBytes = new Uint8Array(await imageFile.arrayBuffer());
-    const base64Image = base64Encode(imageBytes);
     const mimeType = imageFile.type || "image/jpeg";
-    const dataUrl = `data:${mimeType};base64,${base64Image}`;
 
-    // Check if client wants streaming
     const wantsStream = req.headers.get("x-stream") === "true";
 
     // Build model tasks based on available keys
     type ModelTask = { run: () => Promise<ModelResult>; label: string };
     const tasks: ModelTask[] = [];
 
-    if (GOOGLE_AI_API_KEY) {
+    if (HIVE_API_KEY) {
       tasks.push({
-        label: "Gemini Flash",
-        run: () => analyzeWithGoogleAI("gemini-2.5-flash", "Gemini Flash", null, base64Image, mimeType, GOOGLE_AI_API_KEY),
-      });
-      tasks.push({
-        label: "Gemini Pro",
-        run: () => analyzeWithGoogleAI("gemini-2.5-pro", "Gemini Pro", GEMINI_PRO_SYSTEM, base64Image, mimeType, GOOGLE_AI_API_KEY),
+        label: "Hive",
+        run: () => analyzeWithHive(imageBytes, mimeType, HIVE_API_KEY),
       });
     }
-    if (OPENAI_API_KEY) {
+    if (SIGHTENGINE_API_USER && SIGHTENGINE_API_SECRET) {
       tasks.push({
-        label: "GPT-5",
-        run: () => analyzeWithOpenAI("gpt-5-mini", "GPT-5", dataUrl, OPENAI_API_KEY),
+        label: "SightEngine",
+        run: () => analyzeWithSightEngine(imageBytes, mimeType, SIGHTENGINE_API_USER, SIGHTENGINE_API_SECRET),
+      });
+    }
+    if (AIORNOT_API_KEY) {
+      tasks.push({
+        label: "AI or Not",
+        run: () => analyzeWithAIorNot(imageBytes, mimeType, AIORNOT_API_KEY),
       });
     }
 
     if (tasks.length === 0) {
-      return new Response(JSON.stringify({ error: "No API keys configured" }), {
+      return new Response(JSON.stringify({ error: "No API keys configured for any detection service" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (!wantsStream) {
-      // Non-streaming path
       const results = await Promise.allSettled(tasks.map((t) => t.run()));
 
       const successfulResults: ModelResult[] = [];
@@ -347,7 +345,7 @@ serve(async (req) => {
       }
 
       if (successfulResults.length === 0) {
-        return new Response(JSON.stringify({ error: "All analysis models failed. Please check your API keys." }), {
+        return new Response(JSON.stringify({ error: "All detection services failed. Please check your API keys." }), {
           status: 502,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -395,7 +393,7 @@ serve(async (req) => {
         await Promise.allSettled(promises);
 
         if (successfulResults.length === 0) {
-          send("error", { error: "All analysis models failed" });
+          send("error", { error: "All detection services failed" });
         } else {
           const final = computeConsensus(successfulResults);
           send("done", { ...final, modelBreakdown });
