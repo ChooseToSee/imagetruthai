@@ -39,6 +39,8 @@ interface ResultsDisplayProps {
   imagePreview: string;
   onReset: () => void;
   streamProgress?: { completed: number; total: number };
+  partialReady?: boolean;
+  onKeepWaiting?: () => void;
 }
 
 const ModelCard = ({ m }: { m: ModelBreakdown }) => {
@@ -69,13 +71,13 @@ const ModelCard = ({ m }: { m: ModelBreakdown }) => {
   );
 };
 
-const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress }: ResultsDisplayProps) => {
+const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partialReady, onKeepWaiting }: ResultsDisplayProps) => {
   const isAI = result.verdict === "ai";
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [showEditBreakdown, setShowEditBreakdown] = useState(false);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
-  const isStreaming = !!streamProgress;
+  const isStreaming = !!streamProgress && !partialReady;
 
   const manipulation = result.manipulation;
   const isEdited = manipulation?.edited ?? false;
@@ -145,6 +147,18 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress }: Resul
                       />
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* Partial results banner */}
+              {partialReady && streamProgress && streamProgress.completed < streamProgress.total && (
+                <div className="mb-4 flex items-center justify-between gap-3 rounded-lg bg-accent/50 border border-border px-4 py-3">
+                  <p className="text-sm text-foreground">
+                    Results based on <span className="font-semibold">{streamProgress.completed}/{streamProgress.total}</span> models
+                  </p>
+                  <Button size="sm" variant="outline" onClick={onKeepWaiting} className="shrink-0 text-xs">
+                    Wait for all models
+                  </Button>
                 </div>
               )}
             </div>
