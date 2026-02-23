@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/lib/compress-image";
@@ -139,8 +139,22 @@ const Index = () => {
   const [batchResults, setBatchResults] = useState<BatchItem[] | null>(null);
   const [demoIndex, setDemoIndex] = useState(0);
   const [streamProgress, setStreamProgress] = useState<{ completed: number; total: number } | null>(null);
+  const [partialReady, setPartialReady] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // 15s timeout: show partial results if not all models done
+  useEffect(() => {
+    if (isAnalyzing && streamProgress && streamProgress.completed > 0 && streamProgress.completed < streamProgress.total) {
+      timeoutRef.current = setTimeout(() => {
+        setPartialReady(true);
+      }, 15000);
+      return () => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      };
+    }
+  }, [isAnalyzing, streamProgress?.completed]);
 
   const scrollToUpload = useCallback(() => {
     setSingleResult(null);
@@ -234,6 +248,7 @@ const Index = () => {
       setIsAnalyzing(true);
       setSingleResult(null);
       setBatchResults(null);
+      setPartialReady(false);
 
       try {
         if (files.length === 1) {
@@ -301,6 +316,8 @@ const Index = () => {
       } finally {
         setIsAnalyzing(false);
         setStreamProgress(null);
+        setPartialReady(false);
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
       }
     },
     [user, toast]
@@ -309,8 +326,13 @@ const Index = () => {
   const handleReset = useCallback(() => {
     setSingleResult(null);
     setBatchResults(null);
+    setPartialReady(false);
     scrollToUpload();
   }, [scrollToUpload]);
+
+  const handleKeepWaiting = useCallback(() => {
+    setPartialReady(false);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -323,6 +345,8 @@ const Index = () => {
           imagePreview={singleResult.preview}
           onReset={handleReset}
           streamProgress={streamProgress ?? undefined}
+          partialReady={partialReady}
+          onKeepWaiting={handleKeepWaiting}
         />
       ) : batchResults ? (
         <BatchResultsDisplay items={batchResults} onReset={handleReset} />
