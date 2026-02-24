@@ -153,7 +153,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                           <CheckCircle className="h-3.5 w-3.5 text-success" />
                         )}
                         <span
-                          className={`text-xs font-medium ${
+                          className={`text-sm font-semibold ${
                             isAI ? "text-destructive" : "text-success"
                           }`}
                         >
@@ -161,13 +161,13 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                         </span>
                         {manipulation && (
                           <>
-                            <span className="text-muted-foreground text-[10px]">·</span>
+                            <span className="text-muted-foreground text-xs">·</span>
                             {isEdited ? (
-                              <Pencil className="h-3 w-3 text-warning" />
+                              <Pencil className="h-3.5 w-3.5 text-warning" />
                             ) : (
-                              <ShieldCheck className="h-3 w-3 text-success" />
+                              <ShieldCheck className="h-3.5 w-3.5 text-success" />
                             )}
-                            <span className={`text-[10px] font-medium ${isEdited ? "text-warning" : "text-success"}`}>
+                            <span className={`text-xs font-medium ${isEdited ? "text-warning" : "text-success"}`}>
                               {isEdited ? "Edited" : "Original"}
                             </span>
                           </>

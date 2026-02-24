@@ -25,10 +25,14 @@ async function analyzeWithWinston(
   imageUrl: string,
   apiKey: string
 ): Promise<ModelResult> {
+  const normalizedApiKey = apiKey.trim();
+
   const res = await fetch("https://api.gowinston.ai/v2/image-detection", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${normalizedApiKey}`,
+      "x-api-key": normalizedApiKey,
+      apikey: normalizedApiKey,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ url: imageUrl }),
@@ -172,9 +176,9 @@ async function analyzeEditWithAI(
   apiKey: string
 ): Promise<{ edited: boolean; confidence: number; reasons: string[] }> {
   const b64 = base64Encode(imageBytes);
+  const normalizedApiKey = apiKey.trim();
 
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-    method: "POST",
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${normalizedApiKey}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -182,7 +186,7 @@ async function analyzeEditWithAI(
         {
           parts: [
             {
-              text: `Analyze this image for signs of editing or manipulation (Photoshop, splicing, cloning, retouching, AI inpainting). Respond ONLY with valid JSON: {"edited": boolean, "confidence": number (50-99), "reasons": ["reason1", "reason2", "reason3"]}. Be conservative — only flag as edited if you see clear evidence.`,
+              text: "Analyze this image for signs of editing/manipulation (Photoshop, cloning, splicing, retouching, inpainting). Return JSON only with this exact shape: {\"edited\": boolean, \"confidence\": number, \"reasons\": string[]}. Keep confidence in 50-99 range.",
             },
             {
               inline_data: { mime_type: mimeType, data: b64 },
@@ -190,7 +194,11 @@ async function analyzeEditWithAI(
           ],
         },
       ],
-      generationConfig: { maxOutputTokens: 500 },
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 300,
+        responseMimeType: "application/json",
+      },
     }),
   });
 
@@ -200,17 +208,35 @@ async function analyzeEditWithAI(
   }
 
   const data = await res.json();
-  const content = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+  const rawText = data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text || "").join("\n")?.trim() ?? "";
 
-  // Extract JSON from response
-  const jsonMatch = content.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error("No JSON in AI response");
+  let parsed: any = null;
+  try {
+    parsed = JSON.parse(rawText);
+  } catch {
+    const cleaned = rawText
+      .replace(/^```json\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/```$/i, "")
+      .trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      parsed = JSON.parse(jsonMatch[0]);
+    }
+  }
 
-  const parsed = JSON.parse(jsonMatch[0]);
+  if (!parsed || typeof parsed !== "object") {
+    throw new Error(`No JSON in AI response: ${rawText.slice(0, 180) || "(empty)"}`);
+  }
+
+  const reasons = Array.isArray(parsed.reasons)
+    ? parsed.reasons.filter((r: unknown) => typeof r === "string" && r.trim().length > 0).slice(0, 5)
+    : [];
+
   return {
     edited: !!parsed.edited,
-    confidence: Math.max(50, Math.min(99, parsed.confidence ?? 60)),
-    reasons: Array.isArray(parsed.reasons) ? parsed.reasons.slice(0, 4) : ["Analysis complete"],
+    confidence: Math.max(50, Math.min(99, Number(parsed.confidence) || 60)),
+    reasons: reasons.length > 0 ? reasons : ["No strong visual manipulation indicators detected"],
   };
 }
 
