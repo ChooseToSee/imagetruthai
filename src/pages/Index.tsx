@@ -31,10 +31,10 @@ const DEMO_AI_RESULT: AnalysisResult = {
   ],
   modelBreakdown: [
     {
-      model: "Hive",
+      model: "Winston",
       verdict: "ai",
       confidence: 96,
-      reasons: ["Hive classifier detected 96.2% AI generation probability", "Likely source identified: stable_diffusion", "CNN-based detection trained on millions of AI-generated images"],
+      reasons: ["Winston AI scored 96% AI generation probability", "Trained on millions of AI-generated images with 99.98% claimed accuracy", "Analyzes pixel patterns and metadata for synthetic generation signatures"],
     },
     {
       model: "SightEngine",
@@ -68,10 +68,10 @@ const DEMO_REAL_RESULT: AnalysisResult = {
   ],
   modelBreakdown: [
     {
-      model: "Hive",
+      model: "Winston",
       verdict: "human",
       confidence: 93,
-      reasons: ["Hive classifier detected 93.0% authentic probability", "Image characteristics consistent with real camera capture", "No AI generation patterns detected by Hive's neural network"],
+      reasons: ["Winston AI scored 93% authentic probability", "Image characteristics consistent with real camera capture", "No AI generation patterns detected by Winston's classifier"],
     },
     {
       model: "SightEngine",

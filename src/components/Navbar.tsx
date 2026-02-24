@@ -1,4 +1,4 @@
-import { Shield, Menu, X, History, LogOut, Share2, Check } from "lucide-react";
+import { Menu, X, History, LogOut, Share2, Check } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,13 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
-          <Shield className="h-6 w-6 text-primary" />
+          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L3 7v6c0 5.25 3.75 10.15 9 11.25C17.25 23.15 21 18.25 21 13V7l-9-5z" fill="currentColor" className="text-primary" stroke="currentColor" strokeWidth="0.5" />
+            <line x1="12" y1="7" x2="12" y2="18" stroke="hsl(var(--primary-foreground))" strokeWidth="2.2" strokeLinecap="round" />
+            <line x1="9" y1="9" x2="15" y2="9" stroke="hsl(var(--primary-foreground))" strokeWidth="2" strokeLinecap="round" />
+            <line x1="9" y1="16" x2="11" y2="16" stroke="hsl(var(--primary-foreground))" strokeWidth="2" strokeLinecap="round" />
+            <line x1="13" y1="16" x2="15" y2="16" stroke="hsl(var(--primary-foreground))" strokeWidth="2" strokeLinecap="round" />
+          </svg>
           <span className="font-display text-lg font-bold tracking-tight text-foreground">
             ImageTruth<span className="text-primary"> AI</span>
           </span>
