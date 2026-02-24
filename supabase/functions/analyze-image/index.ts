@@ -25,7 +25,7 @@ async function analyzeWithWinston(
   imageUrl: string,
   apiKey: string
 ): Promise<ModelResult> {
-  const normalizedApiKey = apiKey.trim();
+  const normalizedApiKey = apiKey.trim().replace(/^Bearer\s+/i, "");
 
   const res = await fetch("https://api.gowinston.ai/v2/image-detection", {
     method: "POST",
@@ -189,7 +189,7 @@ async function analyzeEditWithAI(
               text: "Analyze this image for signs of editing/manipulation (Photoshop, cloning, splicing, retouching, inpainting). Return JSON only with this exact shape: {\"edited\": boolean, \"confidence\": number, \"reasons\": string[]}. Keep confidence in 50-99 range.",
             },
             {
-              inline_data: { mime_type: mimeType, data: b64 },
+              inlineData: { mimeType, data: b64 },
             },
           ],
         },
@@ -214,11 +214,11 @@ async function analyzeEditWithAI(
   try {
     parsed = JSON.parse(rawText);
   } catch {
-    const cleaned = rawText
-      .replace(/^```json\s*/i, "")
-      .replace(/^```\s*/i, "")
-      .replace(/```$/i, "")
-      .trim();
+    const fencedJson = rawText.match(/```json\s*([\s\S]*?)\s*```/i)?.[1]
+      ?? rawText.match(/```\s*([\s\S]*?)\s*```/i)?.[1]
+      ?? rawText;
+
+    const cleaned = fencedJson.trim();
     const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       parsed = JSON.parse(jsonMatch[0]);
