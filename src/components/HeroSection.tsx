@@ -144,7 +144,7 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
 
           <motion.h2
             className="mb-6 font-display text-xl font-medium leading-snug sm:text-2xl lg:text-3xl"
-            style={{ color: "hsl(190 72% 42%)" }}
+            style={{ color: "hsl(227 80% 65%)" }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
