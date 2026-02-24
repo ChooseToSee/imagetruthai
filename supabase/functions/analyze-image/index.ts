@@ -165,7 +165,7 @@ async function checkSightEngineQuality(
   return { edited, confidence, reasons };
 }
 
-// ── AI Gateway Edit Detection ───────────────────────────────────────
+// ── Direct Gemini Edit Detection ────────────────────────────────────
 async function analyzeEditWithAI(
   imageBytes: Uint8Array,
   mimeType: string,
@@ -173,39 +173,34 @@ async function analyzeEditWithAI(
 ): Promise<{ edited: boolean; confidence: number; reasons: string[] }> {
   const b64 = base64Encode(imageBytes);
 
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      max_tokens: 500,
-      messages: [
+      contents: [
         {
-          role: "user",
-          content: [
+          parts: [
             {
-              type: "text",
               text: `Analyze this image for signs of editing or manipulation (Photoshop, splicing, cloning, retouching, AI inpainting). Respond ONLY with valid JSON: {"edited": boolean, "confidence": number (50-99), "reasons": ["reason1", "reason2", "reason3"]}. Be conservative — only flag as edited if you see clear evidence.`,
             },
             {
-              type: "image_url",
-              image_url: { url: `data:${mimeType};base64,${b64}` },
+              inline_data: { mime_type: mimeType, data: b64 },
             },
           ],
         },
       ],
+      generationConfig: { maxOutputTokens: 500 },
     }),
   });
 
   if (!res.ok) {
-    throw new Error(`AI gateway error: ${res.status}`);
+    const t = await res.text();
+    throw new Error(`Gemini API error [${res.status}]: ${t}`);
   }
 
   const data = await res.json();
-  const content = data?.choices?.[0]?.message?.content ?? "";
+  const content = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 
   // Extract JSON from response
   const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -402,7 +397,7 @@ serve(async (req) => {
     const SIGHTENGINE_API_USER = Deno.env.get("SIGHTENGINE_API_USER");
     const SIGHTENGINE_API_SECRET = Deno.env.get("SIGHTENGINE_API_SECRET");
     const AIORNOT_API_KEY = Deno.env.get("AIORNOT_API_KEY");
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const GOOGLE_AI_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
 
     const imageBytes = new Uint8Array(await imageFile.arrayBuffer());
     const mimeType = imageFile.type || "image/jpeg";
@@ -469,10 +464,10 @@ serve(async (req) => {
         run: () => checkSightEngineQuality(imageBytes, mimeType, SIGHTENGINE_API_USER, SIGHTENGINE_API_SECRET),
       });
     }
-    if (LOVABLE_API_KEY) {
+    if (GOOGLE_AI_API_KEY) {
       editTasks.push({
         label: "AI Vision",
-        run: () => analyzeEditWithAI(imageBytes, mimeType, LOVABLE_API_KEY),
+        run: () => analyzeEditWithAI(imageBytes, mimeType, GOOGLE_AI_API_KEY),
       });
     }
 
