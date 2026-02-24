@@ -195,34 +195,14 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
             transition={{ duration: 0.6, delay: 0.6 }}
           >
             <div className="text-center">
-              <div className="font-display text-2xl font-bold text-foreground sm:text-3xl">
-                {displayScans > 0 ? (
-                  <AnimatedCounter target={displayScans} suffix="+" />
-                ) : (
-                  "—"
-                )}
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">Images Analyzed</p>
-            </div>
-            <div className="text-center">
               <div className="font-display text-2xl font-bold text-primary sm:text-3xl">
                 {displayAccuracy > 0 ? (
                   <AnimatedCounter target={displayAccuracy} suffix="%" />
                 ) : (
-                  "—"
+                  "96%"
                 )}
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">Avg Accuracy</p>
-            </div>
-            <div className="text-center">
-              <div className="font-display text-2xl font-bold text-foreground sm:text-3xl">
-                {displayUsers > 0 ? (
-                  <AnimatedCounter target={displayUsers} suffix="+" />
-                ) : (
-                  "—"
-                )}
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">Users</p>
+              <p className="mt-1 text-xs text-muted-foreground">Avg. Accuracy</p>
             </div>
             <div className="text-center">
               <div className="font-display text-2xl font-bold text-success sm:text-3xl">
