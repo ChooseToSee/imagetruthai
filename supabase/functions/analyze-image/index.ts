@@ -149,11 +149,8 @@ async function checkSightEngineQuality(
 
   const hasExif = data?.media?.has_exif ?? false;
   const software = data?.media?.software ?? "";
+  const metadataLimited = !hasExif;
 
-  if (!hasExif) {
-    editScore += 20;
-    reasons.push("No EXIF metadata found — may indicate post-processing");
-  }
   if (software && /photoshop|gimp|lightroom|affinity|snapseed/i.test(software)) {
     editScore += 40;
     reasons.push(`Editing software detected in metadata: ${software}`);
@@ -169,7 +166,11 @@ async function checkSightEngineQuality(
   const confidence = Math.max(50, Math.min(95, 50 + editScore));
 
   if (reasons.length === 0) {
-    reasons.push("No obvious editing indicators found in metadata or quality analysis");
+    reasons.push(
+      metadataLimited
+        ? "No strong editing indicators found; metadata is limited after export/share"
+        : "No obvious editing indicators found in metadata or quality analysis"
+    );
   }
 
   console.log("[EditDetection] SightEngine quality result: edited=", edited, "reasons=", reasons.length);
@@ -259,16 +260,11 @@ If you detect editing, explain specifically what was edited. If the image appear
   const rawText = data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text || "").join("\n")?.trim() ?? "";
   console.log("[EditDetection] Raw response:", rawText.slice(0, 300));
 
-  const parsed = parseJsonSafe(rawText);
+  const parsed = parseEditAnalysisFromText(rawText);
 
-  if (parsed && typeof parsed === "object" && Array.isArray(parsed.reasons)) {
-    const reasons = parsed.reasons.filter((r: unknown) => typeof r === "string" && r.trim().length > 0).slice(0, 5);
-    console.log("[EditDetection] Parsed successfully, edited:", parsed.edited, "reasons:", reasons.length);
-    return {
-      edited: !!parsed.edited,
-      confidence: Math.max(50, Math.min(99, Number(parsed.confidence) || 60)),
-      reasons: reasons.length > 0 ? reasons : ["No strong visual manipulation indicators detected"],
-    };
+  if (parsed) {
+    console.log("[EditDetection] Parsed successfully, edited:", parsed.edited, "reasons:", parsed.reasons.length);
+    return parsed;
   }
 
   console.warn("[EditDetection] Failed to parse structured response, trying fallback...");
@@ -311,13 +307,9 @@ async function analyzeEditWithAIFallback(
   const rawText = data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text || "").join("\n")?.trim() ?? "";
   console.log("[EditDetection Fallback] Raw:", rawText.slice(0, 300));
 
-  const parsed = parseJsonSafe(rawText);
-  if (parsed && Array.isArray(parsed.reasons)) {
-    return {
-      edited: !!parsed.edited,
-      confidence: Math.max(50, Math.min(99, Number(parsed.confidence) || 60)),
-      reasons: parsed.reasons.filter((r: unknown) => typeof r === "string" && r.length > 0).slice(0, 5),
-    };
+  const parsed = parseEditAnalysisFromText(rawText);
+  if (parsed) {
+    return parsed;
   }
 
   return { edited: false, confidence: 55, reasons: ["Could not parse edit analysis response"] };
@@ -327,18 +319,55 @@ async function analyzeEditWithAIFallback(
 function parseJsonSafe(text: string): any | null {
   if (!text) return null;
   try { return JSON.parse(text); } catch {}
-  
-  // Try extracting from fenced blocks
+
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)?.[1];
   if (fenced) { try { return JSON.parse(fenced.trim()); } catch {} }
-  
-  // Try extracting JSON object
+
   const first = text.indexOf("{");
   const last = text.lastIndexOf("}");
   if (first !== -1 && last > first) {
     try { return JSON.parse(text.slice(first, last + 1)); } catch {}
   }
   return null;
+}
+
+function parseEditAnalysisFromText(text: string): { edited: boolean; confidence: number; reasons: string[] } | null {
+  const parsed = parseJsonSafe(text);
+  if (parsed && typeof parsed === "object") {
+    const edited = typeof parsed.edited === "boolean" ? parsed.edited : null;
+    const confidenceRaw = Number(parsed.confidence);
+    const reasonsRaw = Array.isArray(parsed.reasons) ? parsed.reasons : [];
+    const reasons = reasonsRaw
+      .filter((r: unknown) => typeof r === "string" && r.trim().length > 0)
+      .map((r: string) => r.replace(/\s+/g, " ").trim())
+      .slice(0, 5);
+
+    if (edited !== null) {
+      return {
+        edited,
+        confidence: Math.max(50, Math.min(99, Number.isFinite(confidenceRaw) ? confidenceRaw : 60)),
+        reasons: reasons.length > 0 ? reasons : ["No strong visual manipulation indicators detected"],
+      };
+    }
+  }
+
+  const editedMatch = text.match(/"edited"\s*:\s*(true|false)/i);
+  if (!editedMatch) return null;
+
+  const confidenceMatch = text.match(/"confidence"\s*:\s*(\d{1,3})/i);
+  const reasonsBlock = text.match(/"reasons"\s*:\s*\[([\s\S]*?)\]/i)?.[1] ?? "";
+
+  const extractedReasons: string[] = [];
+  for (const m of reasonsBlock.matchAll(/"([\s\S]*?)"/g)) {
+    const cleaned = m[1].replace(/\\n/g, " ").replace(/\s+/g, " ").trim();
+    if (cleaned.length > 0) extractedReasons.push(cleaned);
+  }
+
+  return {
+    edited: editedMatch[1].toLowerCase() === "true",
+    confidence: Math.max(50, Math.min(99, Number(confidenceMatch?.[1] ?? 60))),
+    reasons: extractedReasons.slice(0, 5).length > 0 ? extractedReasons.slice(0, 5) : ["No strong visual manipulation indicators detected"],
+  };
 }
 
 // ── AI or Not ───────────────────────────────────────────────────────
