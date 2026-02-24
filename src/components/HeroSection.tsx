@@ -48,7 +48,7 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
 
   const displayScans = Math.max(stats?.totalScans ?? 0, 0);
   const displayUsers = Math.max(stats?.uniqueUsers ?? 0, 0);
-  const displayAccuracy = stats?.avgAccuracy || 96;
+  const displayAccuracy = stats?.avgAccuracy ?? 0;
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -202,12 +202,14 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
                 <p className="mt-1 text-xs text-muted-foreground">Images Analyzed</p>
               </div>
             )}
-            <div className="text-center">
-              <div className="font-display text-2xl font-bold text-primary sm:text-3xl">
-                <AnimatedCounter target={displayAccuracy} suffix="%" />
+            {displayAccuracy > 0 && (
+              <div className="text-center">
+                <div className="font-display text-2xl font-bold text-primary sm:text-3xl">
+                  <AnimatedCounter target={displayAccuracy} suffix="%" />
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">Avg Accuracy</p>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">Avg Accuracy</p>
-            </div>
+            )}
             {displayUsers >= 100 && (
               <div className="text-center">
                 <div className="font-display text-2xl font-bold text-foreground sm:text-3xl">
