@@ -19,73 +19,49 @@ interface ModelResult {
   };
 }
 
-// ── Hive Moderation ─────────────────────────────────────────────────
-async function analyzeWithHive(
+// ── Winston AI ──────────────────────────────────────────────────────
+async function analyzeWithWinston(
   imageBytes: Uint8Array,
   mimeType: string,
   apiKey: string
 ): Promise<ModelResult> {
-  const blob = new Blob([imageBytes], { type: mimeType });
-  const formData = new FormData();
-  formData.append("media", blob, "image.jpg");
+  const b64 = base64Encode(imageBytes);
+  const dataUri = `data:${mimeType};base64,${b64}`;
 
-  const res = await fetch("https://api.hivemoderation.com/api/v2/task/sync", {
+  const res = await fetch("https://api.gowinston.ai/v2/image-detection", {
     method: "POST",
-    headers: { authorization: `token ${apiKey}` },
-    body: formData,
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ image: dataUri }),
   });
 
   if (!res.ok) {
     const t = await res.text();
-    throw new Error(`Hive error [${res.status}]: ${t}`);
+    throw new Error(`Winston error [${res.status}]: ${t}`);
   }
 
   const data = await res.json();
 
-  // Parse Hive response: status[0].response.output[0].classes
-  const output = data?.status?.[0]?.response?.output;
-  if (!output || output.length === 0) {
-    throw new Error("Hive returned no output");
-  }
+  // Winston returns: score (0-100 human score), human_probability
+  const humanScore = data.score ?? 50;
+  const aiScore = 100 - humanScore;
+  const verdict: "ai" | "human" = aiScore >= 50 ? "ai" : "human";
+  const confidence = Math.max(50, Math.min(99, Math.round(Math.max(aiScore, humanScore))));
 
-  let aiScore = 0.5;
-  let source = "";
   const reasons: string[] = [];
-
-  for (const item of output) {
-    const classes = item.classes || [];
-    for (const cls of classes) {
-      if (cls.class === "ai_generated" && cls.score !== undefined) {
-        aiScore = cls.score;
-      }
-      if (cls.class === "not_ai_generated" && cls.score !== undefined) {
-        // Complementary score, but ai_generated is primary
-      }
-      // Source identification (Midjourney, DALL-E, etc.)
-      if (
-        cls.class !== "ai_generated" &&
-        cls.class !== "not_ai_generated" &&
-        cls.score > 0.3
-      ) {
-        source = cls.class;
-      }
-    }
-  }
-
-  const confidence = Math.max(50, Math.min(99, Math.round(Math.max(aiScore, 1 - aiScore) * 100)));
-  const verdict: "ai" | "human" = aiScore >= 0.5 ? "ai" : "human";
-
   if (verdict === "ai") {
-    reasons.push(`Hive classifier detected ${(aiScore * 100).toFixed(1)}% AI generation probability`);
-    if (source) reasons.push(`Likely source identified: ${source}`);
-    reasons.push("CNN-based detection trained on millions of AI-generated images");
+    reasons.push(`Winston AI scored ${aiScore}% AI generation probability`);
+    reasons.push("Trained on millions of AI-generated images with 99.98% claimed accuracy");
+    reasons.push("Analyzes pixel patterns and metadata for synthetic generation signatures");
   } else {
-    reasons.push(`Hive classifier detected ${((1 - aiScore) * 100).toFixed(1)}% probability of authentic origin`);
-    reasons.push("Image characteristics consistent with real camera capture");
-    reasons.push("No AI generation patterns detected by Hive's neural network");
+    reasons.push(`Winston AI scored ${humanScore}% authentic probability`);
+    reasons.push("Image characteristics consistent with real photographic capture");
+    reasons.push("No AI generation patterns detected by Winston's classifier");
   }
 
-  return { model: "Hive", verdict, confidence, reasons };
+  return { model: "Winston", verdict, confidence, reasons };
 }
 
 // ── SightEngine ─────────────────────────────────────────────────────
@@ -136,6 +112,117 @@ async function analyzeWithSightEngine(
   return { model: "SightEngine", verdict, confidence, reasons };
 }
 
+// ── SightEngine Quality Check (for edit detection) ──────────────────
+async function checkSightEngineQuality(
+  imageBytes: Uint8Array,
+  mimeType: string,
+  apiUser: string,
+  apiSecret: string
+): Promise<{ edited: boolean; confidence: number; reasons: string[] }> {
+  const blob = new Blob([imageBytes], { type: mimeType });
+  const formData = new FormData();
+  formData.append("media", blob, "image.jpg");
+  formData.append("models", "quality,properties");
+  formData.append("api_user", apiUser);
+  formData.append("api_secret", apiSecret);
+
+  const res = await fetch("https://api.sightengine.com/1.0/check.json", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) return { edited: false, confidence: 50, reasons: ["Quality check unavailable"] };
+
+  const data = await res.json();
+  if (data.status !== "success") return { edited: false, confidence: 50, reasons: ["Quality check failed"] };
+
+  const reasons: string[] = [];
+  let editScore = 0;
+
+  // Check for signs of editing from quality/properties
+  const hasExif = data?.media?.has_exif ?? false;
+  const software = data?.media?.software ?? "";
+
+  if (!hasExif) {
+    editScore += 20;
+    reasons.push("No EXIF metadata found — may indicate post-processing");
+  }
+  if (software && /photoshop|gimp|lightroom|affinity|snapseed/i.test(software)) {
+    editScore += 40;
+    reasons.push(`Editing software detected in metadata: ${software}`);
+  }
+
+  // Quality anomalies
+  const quality = data?.quality?.score ?? -1;
+  if (quality >= 0 && quality < 0.3) {
+    editScore += 15;
+    reasons.push("Low quality score may indicate heavy compression or editing");
+  }
+
+  const edited = editScore >= 30;
+  const confidence = Math.max(50, Math.min(95, 50 + editScore));
+
+  if (reasons.length === 0) {
+    reasons.push("No obvious editing indicators found in metadata or quality analysis");
+  }
+
+  return { edited, confidence, reasons };
+}
+
+// ── AI Gateway Edit Detection ───────────────────────────────────────
+async function analyzeEditWithAI(
+  imageBytes: Uint8Array,
+  mimeType: string,
+  apiKey: string
+): Promise<{ edited: boolean; confidence: number; reasons: string[] }> {
+  const b64 = base64Encode(imageBytes);
+
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      max_tokens: 500,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Analyze this image for signs of editing or manipulation (Photoshop, splicing, cloning, retouching, AI inpainting). Respond ONLY with valid JSON: {"edited": boolean, "confidence": number (50-99), "reasons": ["reason1", "reason2", "reason3"]}. Be conservative — only flag as edited if you see clear evidence.`,
+            },
+            {
+              type: "image_url",
+              image_url: { url: `data:${mimeType};base64,${b64}` },
+            },
+          ],
+        },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`AI gateway error: ${res.status}`);
+  }
+
+  const data = await res.json();
+  const content = data?.choices?.[0]?.message?.content ?? "";
+
+  // Extract JSON from response
+  const jsonMatch = content.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("No JSON in AI response");
+
+  const parsed = JSON.parse(jsonMatch[0]);
+  return {
+    edited: !!parsed.edited,
+    confidence: Math.max(50, Math.min(99, parsed.confidence ?? 60)),
+    reasons: Array.isArray(parsed.reasons) ? parsed.reasons.slice(0, 4) : ["Analysis complete"],
+  };
+}
+
 // ── AI or Not ───────────────────────────────────────────────────────
 async function analyzeWithAIorNot(
   imageBytes: Uint8Array,
@@ -145,7 +232,6 @@ async function analyzeWithAIorNot(
   const blob = new Blob([imageBytes], { type: mimeType });
   const formData = new FormData();
   formData.append("image", blob, "image.jpg");
-  // Only request ai_generated report for speed
   formData.append("only", "ai_generated");
 
   const res = await fetch("https://api.aiornot.com/v2/image/sync", {
@@ -166,7 +252,7 @@ async function analyzeWithAIorNot(
     throw new Error("AI or Not returned no ai_generated report");
   }
 
-  const verdictRaw = report.verdict; // "ai" or "human"
+  const verdictRaw = report.verdict;
   const aiConf = report.ai?.confidence ?? 0.5;
   const humanConf = report.human?.confidence ?? 0.5;
 
@@ -176,7 +262,6 @@ async function analyzeWithAIorNot(
 
   const reasons: string[] = [];
 
-  // Extract generator info
   const generator = report.generator;
   let topGenerator = "";
   if (generator && typeof generator === "object") {
@@ -205,7 +290,7 @@ async function analyzeWithAIorNot(
 // ── Weighted consensus ───────────────────────────────────────────────
 function computeConsensus(results: ModelResult[]) {
   const weights: Record<string, number> = {
-    Hive: 0.40,
+    Winston: 0.40,
     SightEngine: 0.30,
     "AI or Not": 0.30,
   };
@@ -257,12 +342,40 @@ function computeConsensus(results: ModelResult[]) {
     "No single detector is 100% accurate — use results as guidance",
   ];
 
-  return {
-    verdict,
-    confidence,
-    reasons: allReasons.slice(0, 5),
-    tips,
-  };
+  return { verdict, confidence, reasons: allReasons.slice(0, 5), tips };
+}
+
+// ── Compute manipulation consensus ──────────────────────────────────
+function computeManipulation(editResults: { edited: boolean; confidence: number; reasons: string[] }[]) {
+  if (editResults.length === 0) return undefined;
+
+  let editScore = 0;
+  let totalWeight = 0;
+  const allReasons: string[] = [];
+
+  for (const r of editResults) {
+    const w = 1;
+    totalWeight += w;
+    if (r.edited) {
+      editScore += (r.confidence / 100) * w;
+    } else {
+      editScore += ((100 - r.confidence) / 100) * w;
+    }
+    allReasons.push(...r.reasons.slice(0, 2));
+  }
+
+  editScore = totalWeight > 0 ? editScore / totalWeight : 0.5;
+  const edited = editScore >= 0.5;
+  const confidence = Math.max(50, Math.min(99, Math.round(Math.max(editScore, 1 - editScore) * 100)));
+
+  const tips = [
+    "Check EXIF data for editing software markers",
+    "Look for inconsistent lighting, shadows, or perspective",
+    "Zoom in to edges for signs of cloning or splicing",
+    "Compare noise grain patterns across different areas",
+  ];
+
+  return { edited, confidence, reasons: allReasons.slice(0, 5), tips };
 }
 
 // ── Main handler ─────────────────────────────────────────────────────
@@ -289,24 +402,25 @@ serve(async (req) => {
       );
     }
 
-    const HIVE_API_KEY = Deno.env.get("HIVE_API_KEY");
+    const WINSTON_API_KEY = Deno.env.get("WINSTON_API_KEY");
     const SIGHTENGINE_API_USER = Deno.env.get("SIGHTENGINE_API_USER");
     const SIGHTENGINE_API_SECRET = Deno.env.get("SIGHTENGINE_API_SECRET");
     const AIORNOT_API_KEY = Deno.env.get("AIORNOT_API_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     const imageBytes = new Uint8Array(await imageFile.arrayBuffer());
     const mimeType = imageFile.type || "image/jpeg";
 
     const wantsStream = req.headers.get("x-stream") === "true";
 
-    // Build model tasks based on available keys
+    // Build AI detection tasks
     type ModelTask = { run: () => Promise<ModelResult>; label: string };
     const tasks: ModelTask[] = [];
 
-    if (HIVE_API_KEY) {
+    if (WINSTON_API_KEY) {
       tasks.push({
-        label: "Hive",
-        run: () => analyzeWithHive(imageBytes, mimeType, HIVE_API_KEY),
+        label: "Winston",
+        run: () => analyzeWithWinston(imageBytes, mimeType, WINSTON_API_KEY),
       });
     }
     if (SIGHTENGINE_API_USER && SIGHTENGINE_API_SECRET) {
@@ -329,31 +443,54 @@ serve(async (req) => {
       });
     }
 
+    // Build edit detection tasks
+    type EditTask = { run: () => Promise<{ edited: boolean; confidence: number; reasons: string[] }>; label: string };
+    const editTasks: EditTask[] = [];
+
+    if (SIGHTENGINE_API_USER && SIGHTENGINE_API_SECRET) {
+      editTasks.push({
+        label: "SightEngine Quality",
+        run: () => checkSightEngineQuality(imageBytes, mimeType, SIGHTENGINE_API_USER, SIGHTENGINE_API_SECRET),
+      });
+    }
+    if (LOVABLE_API_KEY) {
+      editTasks.push({
+        label: "AI Vision",
+        run: () => analyzeEditWithAI(imageBytes, mimeType, LOVABLE_API_KEY),
+      });
+    }
+
     if (!wantsStream) {
-      const results = await Promise.allSettled(tasks.map((t) => t.run()));
+      // Run AI detection and edit detection in parallel
+      const [aiResults, editResults] = await Promise.all([
+        Promise.allSettled(tasks.map((t) => t.run())),
+        Promise.allSettled(editTasks.map((t) => t.run())),
+      ]);
 
       const successfulResults: ModelResult[] = [];
-      const modelBreakdown: ModelResult[] = [];
+      for (const r of aiResults) {
+        if (r.status === "fulfilled") successfulResults.push(r.value);
+        else console.error("Model failed:", r.reason);
+      }
 
-      for (const r of results) {
-        if (r.status === "fulfilled") {
-          successfulResults.push(r.value);
-          modelBreakdown.push(r.value);
-        } else {
-          console.error("Model failed:", r.reason);
-        }
+      const successfulEdits: { edited: boolean; confidence: number; reasons: string[] }[] = [];
+      for (const r of editResults) {
+        if (r.status === "fulfilled") successfulEdits.push(r.value);
+        else console.error("Edit check failed:", r.reason);
       }
 
       if (successfulResults.length === 0) {
-        return new Response(JSON.stringify({ error: "All detection services failed. Please check your API keys." }), {
+        return new Response(JSON.stringify({ error: "All detection services failed." }), {
           status: 502,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       const consensus = computeConsensus(successfulResults);
+      const manipulation = computeManipulation(successfulEdits);
+
       return new Response(
-        JSON.stringify({ ...consensus, modelBreakdown }),
+        JSON.stringify({ ...consensus, modelBreakdown: successfulResults, manipulation }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -367,36 +504,48 @@ serve(async (req) => {
         };
 
         const successfulResults: ModelResult[] = [];
-        const modelBreakdown: ModelResult[] = [];
+        const successfulEdits: { edited: boolean; confidence: number; reasons: string[] }[] = [];
 
-        const promises = tasks.map(async (task) => {
+        // Run edit detection in background
+        const editPromise = Promise.allSettled(editTasks.map(async (task) => {
+          try {
+            const result = await task.run();
+            successfulEdits.push(result);
+          } catch (err) {
+            console.error(`${task.label} edit failed:`, err);
+          }
+        }));
+
+        // Stream AI detection results
+        const aiPromises = tasks.map(async (task) => {
           try {
             const result = await task.run();
             successfulResults.push(result);
-            modelBreakdown.push(result);
 
             send("model", result);
 
             const interim = computeConsensus([...successfulResults]);
             send("consensus", {
               ...interim,
-              modelBreakdown: [...modelBreakdown],
+              modelBreakdown: [...successfulResults],
               modelsCompleted: successfulResults.length,
               modelsTotal: tasks.length,
             });
           } catch (err) {
             console.error(`${task.label} failed:`, err);
-            send("model_error", { model: task.label, error: err.message });
+            send("model_error", { model: task.label, error: (err as Error).message });
           }
         });
 
-        await Promise.allSettled(promises);
+        await Promise.allSettled(aiPromises);
+        await editPromise;
 
         if (successfulResults.length === 0) {
           send("error", { error: "All detection services failed" });
         } else {
           const final = computeConsensus(successfulResults);
-          send("done", { ...final, modelBreakdown });
+          const manipulation = computeManipulation(successfulEdits);
+          send("done", { ...final, modelBreakdown: successfulResults, manipulation });
         }
 
         controller.close();
@@ -414,7 +563,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("analyze-image error:", error);
 
-    if (error.message?.includes("429") || error.status === 429) {
+    if ((error as any).message?.includes("429") || (error as any).status === 429) {
       return new Response(JSON.stringify({ error: "Rate limit exceeded, please try again shortly" }), {
         status: 429,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -422,7 +571,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ error: error.message || "Internal server error" }),
+      JSON.stringify({ error: (error as Error).message || "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
