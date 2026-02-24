@@ -122,6 +122,7 @@ async function checkSightEngineQuality(
   apiUser: string,
   apiSecret: string
 ): Promise<{ edited: boolean; confidence: number; reasons: string[] }> {
+  console.log("[EditDetection] Starting SightEngine quality check...");
   const blob = new Blob([imageBytes], { type: mimeType });
   const formData = new FormData();
   formData.append("media", blob, "image.jpg");
@@ -134,15 +135,18 @@ async function checkSightEngineQuality(
     body: formData,
   });
 
-  if (!res.ok) return { edited: false, confidence: 50, reasons: ["Quality check unavailable"] };
+  if (!res.ok) {
+    console.error("[EditDetection] SightEngine quality error:", res.status);
+    return { edited: false, confidence: 50, reasons: ["Quality check unavailable"] };
+  }
 
   const data = await res.json();
+  console.log("[EditDetection] SightEngine quality response status:", data.status);
   if (data.status !== "success") return { edited: false, confidence: 50, reasons: ["Quality check failed"] };
 
   const reasons: string[] = [];
   let editScore = 0;
 
-  // Check for signs of editing from quality/properties
   const hasExif = data?.media?.has_exif ?? false;
   const software = data?.media?.software ?? "";
 
@@ -155,7 +159,6 @@ async function checkSightEngineQuality(
     reasons.push(`Editing software detected in metadata: ${software}`);
   }
 
-  // Quality anomalies
   const quality = data?.quality?.score ?? -1;
   if (quality >= 0 && quality < 0.3) {
     editScore += 15;
@@ -169,6 +172,7 @@ async function checkSightEngineQuality(
     reasons.push("No obvious editing indicators found in metadata or quality analysis");
   }
 
+  console.log("[EditDetection] SightEngine quality result: edited=", edited, "reasons=", reasons.length);
   return { edited, confidence, reasons };
 }
 
@@ -181,90 +185,85 @@ async function analyzeEditWithAI(
   const b64 = base64Encode(imageBytes);
   const normalizedApiKey = apiKey.trim();
 
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${normalizedApiKey}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [
-        {
-          parts: [
-            {
-              text: "Analyze this image for signs of editing/manipulation (Photoshop, cloning, splicing, retouching, inpainting). Return JSON only with this exact shape: {\"edited\": boolean, \"confidence\": number, \"reasons\": string[]}. Keep confidence in 50-99 range.",
-            },
-            {
-              inlineData: { mimeType, data: b64 },
-            },
-          ],
-        },
-      ],
-      generationConfig: {
-        temperature: 0.1,
-        maxOutputTokens: 512,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "OBJECT",
-          properties: {
-            edited: { type: "BOOLEAN" },
-            confidence: { type: "NUMBER" },
-            reasons: {
-              type: "ARRAY",
-              items: { type: "STRING" },
-            },
-          },
-          required: ["edited", "confidence", "reasons"],
-        },
-      },
-    }),
-  });
+  console.log("[EditDetection] Starting Gemini analysis...");
 
-  if (!res.ok) {
-    const t = await res.text();
+  let res: Response;
+  try {
+    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${normalizedApiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: `You are a forensic image analyst. Analyze this image for any signs of editing or manipulation including: Photoshop edits, cloning, splicing, retouching, inpainting, face swapping, background replacement, color manipulation, or any other post-processing.
+
+Return your analysis as JSON with exactly this structure:
+{"edited": true/false, "confidence": 50-99, "reasons": ["reason1", "reason2", "reason3"]}
+
+If you detect editing, explain specifically what was edited. If the image appears unedited, explain what indicates it is authentic.`,
+              },
+              {
+                inlineData: { mimeType, data: b64 },
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 1024,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              edited: { type: "BOOLEAN" },
+              confidence: { type: "NUMBER" },
+              reasons: {
+                type: "ARRAY",
+                items: { type: "STRING" },
+              },
+            },
+            required: ["edited", "confidence", "reasons"],
+          },
+        },
+      }),
+    });
+  } catch (fetchErr: any) {
+    console.error("[EditDetection] Fetch error:", fetchErr.message);
     return {
       edited: false,
-      confidence: 55,
-      reasons: [`AI vision check unavailable (${res.status})`, t.slice(0, 120) || "No response body"],
+      confidence: 50,
+      reasons: [`Gemini API connection failed: ${fetchErr.message}`],
+    };
+  }
+
+  if (!res.ok) {
+    const errorBody = await res.text();
+    console.error(`[EditDetection] Gemini API error [${res.status}]:`, errorBody.slice(0, 300));
+    
+    // If structured output fails, retry without responseSchema
+    if (res.status === 400) {
+      console.log("[EditDetection] Retrying without responseSchema...");
+      return analyzeEditWithAIFallback(imageBytes, mimeType, normalizedApiKey);
+    }
+    
+    return {
+      edited: false,
+      confidence: 50,
+      reasons: [`Gemini API error (${res.status}): ${errorBody.slice(0, 100)}`],
     };
   }
 
   const data = await res.json();
   const rawText = data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text || "").join("\n")?.trim() ?? "";
+  console.log("[EditDetection] Raw response:", rawText.slice(0, 300));
 
-  const parseJsonFromText = (text: string): any | null => {
-    if (!text) return null;
+  const parsed = parseJsonSafe(rawText);
 
-    try {
-      return JSON.parse(text);
-    } catch {
-      // continue
-    }
-
-    const fencedJson = text.match(/```json\s*([\s\S]*?)\s*```/i)?.[1]
-      ?? text.match(/```\s*([\s\S]*?)\s*```/i)?.[1]
-      ?? text;
-
-    const cleaned = fencedJson.trim();
-    const firstBrace = cleaned.indexOf("{");
-    const lastBrace = cleaned.lastIndexOf("}");
-
-    if (firstBrace !== -1 && lastBrace > firstBrace) {
-      const candidate = cleaned.slice(firstBrace, lastBrace + 1);
-      try {
-        return JSON.parse(candidate);
-      } catch {
-        return null;
-      }
-    }
-
-    return null;
-  };
-
-  const parsed = parseJsonFromText(rawText);
-
-  if (parsed && typeof parsed === "object") {
-    const reasons = Array.isArray(parsed.reasons)
-      ? parsed.reasons.filter((r: unknown) => typeof r === "string" && r.trim().length > 0).slice(0, 5)
-      : [];
-
+  if (parsed && typeof parsed === "object" && Array.isArray(parsed.reasons)) {
+    const reasons = parsed.reasons.filter((r: unknown) => typeof r === "string" && r.trim().length > 0).slice(0, 5);
+    console.log("[EditDetection] Parsed successfully, edited:", parsed.edited, "reasons:", reasons.length);
     return {
       edited: !!parsed.edited,
       confidence: Math.max(50, Math.min(99, Number(parsed.confidence) || 60)),
@@ -272,29 +271,74 @@ async function analyzeEditWithAI(
     };
   }
 
-  // Loose fallback parsing so this model still contributes reasons
-  const editedMatch = rawText.match(/"edited"\s*:\s*(true|false)/i) ?? rawText.match(/\bedited\s*[:=-]\s*(true|false)/i);
-  const confidenceMatch = rawText.match(/"confidence"\s*:\s*(\d{1,3})/i) ?? rawText.match(/\bconfidence\s*[:=-]\s*(\d{1,3})/i);
-  const reasonsMatch = rawText.match(/"reasons"\s*:\s*\[([\s\S]*?)\]/i);
+  console.warn("[EditDetection] Failed to parse structured response, trying fallback...");
+  return analyzeEditWithAIFallback(imageBytes, mimeType, normalizedApiKey);
+}
 
-  const parsedReasons = reasonsMatch?.[1]
-    ? reasonsMatch[1]
-        .split(",")
-        .map((r) => r.replace(/^\s*"|"\s*$/g, "").trim())
-        .filter((r) => r.length > 0)
-        .slice(0, 5)
-    : [];
+// Fallback without responseSchema (plain text prompt)
+async function analyzeEditWithAIFallback(
+  imageBytes: Uint8Array,
+  mimeType: string,
+  apiKey: string
+): Promise<{ edited: boolean; confidence: number; reasons: string[] }> {
+  const b64 = base64Encode(imageBytes);
 
-  return {
-    edited: (editedMatch?.[1] || "false").toLowerCase() === "true",
-    confidence: Math.max(50, Math.min(99, Number(confidenceMatch?.[1]) || 60)),
-    reasons: parsedReasons.length > 0
-      ? parsedReasons
-      : [
-          "AI vision response was unstructured; fallback parsing used",
-          rawText ? `Model output excerpt: ${rawText.slice(0, 120)}` : "No model text returned",
-        ],
-  };
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [
+            {
+              text: `Analyze this image for editing/manipulation signs. Reply with ONLY valid JSON, no markdown: {"edited": true_or_false, "confidence": 50_to_99, "reasons": ["reason1", "reason2"]}`,
+            },
+            { inlineData: { mimeType, data: b64 } },
+          ],
+        },
+      ],
+      generationConfig: { temperature: 0.1, maxOutputTokens: 512 },
+    }),
+  });
+
+  if (!res.ok) {
+    const t = await res.text();
+    console.error("[EditDetection Fallback] Error:", t.slice(0, 200));
+    return { edited: false, confidence: 50, reasons: ["Edit analysis unavailable"] };
+  }
+
+  const data = await res.json();
+  const rawText = data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text || "").join("\n")?.trim() ?? "";
+  console.log("[EditDetection Fallback] Raw:", rawText.slice(0, 300));
+
+  const parsed = parseJsonSafe(rawText);
+  if (parsed && Array.isArray(parsed.reasons)) {
+    return {
+      edited: !!parsed.edited,
+      confidence: Math.max(50, Math.min(99, Number(parsed.confidence) || 60)),
+      reasons: parsed.reasons.filter((r: unknown) => typeof r === "string" && r.length > 0).slice(0, 5),
+    };
+  }
+
+  return { edited: false, confidence: 55, reasons: ["Could not parse edit analysis response"] };
+}
+
+// Robust JSON parser
+function parseJsonSafe(text: string): any | null {
+  if (!text) return null;
+  try { return JSON.parse(text); } catch {}
+  
+  // Try extracting from fenced blocks
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)?.[1];
+  if (fenced) { try { return JSON.parse(fenced.trim()); } catch {} }
+  
+  // Try extracting JSON object
+  const first = text.indexOf("{");
+  const last = text.lastIndexOf("}");
+  if (first !== -1 && last > first) {
+    try { return JSON.parse(text.slice(first, last + 1)); } catch {}
+  }
+  return null;
 }
 
 // ── AI or Not ───────────────────────────────────────────────────────
