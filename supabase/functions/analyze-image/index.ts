@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,20 +22,16 @@ interface ModelResult {
 
 // ── Winston AI ──────────────────────────────────────────────────────
 async function analyzeWithWinston(
-  imageBytes: Uint8Array,
-  mimeType: string,
+  imageUrl: string,
   apiKey: string
 ): Promise<ModelResult> {
-  const b64 = base64Encode(imageBytes);
-  const dataUri = `data:${mimeType};base64,${b64}`;
-
   const res = await fetch("https://api.gowinston.ai/v2/image-detection", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ image: dataUri }),
+    body: JSON.stringify({ url: imageUrl }),
   });
 
   if (!res.ok) {
@@ -44,7 +41,6 @@ async function analyzeWithWinston(
 
   const data = await res.json();
 
-  // Winston returns: score (0-100 human score), human_probability
   const humanScore = data.score ?? 50;
   const aiScore = 100 - humanScore;
   const verdict: "ai" | "human" = aiScore >= 50 ? "ai" : "human";
@@ -413,14 +409,34 @@ serve(async (req) => {
 
     const wantsStream = req.headers.get("x-stream") === "true";
 
+    // Upload image to temp storage for Winston (needs a public URL)
+    let tempImageUrl: string | null = null;
+    let tempImagePath: string | null = null;
+    if (WINSTON_API_KEY) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const sb = createClient(supabaseUrl, supabaseServiceKey);
+      const ext = mimeType.split("/")[1] || "jpg";
+      tempImagePath = `temp/${crypto.randomUUID()}.${ext}`;
+      const { error: uploadErr } = await sb.storage
+        .from("scan-images")
+        .upload(tempImagePath, imageBytes, { contentType: mimeType, upsert: true });
+      if (!uploadErr) {
+        const { data: urlData } = sb.storage.from("scan-images").getPublicUrl(tempImagePath);
+        tempImageUrl = urlData.publicUrl;
+      } else {
+        console.error("Temp upload for Winston failed:", uploadErr);
+      }
+    }
+
     // Build AI detection tasks
     type ModelTask = { run: () => Promise<ModelResult>; label: string };
     const tasks: ModelTask[] = [];
 
-    if (WINSTON_API_KEY) {
+    if (WINSTON_API_KEY && tempImageUrl) {
       tasks.push({
         label: "Winston",
-        run: () => analyzeWithWinston(imageBytes, mimeType, WINSTON_API_KEY),
+        run: () => analyzeWithWinston(tempImageUrl!, WINSTON_API_KEY),
       });
     }
     if (SIGHTENGINE_API_USER && SIGHTENGINE_API_SECRET) {
@@ -460,6 +476,18 @@ serve(async (req) => {
       });
     }
 
+    // Helper to clean up temp image
+    const cleanupTemp = async () => {
+      if (tempImagePath) {
+        try {
+          const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+          const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+          const sb = createClient(supabaseUrl, supabaseServiceKey);
+          await sb.storage.from("scan-images").remove([tempImagePath]);
+        } catch (e) { console.error("Temp cleanup failed:", e); }
+      }
+    };
+
     if (!wantsStream) {
       // Run AI detection and edit detection in parallel
       const [aiResults, editResults] = await Promise.all([
@@ -488,6 +516,8 @@ serve(async (req) => {
 
       const consensus = computeConsensus(successfulResults);
       const manipulation = computeManipulation(successfulEdits);
+
+      await cleanupTemp();
 
       return new Response(
         JSON.stringify({ ...consensus, modelBreakdown: successfulResults, manipulation }),
@@ -548,6 +578,7 @@ serve(async (req) => {
           send("done", { ...final, modelBreakdown: successfulResults, manipulation });
         }
 
+        await cleanupTemp();
         controller.close();
       },
     });
