@@ -22,7 +22,9 @@ interface ModelResult {
 
 // ── Winston AI ──────────────────────────────────────────────────────
 async function analyzeWithWinston(
-  imageUrl: string,
+  imageUrlOrNull: string | null,
+  imageBytes: Uint8Array,
+  mimeType: string,
   apiKey: string
 ): Promise<ModelResult> {
   const normalizedApiKey = apiKey
@@ -32,21 +34,34 @@ async function analyzeWithWinston(
     .replace(/^x-api-key:\s*/i, "")
     .replace(/^apikey:\s*/i, "");
 
+  // Try URL-based first, fallback to base64
+  let body: Record<string, unknown>;
+  if (imageUrlOrNull) {
+    body = { url: imageUrlOrNull };
+    console.log("[Winston] Using URL mode");
+  } else {
+    const b64 = base64Encode(imageBytes);
+    body = { image: `data:${mimeType};base64,${b64}` };
+    console.log("[Winston] Using base64 mode (URL unavailable)");
+  }
+
   const res = await fetch("https://api.gowinston.ai/v2/image-detection", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${normalizedApiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ url: imageUrl }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
     const t = await res.text();
+    console.error(`[Winston] API error [${res.status}]:`, t.slice(0, 300));
     throw new Error(`Winston error [${res.status}]: ${t}`);
   }
 
   const data = await res.json();
+  console.log("[Winston] Response score:", data.score);
 
   const humanScore = data.score ?? 50;
   const aiScore = 100 - humanScore;
@@ -564,19 +579,25 @@ serve(async (req) => {
     let tempImageUrl: string | null = null;
     let tempImagePath: string | null = null;
     if (WINSTON_API_KEY) {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const sb = createClient(supabaseUrl, supabaseServiceKey);
-      const ext = mimeType.split("/")[1] || "jpg";
-      tempImagePath = `temp/${crypto.randomUUID()}.${ext}`;
-      const { error: uploadErr } = await sb.storage
-        .from("scan-images")
-        .upload(tempImagePath, imageBytes, { contentType: mimeType, upsert: true });
-      if (!uploadErr) {
-        const { data: urlData } = sb.storage.from("scan-images").getPublicUrl(tempImagePath);
-        tempImageUrl = urlData.publicUrl;
-      } else {
-        console.error("Temp upload for Winston failed:", uploadErr);
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const sb = createClient(supabaseUrl, supabaseServiceKey);
+        const ext = mimeType.split("/")[1] || "jpg";
+        tempImagePath = `temp/${crypto.randomUUID()}.${ext}`;
+        console.log("[Winston] Uploading temp image:", tempImagePath);
+        const { error: uploadErr } = await sb.storage
+          .from("scan-images")
+          .upload(tempImagePath, imageBytes, { contentType: mimeType, upsert: true });
+        if (!uploadErr) {
+          const { data: urlData } = sb.storage.from("scan-images").getPublicUrl(tempImagePath);
+          tempImageUrl = urlData.publicUrl;
+          console.log("[Winston] Temp URL ready:", tempImageUrl?.slice(0, 80));
+        } else {
+          console.error("[Winston] Temp upload failed:", JSON.stringify(uploadErr));
+        }
+      } catch (e) {
+        console.error("[Winston] Temp upload exception:", (e as Error).message);
       }
     }
 
@@ -584,10 +605,10 @@ serve(async (req) => {
     type ModelTask = { run: () => Promise<ModelResult>; label: string };
     const tasks: ModelTask[] = [];
 
-    if (WINSTON_API_KEY && tempImageUrl) {
+    if (WINSTON_API_KEY) {
       tasks.push({
         label: "Winston",
-        run: () => analyzeWithWinston(tempImageUrl!, WINSTON_API_KEY),
+        run: () => analyzeWithWinston(tempImageUrl, imageBytes, mimeType, WINSTON_API_KEY),
       });
     }
     if (SIGHTENGINE_API_USER && SIGHTENGINE_API_SECRET) {
