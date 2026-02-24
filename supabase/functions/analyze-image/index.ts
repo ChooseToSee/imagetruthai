@@ -25,14 +25,17 @@ async function analyzeWithWinston(
   imageUrl: string,
   apiKey: string
 ): Promise<ModelResult> {
-  const normalizedApiKey = apiKey.trim().replace(/^Bearer\s+/i, "");
+  const normalizedApiKey = apiKey
+    .trim()
+    .replace(/^['"]|['"]$/g, "")
+    .replace(/^(authorization:)?\s*bearer\s+/i, "")
+    .replace(/^x-api-key:\s*/i, "")
+    .replace(/^apikey:\s*/i, "");
 
   const res = await fetch("https://api.gowinston.ai/v2/image-detection", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${normalizedApiKey}`,
-      "x-api-key": normalizedApiKey,
-      apikey: normalizedApiKey,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ url: imageUrl }),
@@ -196,47 +199,101 @@ async function analyzeEditWithAI(
       ],
       generationConfig: {
         temperature: 0.1,
-        maxOutputTokens: 300,
+        maxOutputTokens: 512,
         responseMimeType: "application/json",
+        responseSchema: {
+          type: "OBJECT",
+          properties: {
+            edited: { type: "BOOLEAN" },
+            confidence: { type: "NUMBER" },
+            reasons: {
+              type: "ARRAY",
+              items: { type: "STRING" },
+            },
+          },
+          required: ["edited", "confidence", "reasons"],
+        },
       },
     }),
   });
 
   if (!res.ok) {
     const t = await res.text();
-    throw new Error(`Gemini API error [${res.status}]: ${t}`);
+    return {
+      edited: false,
+      confidence: 55,
+      reasons: [`AI vision check unavailable (${res.status})`, t.slice(0, 120) || "No response body"],
+    };
   }
 
   const data = await res.json();
   const rawText = data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text || "").join("\n")?.trim() ?? "";
 
-  let parsed: any = null;
-  try {
-    parsed = JSON.parse(rawText);
-  } catch {
-    const fencedJson = rawText.match(/```json\s*([\s\S]*?)\s*```/i)?.[1]
-      ?? rawText.match(/```\s*([\s\S]*?)\s*```/i)?.[1]
-      ?? rawText;
+  const parseJsonFromText = (text: string): any | null => {
+    if (!text) return null;
+
+    try {
+      return JSON.parse(text);
+    } catch {
+      // continue
+    }
+
+    const fencedJson = text.match(/```json\s*([\s\S]*?)\s*```/i)?.[1]
+      ?? text.match(/```\s*([\s\S]*?)\s*```/i)?.[1]
+      ?? text;
 
     const cleaned = fencedJson.trim();
-    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      parsed = JSON.parse(jsonMatch[0]);
+    const firstBrace = cleaned.indexOf("{");
+    const lastBrace = cleaned.lastIndexOf("}");
+
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      const candidate = cleaned.slice(firstBrace, lastBrace + 1);
+      try {
+        return JSON.parse(candidate);
+      } catch {
+        return null;
+      }
     }
+
+    return null;
+  };
+
+  const parsed = parseJsonFromText(rawText);
+
+  if (parsed && typeof parsed === "object") {
+    const reasons = Array.isArray(parsed.reasons)
+      ? parsed.reasons.filter((r: unknown) => typeof r === "string" && r.trim().length > 0).slice(0, 5)
+      : [];
+
+    return {
+      edited: !!parsed.edited,
+      confidence: Math.max(50, Math.min(99, Number(parsed.confidence) || 60)),
+      reasons: reasons.length > 0 ? reasons : ["No strong visual manipulation indicators detected"],
+    };
   }
 
-  if (!parsed || typeof parsed !== "object") {
-    throw new Error(`No JSON in AI response: ${rawText.slice(0, 180) || "(empty)"}`);
-  }
+  // Loose fallback parsing so this model still contributes reasons
+  const editedMatch = rawText.match(/"edited"\s*:\s*(true|false)/i) ?? rawText.match(/\bedited\s*[:=-]\s*(true|false)/i);
+  const confidenceMatch = rawText.match(/"confidence"\s*:\s*(\d{1,3})/i) ?? rawText.match(/\bconfidence\s*[:=-]\s*(\d{1,3})/i);
+  const reasonsMatch = rawText.match(/"reasons"\s*:\s*\[([\s\S]*?)\]/i);
 
-  const reasons = Array.isArray(parsed.reasons)
-    ? parsed.reasons.filter((r: unknown) => typeof r === "string" && r.trim().length > 0).slice(0, 5)
+  const parsedReasons = reasonsMatch?.[1]
+    ? reasonsMatch[1]
+        .split(",")
+        .map((r) => r.replace(/^\s*"|"\s*$/g, "").trim())
+        .filter((r) => r.length > 0)
+        .slice(0, 5)
     : [];
 
   return {
-    edited: !!parsed.edited,
-    confidence: Math.max(50, Math.min(99, Number(parsed.confidence) || 60)),
-    reasons: reasons.length > 0 ? reasons : ["No strong visual manipulation indicators detected"],
+    edited: (editedMatch?.[1] || "false").toLowerCase() === "true",
+    confidence: Math.max(50, Math.min(99, Number(confidenceMatch?.[1]) || 60)),
+    reasons: parsedReasons.length > 0
+      ? parsedReasons
+      : [
+          "AI vision response was unstructured; fallback parsing used",
+          rawText ? `Model output excerpt: ${rawText.slice(0, 120)}` : "No model text returned",
+        ],
   };
 }
 
@@ -305,7 +362,7 @@ async function analyzeWithAIorNot(
 }
 
 // ── Weighted consensus ───────────────────────────────────────────────
-function computeConsensus(results: ModelResult[]) {
+function computeConsensus(results: ModelResult[], expectedTotal = results.length) {
   const weights: Record<string, number> = {
     Winston: 0.40,
     SightEngine: 0.30,
@@ -346,10 +403,10 @@ function computeConsensus(results: ModelResult[]) {
   }
 
   const agreementCount = aligned.length;
-  if (agreementCount === results.length) {
-    allReasons.unshift(`All ${results.length} classifiers agree: image is ${verdict === "ai" ? "AI-generated" : "human-created"}`);
+  if (agreementCount === expectedTotal && expectedTotal > 0) {
+    allReasons.unshift(`All ${expectedTotal} classifiers agree: image is ${verdict === "ai" ? "AI-generated" : "human-created"}`);
   } else {
-    allReasons.unshift(`${agreementCount}/${results.length} classifiers lean ${verdict === "ai" ? "AI-generated" : "human-created"}`);
+    allReasons.unshift(`${agreementCount}/${expectedTotal} classifiers currently lean ${verdict === "ai" ? "AI-generated" : "human-created"}`);
   }
 
   const tips = [
@@ -535,7 +592,7 @@ serve(async (req) => {
         });
       }
 
-      const consensus = computeConsensus(successfulResults);
+      const consensus = computeConsensus(successfulResults, tasks.length);
       const manipulation = computeManipulation(successfulEdits);
 
       await cleanupTemp();
@@ -575,7 +632,7 @@ serve(async (req) => {
 
             send("model", result);
 
-            const interim = computeConsensus([...successfulResults]);
+            const interim = computeConsensus([...successfulResults], tasks.length);
             send("consensus", {
               ...interim,
               modelBreakdown: [...successfulResults],
@@ -594,7 +651,7 @@ serve(async (req) => {
         if (successfulResults.length === 0) {
           send("error", { error: "All detection services failed" });
         } else {
-          const final = computeConsensus(successfulResults);
+          const final = computeConsensus(successfulResults, tasks.length);
           const manipulation = computeManipulation(successfulEdits);
           send("done", { ...final, modelBreakdown: successfulResults, manipulation });
         }
