@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 // Admin emails authorized to create coupons
-const ADMIN_EMAILS = ["admin@imagetruthai.com"];
+const ADMIN_EMAILS = ["jethrun@comcast.net"];
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
