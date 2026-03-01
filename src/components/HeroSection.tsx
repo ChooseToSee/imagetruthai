@@ -109,7 +109,7 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
             className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-medium text-primary"
           >
             <TrendingUp className="h-3.5 w-3.5" />
-            3 AI Models for Detection
+            5 AI Models — Detection + Edit Analysis
           </motion.div>
           <br />
           <motion.div
