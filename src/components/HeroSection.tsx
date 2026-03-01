@@ -206,7 +206,7 @@ const HeroSection = ({ onScrollToUpload, onDemo }: HeroSectionProps) => {
             </div>
             <div className="text-center">
               <div className="font-display text-2xl font-bold text-success sm:text-3xl">
-                &lt;3s
+                &lt;10s
               </div>
               <p className="mt-1 text-xs text-muted-foreground">Avg Analysis Time</p>
             </div>
