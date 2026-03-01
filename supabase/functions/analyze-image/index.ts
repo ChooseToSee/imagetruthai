@@ -632,12 +632,13 @@ serve(async (req) => {
     }
 
     // Build edit detection tasks
-    type EditTask = { run: () => Promise<{ edited: boolean; confidence: number; reasons: string[] }>; label: string };
+    type EditResult = { edited: boolean; confidence: number; reasons: string[] };
+    type EditTask = { run: () => Promise<EditResult>; label: string };
     const editTasks: EditTask[] = [];
 
     if (SIGHTENGINE_API_USER && SIGHTENGINE_API_SECRET) {
       editTasks.push({
-        label: "SightEngine Quality",
+        label: "SightEngine",
         run: () => checkSightEngineQuality(imageBytes, mimeType, SIGHTENGINE_API_USER, SIGHTENGINE_API_SECRET),
       });
     }
@@ -647,6 +648,26 @@ serve(async (req) => {
         run: () => analyzeEditWithAI(imageBytes, mimeType, GOOGLE_AI_API_KEY),
       });
     }
+
+    // Helper: attach edit results to model breakdown entries
+    const attachEditToModels = (models: ModelResult[], edits: { label: string; result: EditResult }[]) => {
+      for (const edit of edits) {
+        // Try to find matching model by label prefix
+        const match = models.find(m => m.model.startsWith(edit.label));
+        if (match) {
+          match.manipulation = edit.result;
+        } else {
+          // Add as a new entry with manipulation data only
+          models.push({
+            model: edit.label,
+            verdict: "human",
+            confidence: 0,
+            reasons: [],
+            manipulation: edit.result,
+          });
+        }
+      }
+    };
 
     // Helper to clean up temp image
     const cleanupTemp = async () => {
@@ -673,9 +694,10 @@ serve(async (req) => {
         else console.error("Model failed:", r.reason);
       }
 
-      const successfulEdits: { edited: boolean; confidence: number; reasons: string[] }[] = [];
-      for (const r of editResults) {
-        if (r.status === "fulfilled") successfulEdits.push(r.value);
+      const successfulEdits: { label: string; result: { edited: boolean; confidence: number; reasons: string[] } }[] = [];
+      for (let i = 0; i < editResults.length; i++) {
+        const r = editResults[i];
+        if (r.status === "fulfilled") successfulEdits.push({ label: editTasks[i].label, result: r.value });
         else console.error("Edit check failed:", r.reason);
       }
 
@@ -687,7 +709,8 @@ serve(async (req) => {
       }
 
       const consensus = computeConsensus(successfulResults, tasks.length);
-      const manipulation = computeManipulation(successfulEdits);
+      const manipulation = computeManipulation(successfulEdits.map(e => e.result));
+      attachEditToModels(successfulResults, successfulEdits);
 
       await cleanupTemp();
 
@@ -706,13 +729,13 @@ serve(async (req) => {
         };
 
         const successfulResults: ModelResult[] = [];
-        const successfulEdits: { edited: boolean; confidence: number; reasons: string[] }[] = [];
+        const labeledEdits: { label: string; result: { edited: boolean; confidence: number; reasons: string[] } }[] = [];
 
         // Run edit detection in background
         const editPromise = Promise.allSettled(editTasks.map(async (task) => {
           try {
             const result = await task.run();
-            successfulEdits.push(result);
+            labeledEdits.push({ label: task.label, result });
           } catch (err) {
             console.error(`${task.label} edit failed:`, err);
           }
@@ -746,7 +769,8 @@ serve(async (req) => {
           send("error", { error: "All detection services failed" });
         } else {
           const final = computeConsensus(successfulResults, tasks.length);
-          const manipulation = computeManipulation(successfulEdits);
+          const manipulation = computeManipulation(labeledEdits.map(e => e.result));
+          attachEditToModels(successfulResults, labeledEdits);
           send("done", { ...final, modelBreakdown: successfulResults, manipulation });
         }
 
