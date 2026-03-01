@@ -666,7 +666,7 @@ serve(async (req) => {
     }
     if (GOOGLE_AI_API_KEY) {
       editTasks.push({
-        label: "AI Vision",
+        label: "Gemini",
         run: () => analyzeEditWithAI(imageBytes, mimeType, GOOGLE_AI_API_KEY),
       });
     }
