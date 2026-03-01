@@ -20,6 +20,16 @@ interface ModelResult {
   };
 }
 
+// Sanitize error text to remove potential secrets/keys before logging
+function sanitizeErrorText(text: string): string {
+  return text
+    .replace(/[A-Za-z0-9_\-]{20,}/g, "[REDACTED]")
+    .replace(/key[=:]\s*\S+/gi, "key=[REDACTED]")
+    .replace(/bearer\s+\S+/gi, "Bearer [REDACTED]")
+    .replace(/api[_-]?key[=:]\s*\S+/gi, "api_key=[REDACTED]")
+    .slice(0, 200);
+}
+
 // ── Winston AI ──────────────────────────────────────────────────────
 async function analyzeWithWinston(
   imageUrlOrNull: string | null,
@@ -56,8 +66,8 @@ async function analyzeWithWinston(
 
   if (!res.ok) {
     const t = await res.text();
-    console.error(`[Winston] API error [${res.status}]:`, t.slice(0, 300));
-    throw new Error(`Winston error [${res.status}]: ${t}`);
+    console.error(`[Winston] API error [${res.status}]:`, sanitizeErrorText(t));
+    throw new Error(`Winston analysis failed (${res.status})`);
   }
 
   const data = await res.json();
@@ -103,13 +113,15 @@ async function analyzeWithSightEngine(
 
   if (!res.ok) {
     const t = await res.text();
-    throw new Error(`SightEngine error [${res.status}]: ${t}`);
+    console.error(`[SightEngine] API error [${res.status}]:`, sanitizeErrorText(t));
+    throw new Error(`SightEngine analysis failed (${res.status})`);
   }
 
   const data = await res.json();
 
   if (data.status !== "success") {
-    throw new Error(`SightEngine failed: ${JSON.stringify(data)}`);
+    console.error("[SightEngine] Non-success status:", sanitizeErrorText(JSON.stringify(data)));
+    throw new Error("SightEngine analysis returned non-success status");
   }
 
   const aiGenerated = data?.type?.ai_generated ?? 0.5;
@@ -246,17 +258,17 @@ If you detect editing, explain specifically what was edited. If the image appear
       }),
     });
   } catch (fetchErr: any) {
-    console.error("[EditDetection] Fetch error:", fetchErr.message);
+    console.error("[EditDetection] Fetch error:", sanitizeErrorText(fetchErr.message));
     return {
       edited: false,
       confidence: 50,
-      reasons: [`Gemini API connection failed: ${fetchErr.message}`],
+      reasons: ["Edit detection service temporarily unavailable"],
     };
   }
 
   if (!res.ok) {
     const errorBody = await res.text();
-    console.error(`[EditDetection] Gemini API error [${res.status}]:`, errorBody.slice(0, 300));
+    console.error(`[EditDetection] Gemini API error [${res.status}]:`, sanitizeErrorText(errorBody));
     
     // If structured output fails, retry without responseSchema
     if (res.status === 400) {
@@ -267,7 +279,7 @@ If you detect editing, explain specifically what was edited. If the image appear
     return {
       edited: false,
       confidence: 50,
-      reasons: [`Gemini API error (${res.status}): ${errorBody.slice(0, 100)}`],
+      reasons: ["Edit detection service temporarily unavailable"],
     };
   }
 
@@ -314,7 +326,7 @@ async function analyzeEditWithAIFallback(
 
   if (!res.ok) {
     const t = await res.text();
-    console.error("[EditDetection Fallback] Error:", t.slice(0, 200));
+    console.error("[EditDetection Fallback] Error:", sanitizeErrorText(t));
     return { edited: false, confidence: 50, reasons: ["Edit analysis unavailable"] };
   }
 
@@ -404,7 +416,8 @@ async function analyzeWithAIorNot(
 
   if (!res.ok) {
     const t = await res.text();
-    throw new Error(`AI or Not error [${res.status}]: ${t}`);
+    console.error(`[AI or Not] API error [${res.status}]:`, sanitizeErrorText(t));
+    throw new Error(`AI or Not analysis failed (${res.status})`);
   }
 
   const data = await res.json();
@@ -547,6 +560,15 @@ serve(async (req) => {
   }
 
   try {
+    // Early Content-Length check before reading body
+    const contentLength = req.headers.get("content-length");
+    if (contentLength && parseInt(contentLength, 10) > 3 * 1024 * 1024) {
+      return new Response(
+        JSON.stringify({ error: "Request too large. Please upload an image under 2 MB." }),
+        { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const formData = await req.formData();
     const imageFile = formData.get("image") as File;
 
@@ -798,7 +820,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ error: (error as Error).message || "Internal server error" }),
+      JSON.stringify({ error: "Analysis failed. Please try again." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

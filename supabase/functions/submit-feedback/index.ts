@@ -17,13 +17,51 @@ serve(async (req) => {
   );
 
   try {
-    const { type, message, userEmail } = await req.json();
-    if (!message || message.length > 1000) throw new Error("Invalid message");
+    // Authenticate user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Authentication required" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
+    }
 
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError || !userData.user) {
+      return new Response(JSON.stringify({ error: "Invalid authentication" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
+    }
+
+    const { type, message } = await req.json();
+
+    // Validate type
+    const allowedTypes = ["feedback", "bug"];
+    const safeType = allowedTypes.includes(type) ? type : "feedback";
+
+    // Validate message
+    if (!message || typeof message !== "string") {
+      return new Response(JSON.stringify({ error: "Message is required" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    const trimmedMessage = message.trim();
+    if (trimmedMessage.length === 0 || trimmedMessage.length > 1000) {
+      return new Response(JSON.stringify({ error: "Message must be between 1 and 1000 characters" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    // Use authenticated user's email instead of client-provided value
     const { error } = await supabaseClient.from("feedback").insert({
-      type: type || "feedback",
-      message,
-      user_email: userEmail || "anonymous",
+      type: safeType,
+      message: trimmedMessage,
+      user_email: userData.user.email ?? "anonymous",
     });
     if (error) throw error;
 
@@ -32,7 +70,8 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("submit-feedback error:", error);
+    return new Response(JSON.stringify({ error: "Failed to submit feedback" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

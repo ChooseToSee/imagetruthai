@@ -81,7 +81,11 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    // Return generic error to client
+    const safeMessage = errorMessage.includes("Authentication") || errorMessage.includes("No authorization")
+      ? errorMessage
+      : "Failed to check subscription status";
+    return new Response(JSON.stringify({ error: safeMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

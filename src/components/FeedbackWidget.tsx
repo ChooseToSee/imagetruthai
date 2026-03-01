@@ -18,7 +18,7 @@ const FeedbackWidget = () => {
     setLoading(true);
     try {
       const { error } = await supabase.functions.invoke("submit-feedback", {
-        body: { type, message: message.trim(), userEmail: user?.email ?? "anonymous" },
+        body: { type, message: message.trim() },
       });
       if (error) throw error;
       toast({ title: "Thanks for your feedback!", description: "We'll review it shortly." });
