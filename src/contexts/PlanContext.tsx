@@ -1,11 +1,12 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type PlanTier = "free" | "plus" | "pro";
 
 interface PlanLimits {
   scansPerDay: number;
   batchLimit: number;
-  historyDays: number | null; // null = unlimited
+  historyDays: number | null;
   pdfExport: boolean;
   apiAccess: boolean;
 }
@@ -27,8 +28,16 @@ interface PlanContextType {
 const PlanContext = createContext<PlanContextType | undefined>(undefined);
 
 export const PlanProvider = ({ children }: { children: ReactNode }) => {
-  const [plan, setPlan] = useState<PlanTier>("free");
+  const { subscription } = useAuth();
+  const [overridePlan, setOverridePlan] = useState<PlanTier | null>(null);
   const [devMode, setDevMode] = useState(false);
+
+  // Sync plan from subscription unless dev override is active
+  const plan = devMode && overridePlan !== null ? overridePlan : subscription.tier;
+
+  const setPlan = (p: PlanTier) => {
+    setOverridePlan(p);
+  };
 
   return (
     <PlanContext.Provider value={{ plan, setPlan, limits: PLAN_LIMITS[plan], devMode, setDevMode }}>

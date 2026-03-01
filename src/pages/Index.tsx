@@ -105,8 +105,18 @@ const Index = () => {
   const [streamProgress, setStreamProgress] = useState<{ completed: number; total: number } | null>(null);
   const [partialReady, setPartialReady] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { user } = useAuth();
+  const { user, refreshSubscription } = useAuth();
   const { toast } = useToast();
+
+  // Handle checkout success redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") === "success") {
+      toast({ title: "Subscription activated!", description: "Your plan has been upgraded." });
+      refreshSubscription();
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   // 15s timeout: show partial results if not all models done
   useEffect(() => {
