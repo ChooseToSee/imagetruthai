@@ -8,11 +8,14 @@ import { PlanProvider } from "@/contexts/PlanContext";
 import DevPlanToolbar from "@/components/DevPlanToolbar";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import History from "./pages/History";
 import NotFound from "./pages/NotFound";
 import Contact from "./pages/Contact";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import FeedbackWidget from "./components/FeedbackWidget";
 
 const queryClient = new QueryClient();
 
@@ -27,12 +30,15 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/history" element={<History />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <FeedbackWidget />
             <DevPlanToolbar />
           </PlanProvider>
         </AuthProvider>
