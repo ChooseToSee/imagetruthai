@@ -691,16 +691,26 @@ serve(async (req) => {
       }
     };
 
-    // Helper to clean up temp image
+    // Helper to clean up temp image with retry
     const cleanupTemp = async () => {
-      if (tempImagePath) {
+      if (!tempImagePath) return;
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const sb = createClient(supabaseUrl, supabaseServiceKey);
+      const maxRetries = 3;
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-          const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-          const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-          const sb = createClient(supabaseUrl, supabaseServiceKey);
-          await sb.storage.from("scan-images").remove([tempImagePath]);
-        } catch (e) { console.error("Temp cleanup failed:", e); }
+          const { error } = await sb.storage.from("scan-images").remove([tempImagePath]);
+          if (error) throw error;
+          return; // success
+        } catch (e) {
+          console.error(`Temp cleanup attempt ${attempt}/${maxRetries} failed:`, e);
+          if (attempt < maxRetries) {
+            await new Promise((r) => setTimeout(r, 500 * attempt));
+          }
+        }
       }
+      console.error(`CRITICAL: Failed to clean up temp image after ${maxRetries} attempts: ${tempImagePath}`);
     };
 
     if (!wantsStream) {
