@@ -19,12 +19,12 @@ const Footer = () => {
             <a href="/contact" className="hover:text-foreground transition-colors">Contact</a>
           </div>
           <p className="text-[11px] text-muted-foreground/50">
-            © 2026 ImageTruth AI. All rights reserved.
+            © 2026 ImageTruth AI. All rights reserved. 
+ImageTruth AI is a registered trade name of Choose To See, LLC, a Colorado limited liability company. 
           </p>
         </div>
       </div>
-    </footer>
-  );
+    </footer>);
 };
 
 export default Footer;
