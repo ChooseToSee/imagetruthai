@@ -13,18 +13,23 @@ const Footer = () => {
             No detector is 100% accurate. ImageTruth AI is designed as a helper tool —
             always use your own judgment alongside automated analysis.
           </p>
-          <div className="flex gap-6 text-xs text-muted-foreground">
-            <a href="/privacy" className="hover:text-foreground transition-colors">Privacy</a>
-            <a href="/terms" className="hover:text-foreground transition-colors">Terms</a>
+          <div className="flex flex-wrap justify-center gap-6 text-xs text-muted-foreground">
+            <a href="/terms" className="hover:text-foreground transition-colors">Terms of Service</a>
+            <a href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</a>
+            <a href="/refund-policy" className="hover:text-foreground transition-colors">Refund Policy</a>
+            <a href="/ai-disclaimer" className="hover:text-foreground transition-colors">AI Disclaimer</a>
             <a href="/contact" className="hover:text-foreground transition-colors">Contact</a>
           </div>
+          <p className="max-w-lg text-[11px] text-muted-foreground/70">
+            ImageTruth AI is a trade name (DBA) of Choose To See, LLC, a Colorado limited liability company.
+          </p>
           <p className="text-[11px] text-muted-foreground/50">
-            © 2026 ImageTruth AI. All rights reserved. 
-ImageTruth AI is a registered trade name of Choose To See, LLC, a Colorado limited liability company. 
+            © 2026 Choose To See, LLC. All rights reserved.
           </p>
         </div>
       </div>
-    </footer>);
+    </footer>
+  );
 };
 
 export default Footer;

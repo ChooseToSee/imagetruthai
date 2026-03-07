@@ -366,6 +366,10 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
                 <> · <a href="#pricing" className="text-primary hover:underline">Upgrade for more slots</a></>
               )}
             </p>
+            <p className="mt-1.5 text-[11px] text-muted-foreground/70">
+              AI-generated analysis may be inaccurate. Results are informational only.{" "}
+              <a href="/ai-disclaimer" className="text-primary hover:underline">Learn more</a>
+            </p>
           </div>
         </div>
       </section>
