@@ -75,18 +75,19 @@ serve(async (req) => {
     if (hasValidSub) {
       // Prefer active over past_due
       const subscription = activeSubscriptions.data[0] || pastDueSubscriptions.data[0];
-      // Handle current_period_end as either unix timestamp (number) or ISO string
+      // Handle current_period_end - may be number, string, or Date object
       const periodEnd = subscription.current_period_end;
+      logStep("period_end raw", { periodEnd, type: typeof periodEnd });
       try {
         if (typeof periodEnd === "number") {
           subscriptionEnd = new Date(periodEnd * 1000).toISOString();
-        } else if (typeof periodEnd === "string") {
-          subscriptionEnd = new Date(periodEnd).toISOString();
+        } else if (periodEnd) {
+          subscriptionEnd = String(periodEnd);
         } else {
           subscriptionEnd = null;
         }
-      } catch {
-        logStep("WARN: Could not parse current_period_end", { periodEnd });
+      } catch (e) {
+        logStep("WARN: Could not parse current_period_end", { periodEnd, error: String(e) });
         subscriptionEnd = null;
       }
       productId = subscription.items.data[0].price.product;
