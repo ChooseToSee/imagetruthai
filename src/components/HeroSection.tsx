@@ -105,7 +105,23 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            Is This Image Real or Fake?{" "}
+            Is This Image{" "}
+            <span className="relative inline-block min-w-[180px] sm:min-w-[240px] text-left">
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={cycleWords[wordIndex]}
+                  className="text-gradient-brand inline-block"
+                  initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, y: -20, filter: "blur(4px)" }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                >
+                  {cycleWords[wordIndex]}
+                </motion.span>
+              </AnimatePresence>
+            </span>
+            ?{" "}
+            <br className="hidden sm:block" />
             <span className="text-gradient-brand">Analyze It With AI.</span>
           </motion.h1>
 
