@@ -10,6 +10,7 @@ interface SubscriptionState {
   productId: string | null;
   tier: PlanTier;
   subscriptionEnd: string | null;
+  status: string | null; // "active" | "past_due" | null
 }
 
 interface AuthContextType {
