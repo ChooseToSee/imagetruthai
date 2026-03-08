@@ -20,6 +20,7 @@ import RefundPolicy from "./pages/RefundPolicy";
 import AiDisclaimer from "./pages/AiDisclaimer";
 import HowItWorksPage from "./pages/HowItWorks";
 import PhotoshoppedSigns from "./pages/PhotoshoppedSigns";
+import SharedReport from "./pages/SharedReport";
 import FeedbackWidget from "./components/FeedbackWidget";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
                 <Route path="/ai-disclaimer" element={<AiDisclaimer />} />
                 <Route path="/how-it-works" element={<HowItWorksPage />} />
                 <Route path="/blog/photoshopped-signs" element={<PhotoshoppedSigns />} />
+                <Route path="/report/:token" element={<SharedReport />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <FeedbackWidget />

@@ -146,6 +146,54 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_reports: {
+        Row: {
+          confidence: number
+          created_at: string
+          file_name: string
+          id: string
+          image_url: string | null
+          is_public: boolean
+          manipulation: Json | null
+          model_breakdown: Json | null
+          reasons: string[]
+          share_token: string
+          tips: string[]
+          user_id: string
+          verdict: string
+        }
+        Insert: {
+          confidence: number
+          created_at?: string
+          file_name?: string
+          id?: string
+          image_url?: string | null
+          is_public?: boolean
+          manipulation?: Json | null
+          model_breakdown?: Json | null
+          reasons?: string[]
+          share_token?: string
+          tips?: string[]
+          user_id: string
+          verdict: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          file_name?: string
+          id?: string
+          image_url?: string | null
+          is_public?: boolean
+          manipulation?: Json | null
+          model_breakdown?: Json | null
+          reasons?: string[]
+          share_token?: string
+          tips?: string[]
+          user_id?: string
+          verdict?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
