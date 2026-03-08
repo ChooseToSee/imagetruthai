@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      consent_logs: {
+        Row: {
+          ai_disclaimer_accepted: boolean
+          created_at: string
+          id: string
+          ip_address: string | null
+          terms_version: string
+          upload_consent_accepted: boolean
+          user_id: string | null
+        }
+        Insert: {
+          ai_disclaimer_accepted?: boolean
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          terms_version: string
+          upload_consent_accepted?: boolean
+          user_id?: string | null
+        }
+        Update: {
+          ai_disclaimer_accepted?: boolean
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          terms_version?: string
+          upload_consent_accepted?: boolean
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           created_at: string
