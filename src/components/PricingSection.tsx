@@ -86,7 +86,7 @@ const PricingSection = () => {
     try {
       const { data, error } = await supabase.functions.invoke("customer-portal");
       if (error) throw error;
-      if (data?.url) window.location.href = data.url;
+      if (data?.url) window.open(data.url, "_blank");
     } catch (err: any) {
       toast({ title: "Portal failed", description: err.message, variant: "destructive" });
     } finally {
