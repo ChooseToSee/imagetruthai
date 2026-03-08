@@ -26,32 +26,35 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <PlanProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/history" element={<History />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/refund-policy" element={<RefundPolicy />} />
-              <Route path="/ai-disclaimer" element={<AiDisclaimer />} />
-              <Route path="/how-it-works" element={<HowItWorksPage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <FeedbackWidget />
-            <DevPlanToolbar />
-          </PlanProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
+    <HelmetProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <PlanProvider>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/history" element={<History />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/refund-policy" element={<RefundPolicy />} />
+                <Route path="/ai-disclaimer" element={<AiDisclaimer />} />
+                <Route path="/how-it-works" element={<HowItWorksPage />} />
+                <Route path="/blog/photoshopped-signs" element={<PhotoshoppedSigns />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <FeedbackWidget />
+              <DevPlanToolbar />
+            </PlanProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </HelmetProvider>
   </QueryClientProvider>
 );
 
