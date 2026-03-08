@@ -17,6 +17,7 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import RefundPolicy from "./pages/RefundPolicy";
 import AiDisclaimer from "./pages/AiDisclaimer";
+import HowItWorksPage from "./pages/HowItWorks";
 import FeedbackWidget from "./components/FeedbackWidget";
 
 const queryClient = new QueryClient();
