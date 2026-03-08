@@ -53,27 +53,39 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found customer", { customerId });
 
-    const subscriptions = await stripe.subscriptions.list({
+    // Check for active or past_due (grace period) subscriptions
+    const activeSubscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
       limit: 1,
     });
 
-    const hasActiveSub = subscriptions.data.length > 0;
+    const pastDueSubscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "past_due",
+      limit: 1,
+    });
+
+    const allSubs = [...activeSubscriptions.data, ...pastDueSubscriptions.data];
+    const hasValidSub = allSubs.length > 0;
     let productId = null;
     let subscriptionEnd = null;
+    let status = null;
 
-    if (hasActiveSub) {
-      const subscription = subscriptions.data[0];
+    if (hasValidSub) {
+      // Prefer active over past_due
+      const subscription = activeSubscriptions.data[0] || pastDueSubscriptions.data[0];
       subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
       productId = subscription.items.data[0].price.product;
-      logStep("Active subscription", { productId, subscriptionEnd });
+      status = subscription.status;
+      logStep("Valid subscription", { productId, subscriptionEnd, status });
     }
 
     return new Response(JSON.stringify({
-      subscribed: hasActiveSub,
+      subscribed: hasValidSub,
       product_id: productId,
       subscription_end: subscriptionEnd,
+      status,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
