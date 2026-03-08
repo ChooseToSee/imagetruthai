@@ -618,15 +618,58 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
               <p className="mb-4 text-center text-[11px] text-muted-foreground/70">
                 AI-generated analysis may be inaccurate. Results are informational only and should be independently verified.
               </p>
+
+              {/* Share link section */}
+              {shareLink && (
+                <div className="mb-4 rounded-lg border border-border bg-muted/30 p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <LinkIcon className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-xs font-semibold text-foreground">Share Link</span>
+                    <button
+                      onClick={handleTogglePrivacy}
+                      className="ml-auto flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {isPublic ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+                      {isPublic ? "Public" : "Private"}
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      readOnly
+                      value={shareLink}
+                      className="flex-1 bg-muted rounded px-2 py-1 text-xs text-foreground border border-border"
+                      onClick={(e) => (e.target as HTMLInputElement).select()}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs h-7"
+                      onClick={() => {
+                        navigator.clipboard.writeText(shareLink);
+                        toast({ title: "Link copied!" });
+                      }}
+                    >
+                      Copy
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div className="flex flex-wrap justify-center gap-3">
                 <Button variant="outline" onClick={onReset} className="gap-2">
                   <RotateCcw className="h-4 w-4" />
                   Analyze Another
                 </Button>
-                <Button variant="secondary" onClick={handleDownloadPdf} className="gap-2">
-                  <Download className="h-4 w-4" />
-                  Download Report
+                <Button variant="secondary" onClick={handleDownloadPdf} disabled={isExportingPdf} className="gap-2">
+                  {isExportingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  Download PDF
                 </Button>
+                {!shareLink && (
+                  <Button variant="secondary" onClick={handleGenerateShareLink} disabled={isSharing} className="gap-2">
+                    {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <LinkIcon className="h-4 w-4" />}
+                    Generate Share Link
+                  </Button>
+                )}
                 <Button variant="secondary" onClick={handleShare} className="gap-2">
                   {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
                   Share
