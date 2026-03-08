@@ -105,6 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    clearSessionConsent();
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };
