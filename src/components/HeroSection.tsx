@@ -106,7 +106,7 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
             transition={{ duration: 0.6, delay: 0.1 }}
           >
             Is This Image{" "}
-            <span className="relative inline-block min-w-[180px] sm:min-w-[240px] text-left">
+            <span className="relative inline-flex items-baseline">
               <AnimatePresence mode="wait">
                 <motion.span
                   key={cycleWords[wordIndex]}
@@ -119,8 +119,8 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
                   {cycleWords[wordIndex]}
                 </motion.span>
               </AnimatePresence>
-            </span>
-            ?{" "}
+              <span className="text-foreground">?</span>
+            </span>{" "}
             <br className="hidden sm:block" />
             <span className="text-gradient-brand">Analyze It With AI.</span>
           </motion.h1>
