@@ -3,6 +3,9 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { productIdToTier } from "@/lib/stripe-config";
 import type { PlanTier } from "@/contexts/PlanContext";
+import { clearSessionConsent } from "@/lib/consent";
+import { productIdToTier } from "@/lib/stripe-config";
+import type { PlanTier } from "@/contexts/PlanContext";
 
 interface SubscriptionState {
   subscribed: boolean;
