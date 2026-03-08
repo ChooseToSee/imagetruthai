@@ -660,10 +660,17 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                   <RotateCcw className="h-4 w-4" />
                   Analyze Another
                 </Button>
-                <Button variant="secondary" onClick={handleDownloadPdf} disabled={isExportingPdf} className="gap-2">
-                  {isExportingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                  Download PDF
-                </Button>
+                {plan === "pro" ? (
+                  <Button variant="secondary" onClick={handleDownloadPdf} disabled={isExportingPdf} className="gap-2">
+                    {isExportingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                    Download PDF
+                  </Button>
+                ) : (
+                  <Button variant="secondary" disabled className="gap-2 opacity-60" title="PDF export is available on the Unlimited plan">
+                    <Lock className="h-4 w-4" />
+                    PDF (Pro)
+                  </Button>
+                )}
                 {!shareLink && (
                   <Button variant="secondary" onClick={handleGenerateShareLink} disabled={isSharing} className="gap-2">
                     {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <LinkIcon className="h-4 w-4" />}
