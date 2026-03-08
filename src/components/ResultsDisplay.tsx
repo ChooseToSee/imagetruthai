@@ -163,15 +163,22 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
               )}
             </div>
             {/* Tabbed results */}
-            <Tabs defaultValue="ai-detection" className="px-6 pb-6">
-              <TabsList className="grid w-full grid-cols-2 mb-4 h-11 bg-muted/80 border border-border">
-                <TabsTrigger value="ai-detection" className="gap-2 text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:bg-card data-[state=inactive]:text-foreground data-[state=inactive]:border data-[state=inactive]:border-border data-[state=inactive]:hover:bg-accent">
+            <Tabs defaultValue="ai-detection" className="px-6 pb-4">
+              <TabsList className="grid w-full grid-cols-3 mb-4 h-11 bg-muted/80 border border-border">
+                <TabsTrigger value="ai-detection" className="gap-2 text-xs sm:text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:bg-card data-[state=inactive]:text-foreground data-[state=inactive]:border data-[state=inactive]:border-border data-[state=inactive]:hover:bg-accent">
                   <Brain className="h-4 w-4" />
-                  AI Detection
+                  <span className="hidden sm:inline">AI Detection</span>
+                  <span className="sm:hidden">AI</span>
                 </TabsTrigger>
-                <TabsTrigger value="edit-detection" className="gap-2 text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:bg-card data-[state=inactive]:text-foreground data-[state=inactive]:border data-[state=inactive]:border-border data-[state=inactive]:hover:bg-accent">
+                <TabsTrigger value="edit-detection" className="gap-2 text-xs sm:text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:bg-card data-[state=inactive]:text-foreground data-[state=inactive]:border data-[state=inactive]:border-border data-[state=inactive]:hover:bg-accent">
                   <Pencil className="h-4 w-4" />
-                  Edit Detection
+                  <span className="hidden sm:inline">Edit Detection</span>
+                  <span className="sm:hidden">Edits</span>
+                </TabsTrigger>
+                <TabsTrigger value="details" className="gap-2 text-xs sm:text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:bg-card data-[state=inactive]:text-foreground data-[state=inactive]:border data-[state=inactive]:border-border data-[state=inactive]:hover:bg-accent">
+                  <FileText className="h-4 w-4" />
+                  <span className="hidden sm:inline">Details</span>
+                  <span className="sm:hidden">Info</span>
                 </TabsTrigger>
               </TabsList>
 
