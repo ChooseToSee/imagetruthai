@@ -1,5 +1,6 @@
+import { useState, useEffect } from "react";
 import { Upload, Zap, Shield, Search, Fingerprint, FileWarning, ScanEye } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import montage1 from "@/assets/montage-1.jpg";
 import montage2 from "@/assets/montage-2.jpg";
@@ -29,7 +30,17 @@ interface HeroSectionProps {
   onStartFree: () => void;
 }
 
+const cycleWords = ["Real", "Fake", "AI-Generated", "Photoshopped", "Edited"];
+
 const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
+  const [wordIndex, setWordIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWordIndex((prev) => (prev + 1) % cycleWords.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
   return (
     <section className="relative flex flex-col items-center overflow-hidden pt-16">
       {/* Image montage background */}
@@ -94,7 +105,23 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            Is This Image Real or Fake?{" "}
+            Is This Image{" "}
+            <span className="relative inline-block min-w-[180px] sm:min-w-[240px] text-left">
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={cycleWords[wordIndex]}
+                  className="text-gradient-brand inline-block"
+                  initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, y: -20, filter: "blur(4px)" }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                >
+                  {cycleWords[wordIndex]}
+                </motion.span>
+              </AnimatePresence>
+            </span>
+            ?{" "}
+            <br className="hidden sm:block" />
             <span className="text-gradient-brand">Analyze It With AI.</span>
           </motion.h1>
 
