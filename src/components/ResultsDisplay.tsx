@@ -80,7 +80,13 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [showEditBreakdown, setShowEditBreakdown] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [shareLink, setShareLink] = useState<string | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
+  const [isPublic, setIsPublic] = useState(false);
+  const [shareReportId, setShareReportId] = useState<string | null>(null);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
   const isStreaming = !!streamProgress && !partialReady;
 
   const manipulation = result.manipulation;
