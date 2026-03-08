@@ -3,6 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { productIdToTier } from "@/lib/stripe-config";
 import type { PlanTier } from "@/contexts/PlanContext";
+import { clearSessionConsent } from "@/lib/consent";
 
 interface SubscriptionState {
   subscribed: boolean;
@@ -102,6 +103,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    clearSessionConsent();
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };

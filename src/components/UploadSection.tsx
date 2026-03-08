@@ -298,7 +298,7 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
                 <div className="flex items-start gap-3">
                   <Checkbox id="consent-1" checked={consent1} onCheckedChange={(v) => setConsent1(v === true)} />
                   <Label htmlFor="consent-1" className="text-sm leading-relaxed text-muted-foreground cursor-pointer">
-                    I grant ImageTruth AI permission to analyze all images I upload.
+                    I confirm that I have the legal right to upload this image and grant ImageTruth AI permission to analyze it.
                   </Label>
                 </div>
                 <div className="flex items-start gap-3">
