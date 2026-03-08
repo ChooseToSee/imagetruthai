@@ -20,6 +20,7 @@ import RefundPolicy from "./pages/RefundPolicy";
 import AiDisclaimer from "./pages/AiDisclaimer";
 import HowItWorksPage from "./pages/HowItWorks";
 import PhotoshoppedSigns from "./pages/PhotoshoppedSigns";
+import SharedReport from "./pages/SharedReport";
 import FeedbackWidget from "./components/FeedbackWidget";
 
 const queryClient = new QueryClient();
