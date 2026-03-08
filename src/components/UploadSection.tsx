@@ -420,6 +420,8 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
               AI-generated analysis may be inaccurate. Results are informational only.{" "}
               <a href="/ai-disclaimer" className="text-primary hover:underline">Learn more</a>
             </p>
+              </>
+            )}
           </div>
         </div>
       </section>
