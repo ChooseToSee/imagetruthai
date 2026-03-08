@@ -5,6 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { usePlan } from "@/contexts/PlanContext";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  getSessionConsent,
+  setSessionConsent,
+  checkExistingConsent,
+  logConsent,
+  CURRENT_TERMS_VERSION,
+} from "@/lib/consent";
 
 interface UploadSectionProps {
   onAnalyze: (files: File[]) => void;
