@@ -22,10 +22,15 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
     const [selectedFiles, setSelectedFiles] = useState<FilePreview[]>([]);
     const [urlInput, setUrlInput] = useState("");
     const [urlLoading, setUrlLoading] = useState(false);
+    const [consentGiven, setConsentGiven] = useState(false);
+    const [consent1, setConsent1] = useState(false);
+    const [consent2, setConsent2] = useState(false);
+    const [consent3, setConsent3] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const { plan, limits } = usePlan();
 
     const maxSlots = limits.batchLimit;
+    const allConsentsChecked = consent1 && consent2 && consent3;
 
     const addFiles = useCallback((newFiles: FileList | File[]) => {
       const filesToAdd = Array.from(newFiles);
