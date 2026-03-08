@@ -2,6 +2,8 @@ import { useState, useCallback, useRef, useEffect, forwardRef } from "react";
 import { Upload, Image as ImageIcon, X, Loader2, Plus, Link as LinkIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { usePlan } from "@/contexts/PlanContext";
 
 interface UploadSectionProps {
@@ -20,10 +22,15 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
     const [selectedFiles, setSelectedFiles] = useState<FilePreview[]>([]);
     const [urlInput, setUrlInput] = useState("");
     const [urlLoading, setUrlLoading] = useState(false);
+    const [consentGiven, setConsentGiven] = useState(false);
+    const [consent1, setConsent1] = useState(false);
+    const [consent2, setConsent2] = useState(false);
+    const [consent3, setConsent3] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const { plan, limits } = usePlan();
 
     const maxSlots = limits.batchLimit;
+    const allConsentsChecked = consent1 && consent2 && consent3;
 
     const addFiles = useCallback((newFiles: FileList | File[]) => {
       const filesToAdd = Array.from(newFiles);
@@ -235,6 +242,49 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
             </motion.div>
 
             {/* Upload hint */}
+            {/* Consent checkboxes — required before first upload */}
+            {!consentGiven && (
+              <motion.div
+                className="mb-6 space-y-3 rounded-xl border border-border bg-card p-5 text-left shadow-card"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.18 }}
+              >
+                <p className="mb-3 text-sm font-medium text-foreground">Before uploading, please confirm:</p>
+                <div className="flex items-start gap-3">
+                  <Checkbox id="consent-1" checked={consent1} onCheckedChange={(v) => setConsent1(v === true)} />
+                  <Label htmlFor="consent-1" className="text-sm leading-relaxed text-muted-foreground cursor-pointer">
+                    I grant ImageTruth AI permission to analyze all images I upload.
+                  </Label>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Checkbox id="consent-2" checked={consent2} onCheckedChange={(v) => setConsent2(v === true)} />
+                  <Label htmlFor="consent-2" className="text-sm leading-relaxed text-muted-foreground cursor-pointer">
+                    I understand that ImageTruth AI provides AI-generated analysis that may be inaccurate or incomplete and should not be treated as definitive proof.
+                  </Label>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Checkbox id="consent-3" checked={consent3} onCheckedChange={(v) => setConsent3(v === true)} />
+                  <Label htmlFor="consent-3" className="text-sm leading-relaxed text-muted-foreground cursor-pointer">
+                    I agree to the{" "}
+                    <a href="/terms" className="text-primary hover:underline">Terms of Service</a> and{" "}
+                    <a href="/privacy" className="text-primary hover:underline">Privacy Policy</a>.
+                  </Label>
+                </div>
+                <Button
+                  size="sm"
+                  className="mt-2"
+                  disabled={!allConsentsChecked}
+                  onClick={() => setConsentGiven(true)}
+                >
+                  Continue to Upload
+                </Button>
+              </motion.div>
+            )}
+
+            {consentGiven && (
+              <>
             <motion.p
               className="mb-3 text-sm text-muted-foreground"
               initial={{ opacity: 0 }}
@@ -370,6 +420,8 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
               AI-generated analysis may be inaccurate. Results are informational only.{" "}
               <a href="/ai-disclaimer" className="text-primary hover:underline">Learn more</a>
             </p>
+              </>
+            )}
           </div>
         </div>
       </section>
