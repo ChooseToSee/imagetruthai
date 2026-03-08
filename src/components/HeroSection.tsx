@@ -1,5 +1,6 @@
+import { useState, useEffect } from "react";
 import { Upload, Zap, Shield, Search, Fingerprint, FileWarning, ScanEye } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import montage1 from "@/assets/montage-1.jpg";
 import montage2 from "@/assets/montage-2.jpg";
