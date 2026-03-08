@@ -242,6 +242,49 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
             </motion.div>
 
             {/* Upload hint */}
+            {/* Consent checkboxes — required before first upload */}
+            {!consentGiven && (
+              <motion.div
+                className="mb-6 space-y-3 rounded-xl border border-border bg-card p-5 text-left shadow-card"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.18 }}
+              >
+                <p className="mb-3 text-sm font-medium text-foreground">Before uploading, please confirm:</p>
+                <div className="flex items-start gap-3">
+                  <Checkbox id="consent-1" checked={consent1} onCheckedChange={(v) => setConsent1(v === true)} />
+                  <Label htmlFor="consent-1" className="text-sm leading-relaxed text-muted-foreground cursor-pointer">
+                    I grant ImageTruth AI permission to analyze all images I upload.
+                  </Label>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Checkbox id="consent-2" checked={consent2} onCheckedChange={(v) => setConsent2(v === true)} />
+                  <Label htmlFor="consent-2" className="text-sm leading-relaxed text-muted-foreground cursor-pointer">
+                    I understand that ImageTruth AI provides AI-generated analysis that may be inaccurate or incomplete and should not be treated as definitive proof.
+                  </Label>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Checkbox id="consent-3" checked={consent3} onCheckedChange={(v) => setConsent3(v === true)} />
+                  <Label htmlFor="consent-3" className="text-sm leading-relaxed text-muted-foreground cursor-pointer">
+                    I agree to the{" "}
+                    <a href="/terms" className="text-primary hover:underline">Terms of Service</a> and{" "}
+                    <a href="/privacy" className="text-primary hover:underline">Privacy Policy</a>.
+                  </Label>
+                </div>
+                <Button
+                  size="sm"
+                  className="mt-2"
+                  disabled={!allConsentsChecked}
+                  onClick={() => setConsentGiven(true)}
+                >
+                  Continue to Upload
+                </Button>
+              </motion.div>
+            )}
+
+            {consentGiven && (
+              <>
             <motion.p
               className="mb-3 text-sm text-muted-foreground"
               initial={{ opacity: 0 }}
