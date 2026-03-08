@@ -24,7 +24,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
-const defaultSub: SubscriptionState = { subscribed: false, productId: null, tier: "free", subscriptionEnd: null };
+const defaultSub: SubscriptionState = { subscribed: false, productId: null, tier: "free", subscriptionEnd: null, status: null };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
