@@ -201,24 +201,17 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
-            {/* Image preview */}
+            {/* Image preview with heatmap */}
             <div className="p-6 pb-0">
               <motion.div
-                className="relative mb-4 overflow-hidden rounded-lg bg-muted"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
               >
-                <img
-                  src={imagePreview}
-                  alt="Analyzed"
-                  className="mx-auto max-h-64 rounded-lg object-contain"
-                />
-                <motion.div
-                  className="absolute inset-x-0 h-0.5 bg-primary/40"
-                  initial={{ top: 0 }}
-                  animate={{ top: ["0%", "100%", "0%"] }}
-                  transition={{ duration: 2, repeat: 1, ease: "easeInOut" }}
+                <ImageHeatmap
+                  imageUrl={imagePreview}
+                  reasons={result.reasons}
+                  manipulationReasons={manipulation?.reasons}
                 />
               </motion.div>
 
