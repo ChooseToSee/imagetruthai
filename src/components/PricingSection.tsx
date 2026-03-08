@@ -73,7 +73,7 @@ const PricingSection = () => {
         body: { priceId },
       });
       if (error) throw error;
-      if (data?.url) window.open(data.url, "_blank");
+      if (data?.url) window.location.href = data.url;
     } catch (err: any) {
       toast({ title: "Checkout failed", description: err.message, variant: "destructive" });
     } finally {
