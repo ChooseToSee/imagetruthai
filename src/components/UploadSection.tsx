@@ -318,9 +318,10 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
                 <Button
                   size="sm"
                   className="mt-2"
-                  disabled={!allConsentsChecked}
-                  onClick={() => setConsentGiven(true)}
+                  disabled={!allConsentsChecked || consentLoading}
+                  onClick={handleConsentConfirm}
                 >
+                  {consentLoading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
                   Continue to Upload
                 </Button>
               </motion.div>
