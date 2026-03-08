@@ -1,10 +1,14 @@
 import { useState, useCallback } from "react";
-import { AlertTriangle, CheckCircle, Info, RotateCcw, ChevronDown, ChevronUp, Brain, Share2, Check, Pencil, ShieldCheck, Download, FileText, Eye } from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, RotateCcw, ChevronDown, ChevronUp, Brain, Share2, Check, Pencil, ShieldCheck, Download, FileText, Eye, Link as LinkIcon, Lock, Globe, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { shareContent } from "@/lib/share";
+import { exportReportPdf } from "@/lib/pdf-export";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import ImageHeatmap from "@/components/ImageHeatmap";
 
 export interface ModelBreakdown {
   model: string;
