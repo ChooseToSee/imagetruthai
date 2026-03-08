@@ -12,51 +12,45 @@ const plans = [
   {
     name: "Free",
     price: "$0",
-    period: "forever",
+    period: "/month",
     tier: "free" as const,
     features: [
       "3 scans per day",
       "Single image upload",
-      "AI vs human detection",
-      "Edit detection analysis",
-      "Community support",
+      "Limited scan history",
     ],
-    cta: "Get Started",
-    highlighted: false,
-  },
-  {
-    name: "Plus",
-    price: "$7",
-    period: "/month",
-    yearly: "$59/year",
-    tier: "plus" as const,
-    features: [
-      "50 scans per day",
-      "Batch upload up to 5 images",
-      "30-day scan history with thumbnails",
-      "Full detailed forensic reports",
-      "Multi-model consensus analysis",
-      "Email support",
-    ],
-    cta: "Start Plus",
+    cta: "Start Free",
     highlighted: false,
   },
   {
     name: "Pro",
+    price: "$7",
+    period: "/month",
+    tier: "plus" as const,
+    features: [
+      "50 scans per day",
+      "Batch upload up to 5 images",
+      "30-day scan history",
+      "Full detailed forensic reports",
+      "Email support",
+    ],
+    cta: "Start Pro",
+    highlighted: false,
+  },
+  {
+    name: "Unlimited",
     price: "$19",
     period: "/month",
-    yearly: "$159/year",
     tier: "pro" as const,
     features: [
       "Unlimited scans",
       "Batch upload up to 20 images",
-      "Exportable PDF reports",
-      "API access (1,000 calls/mo)",
       "Unlimited scan history",
-      "Multi-model consensus analysis",
+      "Exportable PDF reports",
+      "API access",
       "Priority support",
     ],
-    cta: "Start Pro Trial",
+    cta: "Start Unlimited",
     highlighted: true,
   },
 ];
@@ -72,7 +66,6 @@ const PricingSection = () => {
       navigate("/auth");
       return;
     }
-
     setLoadingTier(tier);
     try {
       const priceId = STRIPE_TIERS[tier].price_id;
@@ -80,9 +73,7 @@ const PricingSection = () => {
         body: { priceId },
       });
       if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
-      }
+      if (data?.url) window.open(data.url, "_blank");
     } catch (err: any) {
       toast({ title: "Checkout failed", description: err.message, variant: "destructive" });
     } finally {
@@ -95,9 +86,7 @@ const PricingSection = () => {
     try {
       const { data, error } = await supabase.functions.invoke("customer-portal");
       if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
-      }
+      if (data?.url) window.open(data.url, "_blank");
     } catch (err: any) {
       toast({ title: "Portal failed", description: err.message, variant: "destructive" });
     } finally {
@@ -117,7 +106,7 @@ const PricingSection = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            Simple Pricing
+            Pricing
           </motion.h2>
           <motion.p
             className="text-muted-foreground"
@@ -126,7 +115,7 @@ const PricingSection = () => {
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
           >
-            Start free — upgrade when you need more power.
+            Start free — upgrade when you need more.
           </motion.p>
         </div>
 
@@ -156,23 +145,14 @@ const PricingSection = () => {
                 )}
                 {!isCurrentPlan && plan.highlighted && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-0.5 text-xs font-semibold text-primary-foreground">
-                    Most Popular
+                    Best Value
                   </div>
                 )}
-                <h3 className="font-display text-xl font-bold text-foreground">
-                  {plan.name}
-                </h3>
+                <h3 className="font-display text-xl font-bold text-foreground">{plan.name}</h3>
                 <div className="mt-4 flex items-baseline gap-1">
-                  <span className="font-display text-4xl font-bold text-foreground">
-                    {plan.price}
-                  </span>
+                  <span className="font-display text-4xl font-bold text-foreground">{plan.price}</span>
                   <span className="text-sm text-muted-foreground">{plan.period}</span>
                 </div>
-                {plan.yearly && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    or {plan.yearly} (save 27%)
-                  </p>
-                )}
 
                 <ul className="mt-8 space-y-3">
                   {plan.features.map((f) => (
@@ -198,7 +178,7 @@ const PricingSection = () => {
                     variant="outline"
                     onClick={() => !user && navigate("/auth")}
                   >
-                    {user ? "Current Plan" : "Get Started"}
+                    {user ? "Current Plan" : "Start Free"}
                   </Button>
                 ) : (
                   <Button

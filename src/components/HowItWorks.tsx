@@ -1,21 +1,21 @@
-import { Upload, Cpu, ShieldCheck } from "lucide-react";
+import { Upload, Cpu, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 
 const steps = [
   {
     icon: Upload,
-    title: "Upload Image",
-    description: "Drag & drop, paste a URL, or select any JPG, PNG, or WEBP image up to 10 MB.",
+    title: "Upload",
+    description: "Upload an image from your device.",
   },
   {
     icon: Cpu,
-    title: "Dual-Layer Analysis",
-    description: "Our multi-model engine detects AI generation and identifies editing artifacts like splicing, retouching, and clone-stamping.",
+    title: "Analyze",
+    description: "Our AI system analyzes visual patterns and metadata signals.",
   },
   {
-    icon: ShieldCheck,
-    title: "Get Verdicts",
-    description: "Receive separate AI-detection and edit-detection confidence scores with detailed forensic reasoning.",
+    icon: FileText,
+    title: "Report",
+    description: "Receive a structured report with AI-generated insights.",
   },
 ];
 
@@ -39,7 +39,7 @@ const HowItWorks = () => {
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
           >
-            Three simple steps to verify any image.
+            Three simple steps to analyze any image.
           </motion.p>
         </div>
 
