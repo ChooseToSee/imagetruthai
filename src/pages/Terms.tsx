@@ -52,11 +52,18 @@ const Terms = () => {
           <p>You agree not to:</p>
           <ul className="list-disc pl-6 space-y-1">
             <li>Upload illegal, obscene, or harmful content</li>
+            <li>Upload images that infringe on the intellectual property, privacy, or other rights of any third party</li>
+            <li>Upload abusive, exploitative, or sensitive images, including but not limited to content depicting minors, violence, or non-consensual intimate imagery</li>
             <li>Attempt to reverse-engineer, decompile, or exploit the Service</li>
             <li>Use the Service for harassment, defamation, or fraud</li>
             <li>Circumvent usage limits or access restrictions</li>
             <li>Resell or redistribute analysis results commercially without permission</li>
           </ul>
+          <p className="mt-2">
+            Violation of these upload restrictions may result in immediate account suspension or
+            termination without prior notice. We reserve the right to review and remove any content
+            that violates these Terms at our sole discretion.
+          </p>
 
           <h2 className="text-lg font-semibold text-foreground">6. Intellectual Property</h2>
           <p>
