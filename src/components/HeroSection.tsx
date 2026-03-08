@@ -30,7 +30,17 @@ interface HeroSectionProps {
   onStartFree: () => void;
 }
 
+const cycleWords = ["Real", "Fake", "AI-Generated", "Photoshopped", "Edited"];
+
 const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
+  const [wordIndex, setWordIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWordIndex((prev) => (prev + 1) % cycleWords.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
   return (
     <section className="relative flex flex-col items-center overflow-hidden pt-16">
       {/* Image montage background */}
