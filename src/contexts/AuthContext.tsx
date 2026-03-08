@@ -49,6 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         productId: data.product_id,
         tier,
         subscriptionEnd: data.subscription_end,
+        status: data.status ?? null,
       });
     } catch (err) {
       console.error("Failed to check subscription:", err);
