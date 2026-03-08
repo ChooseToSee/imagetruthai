@@ -5,6 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { usePlan } from "@/contexts/PlanContext";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  getSessionConsent,
+  setSessionConsent,
+  checkExistingConsent,
+  logConsent,
+  CURRENT_TERMS_VERSION,
+} from "@/lib/consent";
 
 interface UploadSectionProps {
   onAnalyze: (files: File[]) => void;
@@ -22,15 +30,50 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
     const [selectedFiles, setSelectedFiles] = useState<FilePreview[]>([]);
     const [urlInput, setUrlInput] = useState("");
     const [urlLoading, setUrlLoading] = useState(false);
-    const [consentGiven, setConsentGiven] = useState(false);
+    const [consentGiven, setConsentGiven] = useState(() => getSessionConsent());
+    const [consentLoading, setConsentLoading] = useState(false);
     const [consent1, setConsent1] = useState(false);
     const [consent2, setConsent2] = useState(false);
     const [consent3, setConsent3] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const { plan, limits } = usePlan();
+    const { user } = useAuth();
 
     const maxSlots = limits.batchLimit;
     const allConsentsChecked = consent1 && consent2 && consent3;
+
+    // On mount or user change, check if consent already recorded for current terms version
+    useEffect(() => {
+      if (consentGiven) return;
+      if (!user) return;
+      let cancelled = false;
+      checkExistingConsent(user.id).then((alreadyConsented) => {
+        if (cancelled) return;
+        if (alreadyConsented) {
+          setConsentGiven(true);
+          setSessionConsent();
+        }
+      });
+      return () => { cancelled = true; };
+    }, [user, consentGiven]);
+
+    const handleConsentConfirm = useCallback(async () => {
+      setConsentLoading(true);
+      try {
+        if (user) {
+          await logConsent();
+        }
+        setConsentGiven(true);
+        setSessionConsent();
+      } catch (err) {
+        console.error("Failed to log consent:", err);
+        // Still allow usage even if logging fails
+        setConsentGiven(true);
+        setSessionConsent();
+      } finally {
+        setConsentLoading(false);
+      }
+    }, [user]);
 
     const addFiles = useCallback((newFiles: FileList | File[]) => {
       const filesToAdd = Array.from(newFiles);
@@ -275,9 +318,10 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
                 <Button
                   size="sm"
                   className="mt-2"
-                  disabled={!allConsentsChecked}
-                  onClick={() => setConsentGiven(true)}
+                  disabled={!allConsentsChecked || consentLoading}
+                  onClick={handleConsentConfirm}
                 >
+                  {consentLoading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
                   Continue to Upload
                 </Button>
               </motion.div>
