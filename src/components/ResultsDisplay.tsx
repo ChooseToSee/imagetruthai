@@ -88,6 +88,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { plan } = usePlan();
   const isStreaming = !!streamProgress && !partialReady;
 
   const manipulation = result.manipulation;
