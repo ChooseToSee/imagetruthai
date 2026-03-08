@@ -2,6 +2,8 @@ import { useState, useCallback, useRef, useEffect, forwardRef } from "react";
 import { Upload, Image as ImageIcon, X, Loader2, Plus, Link as LinkIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { usePlan } from "@/contexts/PlanContext";
 
 interface UploadSectionProps {
