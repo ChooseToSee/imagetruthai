@@ -445,21 +445,107 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                   </div>
                 )}
               </TabsContent>
+
+              {/* Details Tab */}
+              <TabsContent value="details">
+                {/* Detected Signals Table */}
+                <div className="mb-4">
+                  <h3 className="mb-3 font-display text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Eye className="h-4 w-4 text-primary" />
+                    Detected Signals
+                  </h3>
+                  <div className="rounded-lg border border-border overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-muted/50 border-b border-border">
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-foreground">Signal</th>
+                          <th className="px-3 py-2 text-left text-xs font-semibold text-foreground">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {detectedSignals.map((signal, i) => (
+                          <tr key={i} className="border-b border-border last:border-0">
+                            <td className="px-3 py-2 text-xs text-muted-foreground">{signal.label}</td>
+                            <td className="px-3 py-2">
+                              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                                signal.detected
+                                  ? "bg-destructive/10 text-destructive"
+                                  : "bg-success/10 text-success"
+                              }`}>
+                                {signal.detected ? "Detected" : "Not detected"}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Metadata Information */}
+                <div className="mb-4">
+                  <h3 className="mb-3 font-display text-sm font-semibold text-foreground flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    Image Metadata
+                  </h3>
+                  <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1.5">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Confidence Level</span>
+                      <span className="font-medium text-foreground">{confidenceLabel}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">AI Detection Models</span>
+                      <span className="font-medium text-foreground">{totalModels > 0 ? `${totalModels} models analyzed` : "N/A"}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Model Agreement</span>
+                      <span className="font-medium text-foreground">{totalModels > 0 ? `${modelsAgreed}/${totalModels} agree` : "N/A"}</span>
+                    </div>
+                    {manipulation && (
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">Edit Detection</span>
+                        <span className="font-medium text-foreground">{manipulation.confidence}% {isEdited ? "likely edited" : "likely original"}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* AI Observational Notes */}
+                <div className="rounded-lg bg-muted/50 p-4">
+                  <div className="mb-2 flex items-center gap-2 text-xs font-medium text-foreground">
+                    <Info className="h-3.5 w-3.5 text-primary" />
+                    AI Observational Notes
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed mb-2">
+                    The signals identified above are based on pattern analysis by multiple AI models.
+                    They do not guarantee that manipulation has occurred. Image compression, camera
+                    processing, social media re-encoding, and other non-malicious factors can produce
+                    similar artifacts. Results should be interpreted cautiously and independently verified.
+                  </p>
+                  <p className="text-[10px] text-muted-foreground/70 italic">
+                    AI-generated analysis may be inaccurate. Results are informational only and should be independently verified.
+                  </p>
+                </div>
+              </TabsContent>
             </Tabs>
 
             {/* Footer */}
             <div className="px-6 pb-6">
               <p className="mb-4 text-center text-[11px] text-muted-foreground/70">
-                No detector is 100% accurate — use as a helper tool alongside your judgment.
+                AI-generated analysis may be inaccurate. Results are informational only and should be independently verified.
               </p>
-              <div className="flex justify-center gap-3">
+              <div className="flex flex-wrap justify-center gap-3">
                 <Button variant="outline" onClick={onReset} className="gap-2">
                   <RotateCcw className="h-4 w-4" />
-                  Analyze Another Image
+                  Analyze Another
+                </Button>
+                <Button variant="secondary" onClick={handleDownloadPdf} className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Download Report
                 </Button>
                 <Button variant="secondary" onClick={handleShare} className="gap-2">
                   {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
-                  Share Result
+                  Share
                 </Button>
               </div>
             </div>
