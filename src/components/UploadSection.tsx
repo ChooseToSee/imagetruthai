@@ -30,15 +30,50 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
     const [selectedFiles, setSelectedFiles] = useState<FilePreview[]>([]);
     const [urlInput, setUrlInput] = useState("");
     const [urlLoading, setUrlLoading] = useState(false);
-    const [consentGiven, setConsentGiven] = useState(false);
+    const [consentGiven, setConsentGiven] = useState(() => getSessionConsent());
+    const [consentLoading, setConsentLoading] = useState(false);
     const [consent1, setConsent1] = useState(false);
     const [consent2, setConsent2] = useState(false);
     const [consent3, setConsent3] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const { plan, limits } = usePlan();
+    const { user } = useAuth();
 
     const maxSlots = limits.batchLimit;
     const allConsentsChecked = consent1 && consent2 && consent3;
+
+    // On mount or user change, check if consent already recorded for current terms version
+    useEffect(() => {
+      if (consentGiven) return;
+      if (!user) return;
+      let cancelled = false;
+      checkExistingConsent(user.id).then((alreadyConsented) => {
+        if (cancelled) return;
+        if (alreadyConsented) {
+          setConsentGiven(true);
+          setSessionConsent();
+        }
+      });
+      return () => { cancelled = true; };
+    }, [user, consentGiven]);
+
+    const handleConsentConfirm = useCallback(async () => {
+      setConsentLoading(true);
+      try {
+        if (user) {
+          await logConsent();
+        }
+        setConsentGiven(true);
+        setSessionConsent();
+      } catch (err) {
+        console.error("Failed to log consent:", err);
+        // Still allow usage even if logging fails
+        setConsentGiven(true);
+        setSessionConsent();
+      } finally {
+        setConsentLoading(false);
+      }
+    }, [user]);
 
     const addFiles = useCallback((newFiles: FileList | File[]) => {
       const filesToAdd = Array.from(newFiles);
