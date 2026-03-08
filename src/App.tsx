@@ -41,6 +41,7 @@ const App = () => (
               <Route path="/terms" element={<Terms />} />
               <Route path="/refund-policy" element={<RefundPolicy />} />
               <Route path="/ai-disclaimer" element={<AiDisclaimer />} />
+              <Route path="/how-it-works" element={<HowItWorksPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <FeedbackWidget />
