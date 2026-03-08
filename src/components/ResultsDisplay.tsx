@@ -8,6 +8,7 @@ import { shareContent } from "@/lib/share";
 import { exportReportPdf } from "@/lib/pdf-export";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlan } from "@/contexts/PlanContext";
 import ImageHeatmap from "@/components/ImageHeatmap";
 
 export interface ModelBreakdown {
