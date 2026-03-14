@@ -189,8 +189,18 @@ async function checkSightEngineQuality(
     reasons.push("Low quality score may indicate heavy compression or editing");
   }
 
+  // If editing indicators were found, confidence reflects how edited it is
+  // If no indicators found, confidence reflects how unedited it is
   const edited = editScore >= 30;
-  const confidence = Math.max(50, Math.min(95, 50 + editScore));
+  let confidence: number;
+  if (edited) {
+    // Editing detected: confidence scales with editScore (30-55 → 70-95%)
+    confidence = Math.min(95, 60 + editScore);
+  } else {
+    // No editing detected: high confidence it's unmodified
+    // With EXIF present and clean metadata → higher confidence
+    confidence = metadataLimited ? 70 : 85;
+  }
 
   if (reasons.length === 0) {
     reasons.push(
@@ -200,7 +210,7 @@ async function checkSightEngineQuality(
     );
   }
 
-  console.log("[EditDetection] SightEngine quality result: edited=", edited, "reasons=", reasons.length);
+  console.log("[EditDetection] SightEngine quality result: edited=", edited, "confidence=", confidence, "reasons=", reasons.length);
   return { edited, confidence, reasons };
 }
 
