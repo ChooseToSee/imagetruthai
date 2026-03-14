@@ -1,6 +1,4 @@
-import jsPDFModule from "jspdf";
-// Handle both default and named export patterns across jsPDF versions
-const jsPDF = (jsPDFModule as any).jsPDF || jsPDFModule;
+import { jsPDF } from "jspdf";
 import type { AnalysisResult } from "@/components/ResultsDisplay";
 
 const SIGNAL_KEYWORDS = [
