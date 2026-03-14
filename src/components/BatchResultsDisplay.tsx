@@ -97,6 +97,12 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
     }
     setSharingIndex(index);
     try {
+      const { data: { session: freshSession } } = await supabase.auth.getSession();
+      if (!freshSession) {
+        toast({ title: "Session expired", description: "Please sign in again.", variant: "destructive" });
+        setSharingIndex(null);
+        return;
+      }
       const { data, error } = await supabase.from("shared_reports").insert({
         user_id: user.id,
         is_public: true,
