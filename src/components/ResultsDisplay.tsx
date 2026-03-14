@@ -141,6 +141,13 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
     }
     setIsSharing(true);
     try {
+      // Ensure session token is fresh before authenticated insert
+      const { data: { session: freshSession } } = await supabase.auth.getSession();
+      if (!freshSession) {
+        toast({ title: "Session expired", description: "Please sign in again to share reports.", variant: "destructive" });
+        setIsSharing(false);
+        return;
+      }
       const { data, error } = await supabase.from("shared_reports").insert({
         user_id: user.id,
         is_public: true,
