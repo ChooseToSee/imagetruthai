@@ -516,7 +516,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                         ) : (
                           <Button size="sm" variant="secondary" disabled className="gap-1.5 text-xs opacity-60" title="PDF export is available on the Unlimited plan">
                             <Lock className="h-3.5 w-3.5" />
-                            PDF (Pro)
+                            PDF (Unlimited)
                           </Button>
                         )}
                         {!itemShareLink && (

@@ -670,7 +670,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                 ) : (
                   <Button variant="secondary" disabled className="gap-2 opacity-60" title="PDF export is available on the Unlimited plan">
                     <Lock className="h-4 w-4" />
-                    PDF (Pro)
+                    PDF (Unlimited)
                   </Button>
                 )}
                 {!shareLink && (
