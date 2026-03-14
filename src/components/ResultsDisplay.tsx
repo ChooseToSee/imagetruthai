@@ -363,7 +363,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
                       >
-                        {result.modelBreakdown.map((m, i) => (
+                        {result.modelBreakdown.filter(m => m.confidence > 0 || m.reasons.length > 0).map((m, i) => (
                           <ModelCard key={i} m={m} />
                         ))}
                       </motion.div>
