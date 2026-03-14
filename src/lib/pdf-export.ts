@@ -1,4 +1,4 @@
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 import type { AnalysisResult } from "@/components/ResultsDisplay";
 
 const SIGNAL_KEYWORDS = [
