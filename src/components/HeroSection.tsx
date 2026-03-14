@@ -150,21 +150,21 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
             transition={{ duration: 0.6, delay: 0.3 }}
           >
             <Button
-              size="lg"
-              className="gap-2 px-8 text-base shadow-glow"
-              onClick={onStartFree}
-            >
-              <Zap className="h-4 w-4" />
-              Start Free Analysis
-            </Button>
-            <Button
               variant="outline"
               size="lg"
-              className="gap-2 px-8 text-base"
+              className="gap-2 px-8 text-base bg-primary/80 text-primary-foreground border-primary/60 hover:bg-primary/70"
               onClick={onScrollToUpload}
             >
               <Upload className="h-4 w-4" />
               Upload Image
+            </Button>
+            <Button
+              size="lg"
+              className="gap-2 px-8 text-base shadow-glow"
+              onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
+            >
+              <Zap className="h-4 w-4" />
+              Get More Power
             </Button>
           </motion.div>
 
