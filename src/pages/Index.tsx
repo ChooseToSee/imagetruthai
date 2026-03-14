@@ -123,6 +123,9 @@ const Index = () => {
 
   const saveToHistory = async (file: File, result: AnalysisResult) => {
     if (!user) return;
+    // Ensure session token is fresh before authenticated operations
+    const { data: { session: freshSession } } = await supabase.auth.getSession();
+    if (!freshSession) return;
     let image_url: string | null = null;
     const filePath = `${user.id}/${crypto.randomUUID()}-${file.name}`;
     const { error: uploadError } = await supabase.storage.from("scan-images").upload(filePath, file, { contentType: file.type, upsert: false });
