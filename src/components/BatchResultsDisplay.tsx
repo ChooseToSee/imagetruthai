@@ -340,9 +340,9 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                               </button>
                               {showBreakdown === i && (
                                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                                  {item.result.modelBreakdown.map((m, mi) => (
-                                    <ModelCard key={mi} m={m} />
-                                  ))}
+                                   {item.result.modelBreakdown.filter(m => m.confidence > 0 || m.reasons.length > 0).map((m, mi) => (
+                                     <ModelCard key={mi} m={m} />
+                                   ))}
                                 </div>
                               )}
                             </div>
