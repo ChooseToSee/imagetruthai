@@ -152,7 +152,7 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
             <Button
               variant="outline"
               size="lg"
-              className="gap-2 px-8 text-base bg-primary/80 text-primary-foreground border-primary/60 hover:bg-primary/70"
+              className="gap-2 px-8 text-base border-primary text-primary bg-transparent hover:bg-primary/10"
               onClick={onScrollToUpload}
             >
               <Upload className="h-4 w-4" />
