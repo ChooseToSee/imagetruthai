@@ -541,10 +541,12 @@ function computeManipulation(editResults: { edited: boolean; confidence: number;
   for (const r of editResults) {
     const w = 1;
     totalWeight += w;
+    // editScore: 0 = definitely not edited, 1 = definitely edited
     if (r.edited) {
       editScore += (r.confidence / 100) * w;
     } else {
-      editScore += ((100 - r.confidence) / 100) * w;
+      // Not edited with high confidence → low edit score
+      editScore += (1 - r.confidence / 100) * w;
     }
     allReasons.push(...r.reasons.slice(0, 2));
   }
