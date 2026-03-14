@@ -68,12 +68,19 @@ const PricingSection = () => {
     }
     setLoadingTier(tier);
     try {
+      // Open blank tab immediately (before await) to avoid popup blocker
+      const newTab = window.open("about:blank", "_blank");
       const priceId = STRIPE_TIERS[tier].price_id;
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: { priceId },
       });
       if (error) throw error;
-      if (data?.url) window.location.href = data.url;
+      if (data?.url && newTab) {
+        newTab.location.href = data.url;
+      } else if (data?.url) {
+        // Fallback if popup was blocked
+        window.location.href = data.url;
+      }
     } catch (err: any) {
       toast({ title: "Checkout failed", description: err.message, variant: "destructive" });
     } finally {
