@@ -88,7 +88,10 @@ const PricingSection = () => {
         window.location.href = data.url;
       }
     } catch (err: any) {
-      toast({ title: "Checkout failed", description: err.message, variant: "destructive" });
+      const desc = err?.message?.includes("temporarily unavailable")
+        ? "Our payment system is temporarily down for maintenance. Please try again shortly."
+        : err.message;
+      toast({ title: "Checkout failed", description: desc, variant: "destructive" });
     } finally {
       setLoadingTier(null);
     }

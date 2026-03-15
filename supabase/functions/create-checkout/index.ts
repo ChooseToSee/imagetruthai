@@ -26,6 +26,15 @@ serve(async (req) => {
   );
 
   try {
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) {
+      console.error("[CREATE-CHECKOUT] STRIPE_SECRET_KEY not set");
+      return new Response(JSON.stringify({ error: "Payment system is temporarily unavailable. Please try again later." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 503,
+      });
+    }
+
     const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
     const { data } = await supabaseClient.auth.getUser(token);
@@ -40,7 +49,7 @@ serve(async (req) => {
       });
     }
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    const stripe = new Stripe(stripeKey, {
       apiVersion: "2025-08-27.basil",
     });
 
@@ -68,12 +77,17 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error("Checkout error:", error);
-    const message = error instanceof Error ? error.message : "Checkout failed";
+    console.error("[CREATE-CHECKOUT] Error:", error);
+    const rawMessage = error instanceof Error ? error.message : "Checkout failed";
+    // Detect expired/invalid Stripe key and return user-friendly message
+    const isKeyError = rawMessage.includes("Invalid API Key") || rawMessage.includes("api_key_expired");
+    const message = isKeyError
+      ? "Payment system is temporarily unavailable. Please try again later or contact support."
+      : rawMessage;
     return new Response(
-      JSON.stringify({ error: message }), {
+      JSON.stringify({ error: message, _stripe_key_error: isKeyError }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
+        status: isKeyError ? 503 : 500,
       }
     );
   }

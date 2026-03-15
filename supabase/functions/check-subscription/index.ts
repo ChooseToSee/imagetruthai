@@ -113,6 +113,18 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
+    const isKeyError = errorMessage.includes("Invalid API Key") || errorMessage.includes("api_key_expired");
+    if (isKeyError) {
+      // Return graceful fallback — treat as free tier rather than hard error
+      logStep("WARN: Stripe key invalid/expired, returning free tier fallback");
+      return new Response(JSON.stringify({
+        subscribed: false, product_id: null, subscription_end: null,
+        subscription_tier: "free", _stripe_key_error: true,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
     const safeMessage = errorMessage.includes("Authentication") || errorMessage.includes("No authorization")
       ? errorMessage
       : "Failed to check subscription status";
