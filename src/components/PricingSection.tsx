@@ -72,7 +72,7 @@ const PricingSection = () => {
 
   const handleCheckout = async (tier: "plus" | "pro") => {
     if (!user) {
-      navigate("/auth");
+      navigate(`/auth?plan=${tier}&billing=${billing}`);
       return;
     }
     setLoadingTier(tier);
