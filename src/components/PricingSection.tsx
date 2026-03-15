@@ -184,6 +184,7 @@ const PricingSection = () => {
                     className="mt-8 w-full"
                     variant="outline"
                     onClick={() => !user && navigate("/auth")}
+                    disabled={!!user}
                   >
                     {user ? "Current Plan" : "Start Free"}
                   </Button>

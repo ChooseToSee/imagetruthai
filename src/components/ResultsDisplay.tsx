@@ -669,15 +669,15 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                   <RotateCcw className="h-4 w-4" />
                   Analyze Another
                 </Button>
-                {plan === "pro" ? (
+                {plan === "plus" || plan === "pro" ? (
                   <Button variant="secondary" onClick={handleDownloadPdf} disabled={isExportingPdf} className="gap-2">
                     {isExportingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                     Download PDF
                   </Button>
                 ) : (
-                  <Button variant="secondary" disabled className="gap-2 opacity-60" title="PDF export is available on the Unlimited plan">
+                  <Button variant="secondary" disabled className="gap-2 opacity-60" title="PDF export is available on Pro and Unlimited plans">
                     <Lock className="h-4 w-4" />
-                    PDF (Unlimited)
+                    PDF (Pro+)
                   </Button>
                 )}
                 {!shareLink && (
