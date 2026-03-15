@@ -225,7 +225,7 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
               {plan === "free" ? (
                 <>Analyze <span className="text-primary font-semibold">1 image at a time</span> — {limits.scansPerDay} scans per day on the Free plan.</>
               ) : plan === "plus" ? (
-                <>Drop up to <span className="text-primary font-semibold">{limits.batchLimit} images</span> — {limits.scansPerDay} scans/day with multi-model consensus.</>
+                <>Drop up to <span className="text-primary font-semibold">{limits.batchLimit} images</span> — {limits.scansPerDay} scans/day on the Plus plan.</>
               ) : (
                 <>Drop up to <span className="text-primary font-semibold">{limits.batchLimit} images</span> — unlimited scans with full analysis suite.</>
               )}
