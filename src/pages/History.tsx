@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlan } from "@/contexts/PlanContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Trash2, Clock, AlertTriangle, CheckCircle } from "lucide-react";
+import { Trash2, Clock, AlertTriangle, CheckCircle, Lock } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
@@ -19,9 +20,12 @@ interface ScanRecord {
 
 const History = () => {
   const { user } = useAuth();
+  const { plan } = usePlan();
   const [scans, setScans] = useState<ScanRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  const showFullResults = plan === "plus" || plan === "pro";
 
   useEffect(() => {
     if (!user) return;
@@ -74,6 +78,16 @@ const History = () => {
           </div>
         ) : (
           <div className="space-y-3">
+            {!showFullResults && (
+              <div className="mb-4 flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
+                <Lock className="h-4 w-4 shrink-0" />
+                <span>
+                  Free plan shows basic verdicts only.{" "}
+                  <a href="#pricing" className="font-semibold text-primary hover:underline">Upgrade to Plus</a>{" "}
+                  for full analysis results.
+                </span>
+              </div>
+            )}
             {scans.map((scan) => (
               <div
                 key={scan.id}
@@ -100,9 +114,15 @@ const History = () => {
                         <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">Human</span>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {scan.confidence}% confidence · {new Date(scan.created_at).toLocaleDateString()}
-                    </p>
+                    {showFullResults ? (
+                      <p className="text-xs text-muted-foreground">
+                        {scan.confidence}% confidence · {new Date(scan.created_at).toLocaleDateString()}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(scan.created_at).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => handleDelete(scan.id)}>
