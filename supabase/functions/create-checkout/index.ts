@@ -68,13 +68,13 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
+    console.error("Checkout error:", error);
     const message = error instanceof Error ? error.message : "Checkout failed";
-    const safeMessage = message.includes("authenticated") || message.includes("email")
-      ? message
-      : "Failed to create checkout session";
-    return new Response(JSON.stringify({ error: safeMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ error: message }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      }
+    );
   }
 });
