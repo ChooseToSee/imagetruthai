@@ -9,8 +9,10 @@ const corsHeaders = {
 
 // Whitelist of valid price IDs
 const VALID_PRICE_IDS: Record<string, string> = {
-  "price_1T5ykFAgty77Em73OcjU76cO": "plus",
-  "price_1T5ylsAgty77Em73zxSGfKYe": "pro",
+  "price_1T8V0AANKKxH2qnACu534N2d": "plus",
+  "price_1TB4NgANKKxH2qnAVJZo3Wti": "plus",
+  "price_1T8V0AANKKxH2qnAA1EizK0M": "pro",
+  "price_1TB4TJANKKxH2qnAo1Ciwlem": "pro",
 };
 
 serve(async (req) => {
@@ -54,6 +56,9 @@ serve(async (req) => {
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
       allow_promotion_codes: true,
+      subscription_data: {
+        trial_period_days: 7,
+      },
       success_url: `${req.headers.get("origin")}/?checkout=success`,
       cancel_url: `${req.headers.get("origin")}/?checkout=canceled`,
     });

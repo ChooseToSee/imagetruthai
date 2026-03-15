@@ -1,6 +1,8 @@
 import { Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { STRIPE_TIERS } from "@/lib/stripe-config";
@@ -8,11 +10,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+type BillingInterval = "monthly" | "annual";
+
+const MONTHLY_PRICES = { free: 0, plus: 7, pro: 19 };
+const ANNUAL_PRICES = { free: 0, plus: 70, pro: 190 };
+
 const plans = [
   {
     name: "Free",
-    price: "$0",
-    period: "/month",
     tier: "free" as const,
     features: [
       "3 scans per day",
@@ -20,13 +25,10 @@ const plans = [
       "Basic results only",
       "No scan history",
     ],
-    cta: "Start Free",
     highlighted: false,
   },
   {
     name: "Plus",
-    price: "$7",
-    period: "/month",
     tier: "plus" as const,
     features: [
       "50 scans per day",
@@ -35,13 +37,10 @@ const plans = [
       "Full detailed forensic reports",
       "Email support",
     ],
-    cta: "Start Plus",
     highlighted: false,
   },
   {
     name: "Pro",
-    price: "$19",
-    period: "/month",
     tier: "pro" as const,
     features: [
       "Unlimited scans",
@@ -51,7 +50,6 @@ const plans = [
       "API access",
       "Priority support",
     ],
-    cta: "Start Pro",
     highlighted: true,
   },
 ];
@@ -61,6 +59,16 @@ const PricingSection = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const [billing, setBilling] = useState<BillingInterval>("monthly");
+
+  const getPrice = (tier: "free" | "plus" | "pro") => {
+    if (tier === "free") return "$0";
+    if (billing === "annual") {
+      const monthly = (ANNUAL_PRICES[tier] / 12).toFixed(2);
+      return `$${monthly}`;
+    }
+    return `$${MONTHLY_PRICES[tier]}`;
+  };
 
   const handleCheckout = async (tier: "plus" | "pro") => {
     if (!user) {
@@ -69,9 +77,10 @@ const PricingSection = () => {
     }
     setLoadingTier(tier);
     try {
-      // Open blank tab immediately (before await) to avoid popup blocker
       const newTab = window.open("about:blank", "_blank");
-      const priceId = STRIPE_TIERS[tier].price_id;
+      const priceId = billing === "annual"
+        ? STRIPE_TIERS[tier].annual_price_id
+        : STRIPE_TIERS[tier].monthly_price_id;
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: { priceId },
       });
@@ -79,7 +88,6 @@ const PricingSection = () => {
       if (data?.url && newTab) {
         newTab.location.href = data.url;
       } else if (data?.url) {
-        // Fallback if popup was blocked
         window.location.href = data.url;
       }
     } catch (err: any) {
@@ -117,7 +125,7 @@ const PricingSection = () => {
             Pricing
           </motion.h2>
           <motion.p
-            className="text-muted-foreground"
+            className="mb-8 text-muted-foreground"
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -125,11 +133,37 @@ const PricingSection = () => {
           >
             Start free — upgrade when you need more.
           </motion.p>
+
+          {/* Billing toggle */}
+          <motion.div
+            className="inline-flex items-center gap-3"
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+          >
+            <span className={`text-sm font-medium ${billing === "monthly" ? "text-foreground" : "text-muted-foreground"}`}>
+              Monthly
+            </span>
+            <Switch
+              checked={billing === "annual"}
+              onCheckedChange={(checked) => setBilling(checked ? "annual" : "monthly")}
+            />
+            <span className={`text-sm font-medium ${billing === "annual" ? "text-foreground" : "text-muted-foreground"}`}>
+              Annual
+            </span>
+            {billing === "annual" && (
+              <Badge className="bg-green-600 text-white hover:bg-green-700 text-xs">
+                2 months free
+              </Badge>
+            )}
+          </motion.div>
         </div>
 
         <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-3">
           {plans.map((plan, i) => {
             const isCurrentPlan = currentTier === plan.tier;
+            const isPaid = plan.tier !== "free";
             return (
               <motion.div
                 key={plan.name}
@@ -158,9 +192,14 @@ const PricingSection = () => {
                 )}
                 <h3 className="font-display text-xl font-bold text-foreground">{plan.name}</h3>
                 <div className="mt-4 flex items-baseline gap-1">
-                  <span className="font-display text-4xl font-bold text-foreground">{plan.price}</span>
-                  <span className="text-sm text-muted-foreground">{plan.period}</span>
+                  <span className="font-display text-4xl font-bold text-foreground">{getPrice(plan.tier)}</span>
+                  <span className="text-sm text-muted-foreground">/mo</span>
                 </div>
+                {billing === "annual" && isPaid && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    ${ANNUAL_PRICES[plan.tier]} billed annually
+                  </p>
+                )}
 
                 <ul className="mt-8 space-y-3">
                   {plan.features.map((f) => (
@@ -190,14 +229,19 @@ const PricingSection = () => {
                     {user ? "Current Plan" : "Start Free"}
                   </Button>
                 ) : (
-                  <Button
-                    className={`mt-8 w-full ${plan.highlighted ? "shadow-glow" : ""}`}
-                    variant={plan.highlighted ? "default" : "outline"}
-                    onClick={() => handleCheckout(plan.tier)}
-                    disabled={loadingTier === plan.tier}
-                  >
-                    {loadingTier === plan.tier ? "Loading…" : plan.cta}
-                  </Button>
+                  <div className="mt-8">
+                    <Button
+                      className={`w-full ${plan.highlighted ? "shadow-glow" : ""}`}
+                      variant={plan.highlighted ? "default" : "outline"}
+                      onClick={() => handleCheckout(plan.tier)}
+                      disabled={loadingTier === plan.tier}
+                    >
+                      {loadingTier === plan.tier ? "Loading…" : "Start 7-day free trial"}
+                    </Button>
+                    <p className="mt-2 text-center text-xs text-muted-foreground">
+                      No credit card required for trial
+                    </p>
+                  </div>
                 )}
               </motion.div>
             );

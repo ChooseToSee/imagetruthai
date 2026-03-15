@@ -7,6 +7,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const PRODUCT_TIER_MAP: Record<string, string> = {
+  "prod_U46ynL0lG0C32s": "plus",
+  "prod_U46zg6w4ycRsro": "pro",
+};
+
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
@@ -49,6 +54,34 @@ serve(async (req) => {
     { auth: { persistSession: false } }
   );
 
+  // Helper to find user by Stripe customer email
+  async function findUserByCustomerId(customerId: string) {
+    const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+    if (!customer.email) {
+      logStep("WARN", { message: "Customer has no email", customerId });
+      return null;
+    }
+    const { data: usersData } = await supabaseClient.auth.admin.listUsers();
+    const matchedUser = usersData?.users?.find((u) => u.email === customer.email);
+    if (!matchedUser) {
+      logStep("WARN", { message: "No user found for email", email: customer.email });
+      return null;
+    }
+    return matchedUser;
+  }
+
+  async function updateProfile(userId: string, is_pro: boolean, subscription_tier: string) {
+    const { error: updateErr } = await supabaseClient
+      .from("profiles")
+      .update({ is_pro, subscription_tier })
+      .eq("user_id", userId);
+    if (updateErr) {
+      logStep("ERROR", { message: "Profile update failed", error: updateErr.message });
+    } else {
+      logStep("Profile updated", { userId, is_pro, subscription_tier });
+    }
+  }
+
   try {
     switch (event.type) {
       case "customer.subscription.updated":
@@ -58,50 +91,57 @@ serve(async (req) => {
         const status = subscription.status;
         logStep("Subscription event", { customerId, status, subscriptionId: subscription.id });
 
-        // Look up user by Stripe customer email
-        const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
-        if (!customer.email) {
-          logStep("WARN", { message: "Customer has no email", customerId });
-          break;
+        const matchedUser = await findUserByCustomerId(customerId);
+        if (!matchedUser) break;
+
+        const isActive = status === "active" || status === "past_due" || status === "trialing";
+        let tier = "free";
+        if (isActive) {
+          const productId = subscription.items.data[0]?.price?.product as string;
+          tier = PRODUCT_TIER_MAP[productId] || "free";
         }
 
-        // Find the user in auth by email
-        const { data: usersData } = await supabaseClient.auth.admin.listUsers();
-        const matchedUser = usersData?.users?.find((u) => u.email === customer.email);
-        if (!matchedUser) {
-          logStep("WARN", { message: "No user found for email", email: customer.email });
-          break;
-        }
-
-        // Update profile is_pro based on subscription status
-        const isActive = status === "active" || status === "past_due";
-        const { error: updateErr } = await supabaseClient
-          .from("profiles")
-          .update({ is_pro: isActive })
-          .eq("user_id", matchedUser.id);
-
-        if (updateErr) {
-          logStep("ERROR", { message: "Profile update failed", error: updateErr.message });
-        } else {
-          logStep("Profile updated", { userId: matchedUser.id, is_pro: isActive, status });
-        }
+        await updateProfile(matchedUser.id, isActive && tier !== "free", tier);
         break;
       }
 
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
-        const customerId = invoice.customer as string;
-        logStep("Payment failed", { customerId, invoiceId: invoice.id });
-        // The subscription.updated event will fire with past_due status,
-        // which grants a grace period. No additional action needed here.
+        logStep("Payment failed", { customerId: invoice.customer, invoiceId: invoice.id });
         break;
       }
 
       case "charge.refunded": {
         const charge = event.data.object as Stripe.Charge;
-        logStep("Charge refunded", { chargeId: charge.id, amount: charge.amount_refunded });
-        // Refunds don't automatically cancel subscriptions in Stripe.
-        // The merchant handles cancellation separately if needed.
+        const customerId = charge.customer as string;
+        logStep("Charge refunded", { chargeId: charge.id, customerId, amount: charge.amount_refunded });
+
+        if (!customerId) {
+          logStep("WARN", { message: "Refunded charge has no customer" });
+          break;
+        }
+
+        const matchedUser = await findUserByCustomerId(customerId);
+        if (!matchedUser) break;
+
+        // Revoke access
+        await updateProfile(matchedUser.id, false, "free");
+
+        // Cancel active subscriptions
+        try {
+          const subs = await stripe.subscriptions.list({ customer: customerId, status: "active", limit: 10 });
+          for (const sub of subs.data) {
+            await stripe.subscriptions.cancel(sub.id);
+            logStep("Subscription cancelled after refund", { subscriptionId: sub.id });
+          }
+          const trialSubs = await stripe.subscriptions.list({ customer: customerId, status: "trialing", limit: 10 });
+          for (const sub of trialSubs.data) {
+            await stripe.subscriptions.cancel(sub.id);
+            logStep("Trial subscription cancelled after refund", { subscriptionId: sub.id });
+          }
+        } catch (cancelErr) {
+          logStep("ERROR cancelling subscriptions after refund", { error: String(cancelErr) });
+        }
         break;
       }
 
@@ -111,7 +151,6 @@ serve(async (req) => {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     logStep("ERROR processing event", { message: msg });
-    // Return 200 so Stripe doesn't retry indefinitely
   }
 
   return new Response(JSON.stringify({ received: true }), {
