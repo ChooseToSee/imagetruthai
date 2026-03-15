@@ -3,10 +3,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Trash2, Clock, AlertTriangle, CheckCircle, Lock } from "lucide-react";
+import { Trash2, Clock, AlertTriangle, CheckCircle, Lock, FileDown, ChevronDown, ChevronUp } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
+import { exportReportPdf } from "@/lib/pdf-export";
+import type { AnalysisResult } from "@/components/ResultsDisplay";
 
 interface ScanRecord {
   id: string;
@@ -14,6 +16,7 @@ interface ScanRecord {
   verdict: string;
   confidence: number;
   reasons: string[];
+  tips: string[];
   created_at: string;
   image_url: string | null;
 }
@@ -23,16 +26,19 @@ const History = () => {
   const { plan } = usePlan();
   const [scans, setScans] = useState<ScanRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const showFullResults = plan === "plus" || plan === "pro";
+  const canDownloadPdf = plan === "pro";
 
   useEffect(() => {
     if (!user) return;
     const fetchScans = async () => {
       const { data, error } = await supabase
         .from("scan_history")
-        .select("id, file_name, verdict, confidence, reasons, created_at, image_url")
+        .select("id, file_name, verdict, confidence, reasons, tips, created_at, image_url")
         .order("created_at", { ascending: false })
         .limit(50);
       if (error) {
@@ -49,6 +55,25 @@ const History = () => {
     const { error } = await supabase.from("scan_history").delete().eq("id", id);
     if (!error) {
       setScans((prev) => prev.filter((s) => s.id !== id));
+    }
+  };
+
+  const handleDownloadPdf = async (scan: ScanRecord) => {
+    if (!canDownloadPdf) return;
+    setDownloadingId(scan.id);
+    try {
+      const result: AnalysisResult = {
+        verdict: scan.verdict as "ai" | "human",
+        confidence: scan.confidence,
+        reasons: scan.reasons,
+        tips: scan.tips || [],
+      };
+      await exportReportPdf(result, scan.image_url || "");
+      toast({ title: "PDF exported successfully" });
+    } catch {
+      toast({ title: "PDF export failed", variant: "destructive" });
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -88,48 +113,90 @@ const History = () => {
                 </span>
               </div>
             )}
-            {scans.map((scan) => (
-              <div
-                key={scan.id}
-                className="flex items-center justify-between rounded-lg border border-border bg-card p-4"
-              >
-                <div className="flex items-center gap-3">
-                  {scan.image_url ? (
-                    <img
-                      src={scan.image_url}
-                      alt={scan.file_name}
-                      className="h-12 w-12 rounded-md object-cover"
-                    />
-                  ) : scan.verdict === "ai" ? (
-                    <AlertTriangle className="h-5 w-5 text-destructive" />
-                  ) : (
-                    <CheckCircle className="h-5 w-5 text-success" />
-                  )}
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-foreground">{scan.file_name}</p>
-                      {scan.verdict === "ai" ? (
-                        <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">AI</span>
+            {scans.map((scan) => {
+              const isExpanded = expandedId === scan.id;
+              return (
+                <div
+                  key={scan.id}
+                  className="rounded-lg border border-border bg-card overflow-hidden"
+                >
+                  <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      {scan.image_url ? (
+                        <img
+                          src={scan.image_url}
+                          alt={scan.file_name}
+                          className="h-12 w-12 rounded-md object-cover shrink-0"
+                        />
+                      ) : scan.verdict === "ai" ? (
+                        <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
                       ) : (
-                        <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">Human</span>
+                        <CheckCircle className="h-5 w-5 text-success shrink-0" />
                       )}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-foreground truncate">{scan.file_name}</p>
+                          {scan.verdict === "ai" ? (
+                            <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive shrink-0">AI</span>
+                          ) : (
+                            <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success shrink-0">Human</span>
+                          )}
+                        </div>
+                        {showFullResults ? (
+                          <p className="text-xs text-muted-foreground">
+                            {scan.confidence}% confidence · {new Date(scan.created_at).toLocaleDateString()}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(scan.created_at).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    {showFullResults ? (
-                      <p className="text-xs text-muted-foreground">
-                        {scan.confidence}% confidence · {new Date(scan.created_at).toLocaleDateString()}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(scan.created_at).toLocaleDateString()}
-                      </p>
-                    )}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {canDownloadPdf && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDownloadPdf(scan)}
+                          disabled={downloadingId === scan.id}
+                          title="Download PDF report"
+                        >
+                          <FileDown className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      )}
+                      {showFullResults && scan.reasons.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setExpandedId(isExpanded ? null : scan.id)}
+                          title="View details"
+                        >
+                          {isExpanded ? (
+                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(scan.id)}>
+                        <Trash2 className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </div>
                   </div>
+                  {showFullResults && isExpanded && scan.reasons.length > 0 && (
+                    <div className="border-t border-border px-4 py-3 bg-muted/30">
+                      <p className="text-xs font-medium text-foreground mb-2">Analysis Details</p>
+                      <ul className="space-y-1">
+                        {scan.reasons.map((reason, i) => (
+                          <li key={i} className="text-xs text-muted-foreground">• {reason}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => handleDelete(scan.id)}>
-                  <Trash2 className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
