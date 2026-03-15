@@ -82,7 +82,7 @@ serve(async (req) => {
     // Detect expired/invalid Stripe key and return user-friendly message
     const isKeyError = rawMessage.includes("Invalid API Key") || rawMessage.includes("api_key_expired");
     const message = isKeyError
-      ? "Payment system is temporarily unavailable. Please try again later or contact support."
+      ? "Payment system needs maintenance — please contact support."
       : rawMessage;
     return new Response(
       JSON.stringify({ error: message, _stripe_key_error: isKeyError }), {
