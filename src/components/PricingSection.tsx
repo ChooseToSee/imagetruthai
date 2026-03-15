@@ -72,7 +72,7 @@ const PricingSection = () => {
 
   const handleCheckout = async (tier: "plus" | "pro") => {
     if (!user) {
-      navigate("/auth");
+      navigate(`/auth?plan=${tier}&billing=${billing}`);
       return;
     }
     setLoadingTier(tier);
@@ -223,21 +223,21 @@ const PricingSection = () => {
                   <Button
                     className="mt-8 w-full"
                     variant="outline"
-                    onClick={() => !user && navigate("/auth")}
+                    onClick={() => !user && navigate(`/auth?plan=free&billing=${billing}`)}
                     disabled={!!user}
                   >
                     {user ? "Current Plan" : "Start Free"}
                   </Button>
                 ) : (
                   <div className="mt-8">
-                    <Button
-                      className={`w-full ${plan.highlighted ? "shadow-glow" : ""}`}
-                      variant={plan.highlighted ? "default" : "outline"}
-                      onClick={() => handleCheckout(plan.tier)}
-                      disabled={loadingTier === plan.tier}
-                    >
-                      {loadingTier === plan.tier ? "Loading…" : "Start 7-day free trial"}
-                    </Button>
+                  <Button
+                    className={`w-full ${plan.highlighted ? "shadow-glow" : ""}`}
+                    variant={plan.highlighted ? "default" : "outline"}
+                    onClick={() => handleCheckout(plan.tier)}
+                    disabled={loadingTier === plan.tier}
+                  >
+                    {loadingTier === plan.tier ? "Loading…" : "Start 7-day free trial"}
+                  </Button>
                     <p className="mt-2 text-center text-xs text-muted-foreground">
                       No credit card required for trial
                     </p>
