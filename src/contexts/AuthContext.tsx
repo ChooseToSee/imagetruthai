@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data, error } = await supabase.functions.invoke("check-subscription");
       if (error) throw error;
-      const tier = productIdToTier(data.product_id);
+      const tier = (data.subscription_tier as PlanTier) || productIdToTier(data.product_id);
       setSubscription({
         subscribed: data.subscribed,
         productId: data.product_id,

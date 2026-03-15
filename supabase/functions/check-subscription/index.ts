@@ -7,6 +7,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const PRODUCT_TIER_MAP: Record<string, string> = {
+  "prod_U46ynL0lG0C32s": "plus",
+  "prod_U46zg6w4ycRsro": "pro",
+};
+
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
@@ -44,7 +49,9 @@ serve(async (req) => {
 
     if (customers.data.length === 0) {
       logStep("No Stripe customer found");
-      return new Response(JSON.stringify({ subscribed: false, product_id: null, subscription_end: null }), {
+      // Sync to DB
+      await supabaseClient.from("profiles").update({ is_pro: false, subscription_tier: "free" }).eq("user_id", user.id);
+      return new Response(JSON.stringify({ subscribed: false, product_id: null, subscription_end: null, subscription_tier: "free" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -53,53 +60,52 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found customer", { customerId });
 
-    // Check for active or past_due (grace period) subscriptions
-    const activeSubscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: "active",
-      limit: 1,
-    });
+    // Check for active, past_due, or trialing subscriptions
+    const [activeRes, pastDueRes, trialingRes] = await Promise.all([
+      stripe.subscriptions.list({ customer: customerId, status: "active", limit: 1 }),
+      stripe.subscriptions.list({ customer: customerId, status: "past_due", limit: 1 }),
+      stripe.subscriptions.list({ customer: customerId, status: "trialing", limit: 1 }),
+    ]);
 
-    const pastDueSubscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: "past_due",
-      limit: 1,
-    });
-
-    const allSubs = [...activeSubscriptions.data, ...pastDueSubscriptions.data];
+    const allSubs = [...activeRes.data, ...pastDueRes.data, ...trialingRes.data];
     const hasValidSub = allSubs.length > 0;
     let productId = null;
     let subscriptionEnd = null;
     let status = null;
+    let subscriptionTier = "free";
 
     if (hasValidSub) {
-      // Prefer active over past_due
-      const subscription = activeSubscriptions.data[0] || pastDueSubscriptions.data[0];
-      // Handle current_period_end - may be number, string, or Date object
+      // Prefer active > trialing > past_due
+      const subscription = activeRes.data[0] || trialingRes.data[0] || pastDueRes.data[0];
       const periodEnd = subscription.current_period_end;
-      logStep("period_end raw", { periodEnd, type: typeof periodEnd });
       try {
         if (typeof periodEnd === "number") {
           subscriptionEnd = new Date(periodEnd * 1000).toISOString();
         } else if (periodEnd) {
           subscriptionEnd = String(periodEnd);
-        } else {
-          subscriptionEnd = null;
         }
       } catch (e) {
         logStep("WARN: Could not parse current_period_end", { periodEnd, error: String(e) });
-        subscriptionEnd = null;
       }
       productId = subscription.items.data[0].price.product;
       status = subscription.status;
-      logStep("Valid subscription", { productId, subscriptionEnd, status });
+      subscriptionTier = PRODUCT_TIER_MAP[productId as string] || "free";
+      logStep("Valid subscription", { productId, subscriptionEnd, status, subscriptionTier });
     }
+
+    // Sync tier to database
+    const isPro = hasValidSub && subscriptionTier !== "free";
+    await supabaseClient.from("profiles").update({
+      is_pro: isPro,
+      subscription_tier: subscriptionTier,
+    }).eq("user_id", user.id);
 
     return new Response(JSON.stringify({
       subscribed: hasValidSub,
       product_id: productId,
       subscription_end: subscriptionEnd,
       status,
+      subscription_tier: subscriptionTier,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
@@ -107,7 +113,6 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    // Return generic error to client
     const safeMessage = errorMessage.includes("Authentication") || errorMessage.includes("No authorization")
       ? errorMessage
       : "Failed to check subscription status";
