@@ -514,15 +514,15 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
 
                       {/* Action buttons */}
                       <div className="mt-4 flex flex-wrap gap-2">
-                        {plan === "pro" ? (
+                        {plan === "plus" || plan === "pro" ? (
                           <Button size="sm" variant="secondary" onClick={() => handleDownloadPdf(item, i)} disabled={exportingPdfIndex === i} className="gap-1.5 text-xs">
                             {exportingPdfIndex === i ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
                             Download PDF
                           </Button>
                         ) : (
-                          <Button size="sm" variant="secondary" disabled className="gap-1.5 text-xs opacity-60" title="PDF export is available on the Unlimited plan">
+                          <Button size="sm" variant="secondary" disabled className="gap-1.5 text-xs opacity-60" title="PDF export is available on Pro and Unlimited plans">
                             <Lock className="h-3.5 w-3.5" />
-                            PDF (Unlimited)
+                            PDF (Pro+)
                           </Button>
                         )}
                         {!itemShareLink && (
