@@ -13,7 +13,7 @@ interface PlanLimits {
 
 const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
   free: { scansPerDay: 3, batchLimit: 1, historyDays: null, pdfExport: false, apiAccess: false },
-  plus: { scansPerDay: 50, batchLimit: 5, historyDays: 30, pdfExport: true, apiAccess: false },
+  plus: { scansPerDay: 50, batchLimit: 5, historyDays: 30, pdfExport: false, apiAccess: false },
   pro: { scansPerDay: Infinity, batchLimit: 20, historyDays: null, pdfExport: true, apiAccess: true },
 };
 
