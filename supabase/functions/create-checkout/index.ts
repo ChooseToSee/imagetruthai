@@ -26,6 +26,15 @@ serve(async (req) => {
   );
 
   try {
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) {
+      console.error("[CREATE-CHECKOUT] STRIPE_SECRET_KEY not set");
+      return new Response(JSON.stringify({ error: "Payment system is temporarily unavailable. Please try again later." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 503,
+      });
+    }
+
     const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
     const { data } = await supabaseClient.auth.getUser(token);
@@ -40,7 +49,7 @@ serve(async (req) => {
       });
     }
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    const stripe = new Stripe(stripeKey, {
       apiVersion: "2025-08-27.basil",
     });
 
