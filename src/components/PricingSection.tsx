@@ -230,14 +230,14 @@ const PricingSection = () => {
                   </Button>
                 ) : (
                   <div className="mt-8">
-                    <Button
-                      className={`w-full ${plan.highlighted ? "shadow-glow" : ""}`}
-                      variant={plan.highlighted ? "default" : "outline"}
-                      onClick={() => handleCheckout(plan.tier)}
-                      disabled={loadingTier === plan.tier}
-                    >
-                      {loadingTier === plan.tier ? "Loading…" : "Start 7-day free trial"}
-                    </Button>
+                  <Button
+                    className={`w-full ${plan.highlighted ? "shadow-glow" : ""}`}
+                    variant={plan.highlighted ? "default" : "outline"}
+                    onClick={() => handleCheckout(plan.tier)}
+                    disabled={loadingTier === plan.tier}
+                  >
+                    {loadingTier === plan.tier ? "Loading…" : "Start 7-day free trial"}
+                  </Button>
                     <p className="mt-2 text-center text-xs text-muted-foreground">
                       No credit card required for trial
                     </p>
