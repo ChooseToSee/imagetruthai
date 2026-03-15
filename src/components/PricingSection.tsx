@@ -77,7 +77,6 @@ const PricingSection = () => {
     }
     setLoadingTier(tier);
     try {
-      const newTab = window.open("about:blank", "_blank");
       const priceId = billing === "annual"
         ? STRIPE_TIERS[tier].annual_price_id
         : STRIPE_TIERS[tier].monthly_price_id;
@@ -85,9 +84,7 @@ const PricingSection = () => {
         body: { priceId },
       });
       if (error) throw error;
-      if (data?.url && newTab) {
-        newTab.location.href = data.url;
-      } else if (data?.url) {
+      if (data?.url) {
         window.location.href = data.url;
       }
     } catch (err: any) {
