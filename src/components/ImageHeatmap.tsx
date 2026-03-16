@@ -235,7 +235,8 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
               <img
                 src={imageUrl}
                 alt="Original"
-                className="max-h-64 object-contain w-full"
+                className="max-h-64 object-contain w-full cursor-zoom-in"
+                onClick={() => setLightboxUrl(imageUrl)}
               />
               <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-background/80 text-[10px] font-medium text-foreground">
                 Original
