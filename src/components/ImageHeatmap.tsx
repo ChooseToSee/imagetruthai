@@ -73,6 +73,7 @@ function generateRegions(reasons: string[]): HeatmapRegion[] {
 const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeatmapProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>("original");
   const [hoveredRegion, setHoveredRegion] = useState<number | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
