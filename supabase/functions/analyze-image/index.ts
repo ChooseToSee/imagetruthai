@@ -780,8 +780,13 @@ serve(async (req) => {
         run: () => analyzeEditWithAI(imageBytes, mimeType, GOOGLE_AI_API_KEY),
       });
     }
+    if (HIVE_API_KEY) {
+      editTasks.push({
+        label: "Hive",
+        run: () => analyzeEditWithHive(imageBytes, mimeType, HIVE_API_KEY),
+      });
+    }
 
-    // Helper: attach edit results to model breakdown entries
     const attachEditToModels = (models: ModelResult[], edits: { label: string; result: EditResult }[]) => {
       for (const edit of edits) {
         // Try to find matching model by label prefix
