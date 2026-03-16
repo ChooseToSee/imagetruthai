@@ -206,6 +206,7 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
     const emptySlots = Math.max(0, Math.min(maxSlots, visibleSlotCount) - selectedFiles.length);
 
     return (
+      <>
       <section ref={ref} id="upload" className="py-24">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-3xl text-center">
