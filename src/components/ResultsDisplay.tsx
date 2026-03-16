@@ -222,7 +222,9 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                   reasons={result.reasons}
                   manipulationReasons={manipulation?.reasons}
                 />
-              </motion.div>
+                <p className="text-[10px] text-muted-foreground/60 text-center mt-1 mb-2">
+                  Click image to enlarge
+                </p>
 
               {/* Streaming progress */}
               {isStreaming && (
