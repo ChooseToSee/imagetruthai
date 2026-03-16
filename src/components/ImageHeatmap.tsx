@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Eye, Layers, SplitSquareHorizontal, MapPin } from "lucide-react";
+import { Eye, Layers, SplitSquareHorizontal, MapPin, ZoomIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import ImageLightbox from "@/components/ImageLightbox";
 
 type ViewMode = "original" | "heatmap" | "split";
 
