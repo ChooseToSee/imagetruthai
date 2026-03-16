@@ -700,6 +700,7 @@ serve(async (req) => {
     const SIGHTENGINE_API_SECRET = Deno.env.get("SIGHTENGINE_API_SECRET");
     const AIORNOT_API_KEY = Deno.env.get("AIORNOT_API_KEY");
     const GOOGLE_AI_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
+    const HIVE_API_KEY = Deno.env.get("HIVE_API_KEY");
 
     const imageBytes = new Uint8Array(await imageFile.arrayBuffer());
     const mimeType = imageFile.type || "image/jpeg";
