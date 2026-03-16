@@ -407,13 +407,13 @@ function parseEditAnalysisFromText(text: string): { edited: boolean; confidence:
   };
 }
 
-// ── Hive AI Edit/Deepfake Detection ─────────────────────────────────
+// ── Hive VLM Edit/Deepfake Detection ────────────────────────────────
 async function analyzeEditWithHive(
   imageBytes: Uint8Array,
   mimeType: string,
   apiKey: string
 ): Promise<{ edited: boolean; confidence: number; reasons: string[] }> {
-  console.log("[EditDetection] Starting Hive deepfake/edit analysis...");
+  console.log("[EditDetection] Starting HiveVLM edit analysis...");
   const b64 = base64Encode(imageBytes);
   const dataUrl = `data:${mimeType};base64,${b64}`;
 
@@ -421,87 +421,54 @@ async function analyzeEditWithHive(
 
   let res: Response;
   try {
-    res = await fetch("https://api.thehive.ai/api/v2/task/sync", {
+    res = await fetch("https://api.thehive.ai/api/v3/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Token ${normalizedApiKey}`,
+        Authorization: `Bearer ${normalizedApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        image: dataUrl,
+        model: "hive/moderation-11b-vision-language-model",
+        max_tokens: 512,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `You are a forensic image analyst. Examine this image for signs of editing or manipulation including: cloning, splicing, retouching, inpainting, face swapping, background replacement, or color manipulation.\n\nReturn ONLY valid JSON with no markdown:\n{"edited": true_or_false, "confidence": 50_to_99, "reasons": ["reason1", "reason2", "reason3"]}`,
+              },
+              {
+                type: "image_url",
+                image_url: { url: dataUrl },
+              },
+            ],
+          },
+        ],
       }),
     });
   } catch (fetchErr: any) {
-    console.error("[Hive] Fetch error:", sanitizeErrorText(fetchErr.message));
+    console.error("[HiveVLM] Fetch error:", sanitizeErrorText(fetchErr.message));
     return { edited: false, confidence: 50, reasons: ["Hive analysis temporarily unavailable"] };
   }
 
   if (!res.ok) {
     const t = await res.text();
-    console.error(`[Hive] API error [${res.status}]:`, sanitizeErrorText(t));
+    console.error(`[HiveVLM] API error [${res.status}]:`, sanitizeErrorText(t));
     return { edited: false, confidence: 50, reasons: [`Hive analysis failed (${res.status})`] };
   }
 
   const data = await res.json();
-  console.log("[Hive] Response code:", data?.code);
+  const rawText = data?.choices?.[0]?.message?.content?.trim() ?? "";
+  console.log("[HiveVLM] Raw response:", rawText.slice(0, 300));
 
-  // Parse the response - look for deepfake and ai_generated classes
-  const outputs = data?.status?.output ?? [];
-  let deepfakeScore = 0;
-  let aiGeneratedScore = 0;
-  let topSource = "";
-
-  for (const output of outputs) {
-    const classes = output?.classes ?? [];
-    for (const cls of classes) {
-      const className = cls?.class?.toLowerCase() ?? "";
-      const score = cls?.score ?? 0;
-
-      if (className === "deepfake") {
-        deepfakeScore = score;
-      }
-      if (className === "ai_generated") {
-        aiGeneratedScore = score;
-      }
-      if (className === "not_ai_generated") {
-        // complementary
-      }
-      // Track source generators
-      if (score > 0.1 && !["ai_generated", "not_ai_generated", "deepfake", "none", "inconclusive"].includes(className)) {
-        if (!topSource || score > 0.3) {
-          topSource = className;
-        }
-      }
-    }
+  const parsed = parseEditAnalysisFromText(rawText);
+  if (parsed) {
+    console.log("[HiveVLM] Parsed successfully, edited:", parsed.edited, "confidence:", parsed.confidence);
+    return parsed;
   }
 
-  // Use deepfake score as primary edit indicator, AI generation as secondary
-  const editIndicator = Math.max(deepfakeScore, aiGeneratedScore * 0.5);
-  const edited = editIndicator >= 0.5;
-  const confidence = Math.max(50, Math.min(99, Math.round(Math.max(editIndicator, 1 - editIndicator) * 100)));
-
-  const reasons: string[] = [];
-  if (deepfakeScore >= 0.5) {
-    reasons.push(`Hive deepfake detection scored ${(deepfakeScore * 100).toFixed(1)}% deepfake probability`);
-  }
-  if (aiGeneratedScore >= 0.5) {
-    reasons.push(`Hive classified image as ${(aiGeneratedScore * 100).toFixed(1)}% AI-generated`);
-    if (topSource) {
-      reasons.push(`Suspected source: ${topSource.replace(/_/g, " ")}`);
-    }
-  }
-  if (!edited) {
-    reasons.push(`Hive deepfake score: ${(deepfakeScore * 100).toFixed(1)}% — no strong manipulation detected`);
-    if (aiGeneratedScore < 0.5) {
-      reasons.push("Image appears authentic based on Hive's classifier");
-    }
-  }
-  if (reasons.length === 0) {
-    reasons.push("Hive analysis completed with no strong indicators");
-  }
-
-  console.log("[EditDetection] Hive result: edited=", edited, "confidence=", confidence, "deepfake=", deepfakeScore, "aiGen=", aiGeneratedScore);
-  return { edited, confidence, reasons };
+  return { edited: false, confidence: 50, reasons: ["Could not parse Hive response"] };
 }
 
 // ── AI or Not ───────────────────────────────────────────────────────
