@@ -173,9 +173,10 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
           <motion.img
             src={imageUrl}
             alt="Original"
-            className="mx-auto max-h-64 rounded-lg object-contain w-full"
+            className="mx-auto max-h-64 rounded-lg object-contain w-full cursor-zoom-in"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
+            onClick={() => setLightboxUrl(imageUrl)}
           />
         )}
 
