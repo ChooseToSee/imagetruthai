@@ -182,6 +182,12 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
 
         {viewMode === "heatmap" && (
           <div className="relative">
+            <button
+              onClick={() => setLightboxUrl(imageUrl)}
+              className="absolute top-2 right-2 z-10 rounded-full bg-background/80 border border-border p-1.5 hover:bg-muted transition-colors"
+            >
+              <ZoomIn className="h-3.5 w-3.5 text-foreground" />
+            </button>
             {/* Hidden image for canvas drawing */}
             <img
               src={imageUrl}
