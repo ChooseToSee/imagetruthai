@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Eye, Layers, SplitSquareHorizontal, MapPin } from "lucide-react";
+import { Eye, Layers, SplitSquareHorizontal, MapPin, ZoomIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import ImageLightbox from "@/components/ImageLightbox";
 
 type ViewMode = "original" | "heatmap" | "split";
 
@@ -72,6 +73,7 @@ function generateRegions(reasons: string[]): HeatmapRegion[] {
 const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeatmapProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>("original");
   const [hoveredRegion, setHoveredRegion] = useState<number | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
@@ -171,14 +173,21 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
           <motion.img
             src={imageUrl}
             alt="Original"
-            className="mx-auto max-h-64 rounded-lg object-contain w-full"
+            className="mx-auto max-h-64 rounded-lg object-contain w-full cursor-zoom-in"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
+            onClick={() => setLightboxUrl(imageUrl)}
           />
         )}
 
         {viewMode === "heatmap" && (
           <div className="relative">
+            <button
+              onClick={() => setLightboxUrl(imageUrl)}
+              className="absolute top-2 right-2 z-10 rounded-full bg-background/80 border border-border p-1.5 hover:bg-muted transition-colors"
+            >
+              <ZoomIn className="h-3.5 w-3.5 text-foreground" />
+            </button>
             {/* Hidden image for canvas drawing */}
             <img
               src={imageUrl}
@@ -226,7 +235,8 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
               <img
                 src={imageUrl}
                 alt="Original"
-                className="max-h-64 object-contain w-full"
+                className="max-h-64 object-contain w-full cursor-zoom-in"
+                onClick={() => setLightboxUrl(imageUrl)}
               />
               <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-background/80 text-[10px] font-medium text-foreground">
                 Original
@@ -270,6 +280,7 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
           </div>
         )}
       </div>
+      <ImageLightbox imageUrl={lightboxUrl} onClose={() => setLightboxUrl(null)} />
     </div>
   );
 };

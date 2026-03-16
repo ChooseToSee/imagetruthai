@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect, forwardRef } from "react";
-import { Upload, Image as ImageIcon, X, Loader2, Plus, Link as LinkIcon } from "lucide-react";
+import { Upload, Image as ImageIcon, X, Loader2, Plus, Link as LinkIcon, ZoomIn } from "lucide-react";
+import ImageLightbox from "@/components/ImageLightbox";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -35,6 +36,7 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
     const [consent1, setConsent1] = useState(false);
     const [consent2, setConsent2] = useState(false);
     const [consent3, setConsent3] = useState(false);
+    const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const { plan, limits } = usePlan();
     const { user } = useAuth();
@@ -204,6 +206,7 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
     const emptySlots = Math.max(0, Math.min(maxSlots, visibleSlotCount) - selectedFiles.length);
 
     return (
+      <>
       <section ref={ref} id="upload" className="py-24">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-3xl text-center">
@@ -368,15 +371,23 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
                       <img
                         src={fp.preview}
                         alt={fp.file.name}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover cursor-zoom-in"
+                        onClick={() => setLightboxUrl(fp.preview)}
                       />
                       {!isAnalyzing && (
-                        <button
-                          onClick={() => removeFile(i)}
-                          className="absolute top-1 right-1 rounded-full bg-background/80 p-1 opacity-0 transition-opacity group-hover:opacity-100"
-                        >
-                          <X className="h-3.5 w-3.5 text-foreground" />
-                        </button>
+                        <>
+                          <button
+                            onClick={() => removeFile(i)}
+                            className="absolute top-1 right-1 rounded-full bg-background/80 p-1 opacity-0 transition-opacity group-hover:opacity-100 z-10"
+                          >
+                            <X className="h-3.5 w-3.5 text-foreground" />
+                          </button>
+                          <div
+                            className="absolute inset-0 flex items-center justify-center bg-background/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-zoom-in pointer-events-none"
+                          >
+                            <ZoomIn className="h-6 w-6 text-foreground" />
+                          </div>
+                        </>
                       )}
                       {isAnalyzing && (
                         <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm">
@@ -472,6 +483,8 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
           </div>
         </div>
       </section>
+      <ImageLightbox imageUrl={lightboxUrl} onClose={() => setLightboxUrl(null)} />
+      </>
     );
   }
 );
