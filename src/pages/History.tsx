@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Trash2, Clock, AlertTriangle, CheckCircle, Lock, FileDown, ChevronDown, ChevronUp } from "lucide-react";
+import { Trash2, Clock, AlertTriangle, CheckCircle, Lock, FileDown, ChevronDown, ChevronUp, ZoomIn, Home, Upload } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ImageLightbox from "@/components/ImageLightbox";
 import { useToast } from "@/hooks/use-toast";
 import { exportReportPdf } from "@/lib/pdf-export";
 import type { AnalysisResult } from "@/components/ResultsDisplay";
@@ -24,10 +26,12 @@ interface ScanRecord {
 const History = () => {
   const { user } = useAuth();
   const { plan } = usePlan();
+  const navigate = useNavigate();
   const [scans, setScans] = useState<ScanRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
   const showFullResults = plan === "plus" || plan === "pro";
@@ -92,14 +96,30 @@ const History = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 pt-24 pb-16">
-        <h1 className="mb-8 font-display text-3xl font-bold text-foreground">Scan History</h1>
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 className="font-display text-3xl font-bold text-foreground">Scan History</h1>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate("/")} className="gap-2">
+              <Home className="h-4 w-4" />
+              Home
+            </Button>
+            <Button size="sm" onClick={() => navigate("/#upload")} className="gap-2 shadow-glow">
+              <Upload className="h-4 w-4" />
+              Upload Image
+            </Button>
+          </div>
+        </div>
 
         {loading ? (
           <p className="text-muted-foreground">Loading…</p>
         ) : scans.length === 0 ? (
           <div className="rounded-xl border border-border bg-card p-12 text-center">
             <Clock className="mx-auto mb-4 h-8 w-8 text-muted-foreground" />
-            <p className="text-muted-foreground">No scans yet. Upload an image to get started.</p>
+            <p className="text-muted-foreground mb-4">No scans yet. Upload an image to get started.</p>
+            <Button onClick={() => navigate("/#upload")} className="gap-2 shadow-glow">
+              <Upload className="h-4 w-4" />
+              Upload Your First Image
+            </Button>
           </div>
         ) : (
           <div className="space-y-3">
@@ -123,11 +143,19 @@ const History = () => {
                   <div className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       {scan.image_url ? (
-                        <img
-                          src={scan.image_url}
-                          alt={scan.file_name}
-                          className="h-12 w-12 rounded-md object-cover shrink-0"
-                        />
+                        <div
+                          className="relative group cursor-zoom-in shrink-0"
+                          onClick={() => setLightboxUrl(scan.image_url)}
+                        >
+                          <img
+                            src={scan.image_url}
+                            alt={scan.file_name}
+                            className="h-12 w-12 rounded-md object-cover"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-background/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
+                            <ZoomIn className="h-4 w-4 text-foreground" />
+                          </div>
+                        </div>
                       ) : scan.verdict === "ai" ? (
                         <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
                       ) : (
@@ -200,6 +228,7 @@ const History = () => {
           </div>
         )}
       </div>
+      <ImageLightbox imageUrl={lightboxUrl} onClose={() => setLightboxUrl(null)} />
       <Footer />
     </div>
   );
