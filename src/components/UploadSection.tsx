@@ -370,15 +370,23 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
                       <img
                         src={fp.preview}
                         alt={fp.file.name}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover cursor-zoom-in"
+                        onClick={() => setLightboxUrl(fp.preview)}
                       />
                       {!isAnalyzing && (
-                        <button
-                          onClick={() => removeFile(i)}
-                          className="absolute top-1 right-1 rounded-full bg-background/80 p-1 opacity-0 transition-opacity group-hover:opacity-100"
-                        >
-                          <X className="h-3.5 w-3.5 text-foreground" />
-                        </button>
+                        <>
+                          <button
+                            onClick={() => removeFile(i)}
+                            className="absolute top-1 right-1 rounded-full bg-background/80 p-1 opacity-0 transition-opacity group-hover:opacity-100 z-10"
+                          >
+                            <X className="h-3.5 w-3.5 text-foreground" />
+                          </button>
+                          <div
+                            className="absolute inset-0 flex items-center justify-center bg-background/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-zoom-in pointer-events-none"
+                          >
+                            <ZoomIn className="h-6 w-6 text-foreground" />
+                          </div>
+                        </>
                       )}
                       {isAnalyzing && (
                         <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm">
