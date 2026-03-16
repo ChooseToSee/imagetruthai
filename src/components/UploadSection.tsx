@@ -484,6 +484,7 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
         </div>
       </section>
       <ImageLightbox imageUrl={lightboxUrl} onClose={() => setLightboxUrl(null)} />
+      </>
     );
   }
 );
