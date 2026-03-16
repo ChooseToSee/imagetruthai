@@ -36,6 +36,7 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
     const [consent1, setConsent1] = useState(false);
     const [consent2, setConsent2] = useState(false);
     const [consent3, setConsent3] = useState(false);
+    const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const { plan, limits } = usePlan();
     const { user } = useAuth();
