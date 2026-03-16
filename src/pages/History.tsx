@@ -4,6 +4,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Trash2, Clock, AlertTriangle, CheckCircle, Lock, FileDown, ChevronDown, ChevronUp, ZoomIn, Home, Upload } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -32,10 +43,14 @@ const History = () => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const { toast } = useToast();
 
   const showFullResults = plan === "plus" || plan === "pro";
   const canDownloadPdf = plan === "pro";
+  const selectionMode = selectedIds.size > 0;
 
   useEffect(() => {
     if (!user) return;
@@ -54,6 +69,38 @@ const History = () => {
     };
     fetchScans();
   }, [user]);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === scans.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(scans.map((s) => s.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    const ids = Array.from(selectedIds);
+    const { error } = await supabase.from("scan_history").delete().in("id", ids);
+    if (error) {
+      toast({ title: "Failed to delete scans", description: error.message, variant: "destructive" });
+    } else {
+      setScans((prev) => prev.filter((s) => !selectedIds.has(s.id)));
+      toast({ title: `${ids.length} scan${ids.length > 1 ? "s" : ""} deleted` });
+      setSelectedIds(new Set());
+    }
+    setBulkDeleting(false);
+    setShowConfirm(false);
+  };
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("scan_history").delete().eq("id", id);
@@ -123,6 +170,34 @@ const History = () => {
           </div>
         ) : (
           <div className="space-y-3">
+            {/* Bulk actions bar */}
+            <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-2">
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  checked={selectedIds.size === scans.length && scans.length > 0}
+                  onCheckedChange={toggleSelectAll}
+                  aria-label="Select all scans"
+                />
+                <span className="text-sm text-muted-foreground">
+                  {selectionMode
+                    ? `${selectedIds.size} of ${scans.length} selected`
+                    : "Select all"}
+                </span>
+              </div>
+              {selectionMode && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowConfirm(true)}
+                  disabled={bulkDeleting}
+                  className="gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete {selectedIds.size}
+                </Button>
+              )}
+            </div>
+
             {!showFullResults && (
               <div className="mb-4 flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
                 <Lock className="h-4 w-4 shrink-0" />
@@ -135,13 +210,22 @@ const History = () => {
             )}
             {scans.map((scan) => {
               const isExpanded = expandedId === scan.id;
+              const isSelected = selectedIds.has(scan.id);
               return (
                 <div
                   key={scan.id}
-                  className="rounded-lg border border-border bg-card overflow-hidden"
+                  className={`rounded-lg border overflow-hidden transition-colors ${
+                    isSelected ? "border-primary bg-primary/5" : "border-border bg-card"
+                  }`}
                 >
                   <div className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleSelect(scan.id)}
+                        aria-label={`Select ${scan.file_name}`}
+                        className="shrink-0"
+                      />
                       {scan.image_url ? (
                         <div
                           className="relative group cursor-zoom-in shrink-0"
@@ -228,6 +312,29 @@ const History = () => {
           </div>
         )}
       </div>
+
+      {/* Bulk delete confirmation dialog */}
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedIds.size} scan{selectedIds.size > 1 ? "s" : ""}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The selected scans will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              disabled={bulkDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {bulkDeleting ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <ImageLightbox imageUrl={lightboxUrl} onClose={() => setLightboxUrl(null)} />
       <Footer />
     </div>
