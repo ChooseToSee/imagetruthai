@@ -454,7 +454,8 @@ async function analyzeEditWithHive(
 
   if (!res.ok) {
     const t = await res.text();
-    console.error(`[HiveVLM] API error [${res.status}]:`, sanitizeErrorText(t));
+    console.error(`[HiveVLM] API error [${res.status}] full response:`, t.slice(0, 500));
+    console.error(`[HiveVLM] API key prefix:`, normalizedApiKey.slice(0, 8) + "...");
     return { edited: false, confidence: 50, reasons: [`Hive analysis failed (${res.status})`] };
   }
 
