@@ -428,7 +428,7 @@ async function analyzeEditWithHive(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "hive/moderation-11b-vision-language-model",
+        model: "hive/vision-language-model",
         max_tokens: 512,
         messages: [
           {
