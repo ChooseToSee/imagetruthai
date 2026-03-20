@@ -397,6 +397,12 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
 
               {/* Edit Detection Tab */}
               <TabsContent value="edit-detection">
+                <div className="flex items-start gap-2 rounded-lg bg-muted/50 border border-border px-3 py-2 mb-4">
+                  <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Edit detection identifies image manipulation, retouching, splicing, face swaps, background replacement, and digitally created or painted images presented as photographs.
+                  </p>
+                </div>
                 {manipulation ? (
                   <>
                     <motion.div
