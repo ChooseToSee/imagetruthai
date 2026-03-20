@@ -519,7 +519,12 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                                         {r}
                                       </li>
                                     ))}
-                                  </ul>
+                                   </ul>
+                                  {m.model === "SightEngine" && (
+                                    <p className="text-[10px] text-muted-foreground/60 italic mt-1.5">
+                                      SightEngine checks metadata and image quality signals only — not visual manipulation.
+                                    </p>
+                                  )}
                                 </div>
                               );
                             })}
