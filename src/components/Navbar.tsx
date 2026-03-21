@@ -274,7 +274,7 @@ const Navbar = () => {
                 <Link to="/history" className="flex items-center gap-2 text-sm text-muted-foreground">
                   <History className="h-4 w-4" /> Scan History
                 </Link>
-                {plan !== "free" && (
+                {subscription.subscribed && (
                   <button
                     onClick={async () => {
                       try {
