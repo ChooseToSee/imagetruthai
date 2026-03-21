@@ -274,23 +274,25 @@ const Navbar = () => {
                 <Link to="/history" className="flex items-center gap-2 text-sm text-muted-foreground">
                   <History className="h-4 w-4" /> Scan History
                 </Link>
-                <button
-                  onClick={async () => {
-                    try {
-                      const { data, error } = await supabase.functions.invoke("customer-portal");
-                      if (error) throw error;
-                      if (data?.url) window.open(data.url, "_blank");
-                    } catch (err) {
-                      toast({
-                        title: "Could not open billing portal",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                  className="flex items-center gap-2 text-sm text-muted-foreground"
-                >
-                  <CreditCard className="h-4 w-4" /> Manage Subscription
-                </button>
+                {subscription.tier !== "free" && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        const { data, error } = await supabase.functions.invoke("customer-portal");
+                        if (error) throw error;
+                        if (data?.url) window.open(data.url, "_blank");
+                      } catch (err) {
+                        toast({
+                          title: "Could not open billing portal",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    className="flex items-center gap-2 text-sm text-muted-foreground"
+                  >
+                    <CreditCard className="h-4 w-4" /> Manage Subscription
+                  </button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
