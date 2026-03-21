@@ -46,12 +46,9 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("[customer-portal] Error:", errorMessage);
-    const safeMessage = errorMessage.includes("Authentication") || errorMessage.includes("No authorization") || errorMessage.includes("No Stripe customer")
-      ? errorMessage
-      : "Failed to create portal session";
-    return new Response(JSON.stringify({ error: safeMessage }), {
+    console.error("Customer portal error:", error);
+    const message = error instanceof Error ? error.message : "Portal failed";
+    return new Response(JSON.stringify({ error: message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
