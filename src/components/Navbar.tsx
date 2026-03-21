@@ -184,7 +184,7 @@ const Navbar = () => {
                 </DropdownMenuItem>
 
                 {/* Manage Subscription */}
-                {plan !== "free" && (
+                {subscription.subscribed && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
