@@ -9,7 +9,15 @@ const tiers: { value: PlanTier; label: string }[] = [
 ];
 
 const DevPlanToolbar = () => {
+  const isDevEnvironment =
+    typeof window !== "undefined" &&
+    (window.location.hostname.includes("lovable.app") ||
+      window.location.hostname === "localhost" ||
+      import.meta.env.DEV === true);
+
   const { plan, setPlan, limits, devMode, setDevMode } = usePlan();
+
+  if (!isDevEnvironment) return null;
 
   if (!devMode) {
     return (
