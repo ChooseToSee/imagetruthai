@@ -1,39 +1,26 @@
-async function dataUrlToFile(dataUrl: string, fileName: string): Promise<File | null> {
-  try {
-    const res = await fetch(dataUrl);
-    const blob = await res.blob();
-    return new File([blob], fileName, { type: blob.type || "image/png" });
-  } catch {
-    return null;
-  }
-}
-
 export async function shareContent(
   text: string,
   title: string = "ImageTruth AI",
   url?: string,
   imageUrl?: string
 ): Promise<"shared" | "copied"> {
+  const shareUrl = url || "https://imagetruthai.com";
+
   if (navigator.share) {
     try {
-      const shareData: ShareData = { title, text };
-      if (url) shareData.url = url;
-
-      // Try sharing with image file if supported
-      if (imageUrl) {
-        const file = await dataUrlToFile(imageUrl, "imagetruth-result.png");
-        if (file && navigator.canShare?.({ files: [file] })) {
-          shareData.files = [file];
-        }
-      }
-
-      await navigator.share(shareData);
+      await navigator.share({
+        title,
+        text,
+        url: shareUrl,
+      });
       return "shared";
-    } catch {
-      // User cancelled or error — fall back to clipboard
+    } catch (e) {
+      if ((e as Error).name === "AbortError") return "copied";
     }
   }
-  const clipText = url ? `${text}\n${url}` : text;
-  await navigator.clipboard.writeText(clipText);
+
+  // Fallback: copy to clipboard
+  const clipboardText = `${text}\n${shareUrl}`;
+  await navigator.clipboard.writeText(clipboardText);
   return "copied";
 }
