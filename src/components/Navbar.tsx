@@ -60,12 +60,18 @@ const Navbar = () => {
 
   const handleShare = async () => {
     const result = await shareContent(
-      "Check out ImageTruth AI — detect AI-generated and edited images instantly!",
-      "ImageTruth AI"
+      "Check out ImageTruth AI — instantly detect AI-generated and edited images using multiple AI models for consensus accuracy. Try it free!",
+      "ImageTruth AI — Detect AI Images",
+      "https://imagetruthai.com"
     );
-    if (result === "copied") {
+    if (result === "copied" || result === "shared") {
       setShareIcon(true);
-      toast({ title: "Link copied!", description: "Share it with anyone." });
+      toast({
+        title: result === "shared" ? "Shared!" : "Link copied!",
+        description: result === "shared"
+          ? "Thanks for sharing ImageTruth AI!"
+          : "Share it with anyone.",
+      });
       setTimeout(() => setShareIcon(false), 2000);
     }
   };

@@ -695,6 +695,14 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                       Copy
                     </Button>
                   </div>
+                  <div className="mt-2 rounded-lg bg-muted/30 border border-border p-3">
+                    <p className="text-[10px] font-medium text-foreground mb-1">
+                      Share preview:
+                    </p>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed whitespace-pre-line">
+                      {`🔍 ${result.confidence}% likely ${isAI ? "AI-Generated 🤖" : "Human-Created ✅"}\n${result.reasons[0]}\n\nView: ${shareLink}`}
+                    </p>
+                  </div>
                 </div>
               )}
 
