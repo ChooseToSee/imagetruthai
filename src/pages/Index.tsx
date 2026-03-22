@@ -246,6 +246,7 @@ const Index = () => {
   }, [user, toast]);
 
   const handleReset = useCallback(() => {
+    sessionStorage.removeItem("lastAnalysisResult");
     setSingleResult(null);
     setBatchResults(null);
     setPartialReady(false);
