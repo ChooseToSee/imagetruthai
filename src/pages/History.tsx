@@ -154,7 +154,7 @@ const History = () => {
               <Home className="h-4 w-4" />
               Home
             </Button>
-            <Button size="sm" onClick={() => navigate("/#upload")} className="gap-2 shadow-glow">
+            <Button size="sm" onClick={() => { navigate("/"); setTimeout(() => { document.getElementById("upload")?.scrollIntoView({ behavior: "smooth" }); }, 300); }} className="gap-2 shadow-glow">
               <Upload className="h-4 w-4" />
               Upload Image
             </Button>
