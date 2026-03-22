@@ -164,13 +164,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
       setShareLink(link);
       setShareReportId(data.id);
       setIsPublic(true);
-      try {
-        await navigator.clipboard.writeText(link);
-        toast({ title: "Share link copied!", description: "Anyone with the link can view this report." });
-      } catch (clipErr) {
-        console.warn("Clipboard write failed:", clipErr);
-        toast({ title: "Share link generated!", description: "Copy the link below to share." });
-      }
+      toast({ title: "Share link ready!", description: "Copy the link below to share your report." });
     } catch (err: any) {
       console.error("Full share error:", err);
       toast({ title: "Failed to generate link", description: err?.message || JSON.stringify(err) || "Unknown error", variant: "destructive" });
@@ -694,7 +688,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                       className="text-xs h-7"
                       onClick={() => {
                         navigator.clipboard.writeText(shareLink);
-                        toast({ title: "Link copied!" });
+                        toast({ title: "Link copied!", description: "Anyone with this link can view your full report." });
                       }}
                     >
                       Copy
