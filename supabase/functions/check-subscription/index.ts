@@ -47,20 +47,49 @@ serve(async (req) => {
     logStep("User authenticated", { email: user.email });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
 
-    if (customers.data.length === 0) {
+    // Resilient customer lookup: stored ID first, then email fallback
+    let customerId: string | null = null;
+
+    const { data: profile } = await supabaseClient
+      .from("profiles")
+      .select("stripe_customer_id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (profile?.stripe_customer_id) {
+      try {
+        const existing = await stripe.customers.retrieve(profile.stripe_customer_id);
+        if (!existing.deleted) {
+          customerId = existing.id;
+          logStep("Found customer by stored ID", { customerId });
+        }
+      } catch {
+        logStep("Stored stripe_customer_id invalid, falling back to email");
+      }
+    }
+
+    if (!customerId) {
+      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+        logStep("Found customer by email", { customerId });
+        // Save for future lookups
+        await supabaseClient
+          .from("profiles")
+          .update({ stripe_customer_id: customerId })
+          .eq("user_id", user.id);
+      }
+    }
+
+    if (!customerId) {
       logStep("No Stripe customer found");
-      // Sync to DB
       await supabaseClient.from("profiles").update({ is_pro: false, subscription_tier: "free" }).eq("user_id", user.id);
       return new Response(JSON.stringify({ subscribed: false, product_id: null, subscription_end: null, subscription_tier: "free" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
-
-    const customerId = customers.data[0].id;
-    logStep("Found customer", { customerId });
 
     // Check for active, past_due, or trialing subscriptions
     const [activeRes, pastDueRes, trialingRes] = await Promise.all([
@@ -77,7 +106,6 @@ serve(async (req) => {
     let subscriptionTier = "free";
 
     if (hasValidSub) {
-      // Prefer active > trialing > past_due
       const subscription = activeRes.data[0] || trialingRes.data[0] || pastDueRes.data[0];
       const periodEnd = subscription.current_period_end;
       try {
@@ -117,7 +145,6 @@ serve(async (req) => {
     logStep("ERROR", { message: errorMessage });
     const isKeyError = errorMessage.includes("Invalid API Key") || errorMessage.includes("api_key_expired");
     if (isKeyError) {
-      // Return graceful fallback — treat as free tier rather than hard error
       logStep("WARN: Stripe key invalid/expired, returning free tier fallback");
       return new Response(JSON.stringify({
         subscribed: false, product_id: null, subscription_end: null,

@@ -32,12 +32,41 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    if (customers.data.length === 0) throw new Error("No Stripe customer found for this user");
+
+    // Resilient lookup: stored ID first, then email
+    let customerId: string | null = null;
+
+    const { data: profile } = await supabaseClient
+      .from("profiles")
+      .select("stripe_customer_id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (profile?.stripe_customer_id) {
+      try {
+        const existing = await stripe.customers.retrieve(profile.stripe_customer_id);
+        if (!existing.deleted) {
+          customerId = existing.id;
+        }
+      } catch {
+        // fall through
+      }
+    }
+
+    if (!customerId) {
+      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+      if (customers.data.length === 0) throw new Error("No Stripe customer found for this user");
+      customerId = customers.data[0].id;
+      // Save for future
+      await supabaseClient
+        .from("profiles")
+        .update({ stripe_customer_id: customerId })
+        .eq("user_id", user.id);
+    }
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
     const portalSession = await stripe.billingPortal.sessions.create({
-      customer: customers.data[0].id,
+      customer: customerId,
       return_url: `${origin}/`,
     });
 
