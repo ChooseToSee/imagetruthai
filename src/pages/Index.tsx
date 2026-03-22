@@ -136,6 +136,8 @@ const Index = () => {
     await supabase.from("scan_history").insert({
       user_id: user.id, file_name: file.name, file_size: file.size,
       verdict: result.verdict, confidence: result.confidence, reasons: result.reasons, tips: result.tips, image_url,
+      model_breakdown: result.modelBreakdown ? JSON.parse(JSON.stringify(result.modelBreakdown)) : null,
+      manipulation: result.manipulation ? JSON.parse(JSON.stringify(result.manipulation)) : null,
     });
   };
 

@@ -308,6 +308,19 @@ const History = () => {
                           <li key={i} className="text-xs text-muted-foreground">• {reason}</li>
                         ))}
                       </ul>
+                      {scan.manipulation && (
+                        <div className="mt-3">
+                          <p className="text-xs font-medium text-foreground mb-1">Edit Detection</p>
+                          <p className="text-xs text-muted-foreground">
+                            {scan.manipulation.confidence}% likely{scan.manipulation.edited ? " edited" : " unmodified"}
+                          </p>
+                          <ul className="space-y-1 mt-1">
+                            {(scan.manipulation.reasons || []).slice(0, 3).map((reason: string, i: number) => (
+                              <li key={i} className="text-xs text-muted-foreground">• {reason}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
