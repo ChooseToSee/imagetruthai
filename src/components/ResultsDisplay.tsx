@@ -148,10 +148,35 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
         setIsSharing(false);
         return;
       }
+
+      // Upload blob image to storage so shared reports have a public URL
+      let publicImageUrl: string | null = null;
+      if (imagePreview.startsWith("blob:")) {
+        try {
+          const response = await fetch(imagePreview);
+          const blob = await response.blob();
+          const ext = blob.type.split("/")[1] || "jpg";
+          const filePath = `shared/${crypto.randomUUID()}.${ext}`;
+          const { error: uploadError } = await supabase.storage
+            .from("scan-images")
+            .upload(filePath, blob, { contentType: blob.type, upsert: false });
+          if (!uploadError) {
+            const { data: urlData } = supabase.storage
+              .from("scan-images")
+              .getPublicUrl(filePath);
+            publicImageUrl = urlData.publicUrl;
+          }
+        } catch (uploadErr) {
+          console.error("Image upload failed:", uploadErr);
+        }
+      } else {
+        publicImageUrl = imagePreview;
+      }
+
       const { data, error } = await supabase.from("shared_reports").insert({
         user_id: user.id,
         is_public: true,
-        image_url: imagePreview.startsWith("blob:") ? null : imagePreview,
+        image_url: publicImageUrl,
         verdict: result.verdict,
         confidence: result.confidence,
         reasons: result.reasons,
