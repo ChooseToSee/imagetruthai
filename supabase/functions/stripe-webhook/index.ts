@@ -56,7 +56,7 @@ serve(async (req) => {
     { auth: { persistSession: false } }
   );
 
-  // Helper to find user by Stripe customer email
+  // Helper to find user by Stripe customer email and save stripe_customer_id
   async function findUserByCustomerId(customerId: string) {
     const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
     if (!customer.email) {
@@ -69,13 +69,23 @@ serve(async (req) => {
       logStep("WARN", { message: "No user found for email", email: customer.email });
       return null;
     }
+    // Save stripe_customer_id for future lookups
+    await supabaseClient
+      .from("profiles")
+      .update({ stripe_customer_id: customerId })
+      .eq("user_id", matchedUser.id);
+    logStep("Saved stripe_customer_id to profile", { userId: matchedUser.id, customerId });
     return matchedUser;
   }
 
-  async function updateProfile(userId: string, is_pro: boolean, subscription_tier: string) {
+  async function updateProfile(userId: string, is_pro: boolean, subscription_tier: string, stripeCustomerId?: string) {
+    const updateData: Record<string, unknown> = { is_pro, subscription_tier };
+    if (stripeCustomerId) {
+      updateData.stripe_customer_id = stripeCustomerId;
+    }
     const { error: updateErr } = await supabaseClient
       .from("profiles")
-      .update({ is_pro, subscription_tier })
+      .update(updateData)
       .eq("user_id", userId);
     if (updateErr) {
       logStep("ERROR", { message: "Profile update failed", error: updateErr.message });
@@ -86,6 +96,18 @@ serve(async (req) => {
 
   try {
     switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const customerId = session.customer as string;
+        if (customerId) {
+          const matchedUser = await findUserByCustomerId(customerId);
+          if (matchedUser) {
+            logStep("Checkout completed, stripe_customer_id saved", { customerId });
+          }
+        }
+        break;
+      }
+
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
@@ -103,7 +125,7 @@ serve(async (req) => {
           tier = PRODUCT_TIER_MAP[productId] || "free";
         }
 
-        await updateProfile(matchedUser.id, isActive && tier !== "free", tier);
+        await updateProfile(matchedUser.id, isActive && tier !== "free", tier, customerId);
         break;
       }
 
@@ -127,7 +149,7 @@ serve(async (req) => {
         if (!matchedUser) break;
 
         // Revoke access
-        await updateProfile(matchedUser.id, false, "free");
+        await updateProfile(matchedUser.id, false, "free", customerId);
 
         // Cancel active subscriptions
         try {

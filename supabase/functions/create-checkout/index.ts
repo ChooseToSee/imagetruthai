@@ -22,7 +22,8 @@ serve(async (req) => {
 
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
   );
 
   try {
@@ -53,15 +54,42 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
+    // Look up customer: first by stored stripe_customer_id, then by email
+    let customerId: string | undefined;
+
+    const { data: profile } = await supabaseClient
+      .from("profiles")
+      .select("stripe_customer_id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (profile?.stripe_customer_id) {
+      try {
+        const existing = await stripe.customers.retrieve(profile.stripe_customer_id);
+        if (!existing.deleted) {
+          customerId = existing.id;
+        }
+      } catch {
+        // Customer ID invalid/deleted, fall through to email lookup
+      }
+    }
+
+    if (!customerId) {
+      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+        // Save for future lookups
+        await supabaseClient
+          .from("profiles")
+          .update({ stripe_customer_id: customerId })
+          .eq("user_id", user.id);
+      }
     }
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
+      customer_update: customerId ? { name: "auto" } : undefined,
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
       allow_promotion_codes: true,
@@ -79,7 +107,6 @@ serve(async (req) => {
   } catch (error) {
     console.error("[CREATE-CHECKOUT] Error:", error);
     const rawMessage = error instanceof Error ? error.message : "Checkout failed";
-    // Detect expired/invalid Stripe key and return user-friendly message
     const isKeyError = rawMessage.includes("Invalid API Key") || rawMessage.includes("api_key_expired");
     const message = isKeyError
       ? "Payment system needs maintenance — please contact support."
