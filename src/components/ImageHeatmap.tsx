@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Eye, Layers, SplitSquareHorizontal, MapPin, ZoomIn } from "lucide-react";
+import { Eye, Layers, SplitSquareHorizontal, MapPin, ZoomIn, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import ImageLightbox from "@/components/ImageLightbox";
 
 type ViewMode = "original" | "heatmap" | "split";
@@ -22,15 +21,15 @@ interface ImageHeatmapProps {
   manipulationReasons?: string[];
 }
 
-const SIGNAL_MAP: { keywords: string[]; label: string; color: string }[] = [
-  { keywords: ["lighting", "shadow", "illumination", "light"], label: "Lighting inconsistency detected", color: "rgba(255, 60, 60, 0.6)" },
-  { keywords: ["compression", "jpeg", "artifact", "quality"], label: "Possible compression artifact detected", color: "rgba(255, 165, 0, 0.5)" },
-  { keywords: ["edge", "boundary", "outline", "halo", "border"], label: "Edge irregularity suggesting possible editing boundary", color: "rgba(255, 0, 200, 0.5)" },
-  { keywords: ["clone", "repeating", "pattern", "duplicate", "copy"], label: "Possible clone pattern detected", color: "rgba(0, 200, 255, 0.5)" },
-  { keywords: ["texture", "noise", "grain", "smoothing", "skin", "blur"], label: "Texture anomaly detected", color: "rgba(130, 80, 255, 0.5)" },
-  { keywords: ["metadata", "exif", "camera"], label: "Metadata anomaly detected", color: "rgba(255, 220, 0, 0.5)" },
-  { keywords: ["perspective", "distort", "warp", "stretch"], label: "Perspective inconsistency detected", color: "rgba(0, 255, 130, 0.5)" },
-  { keywords: ["reflection", "mirror"], label: "Inconsistent reflection detected", color: "rgba(255, 100, 100, 0.5)" },
+const SIGNAL_MAP: { keywords: string[]; label: string; color: string; placement: string }[] = [
+  { keywords: ["lighting", "shadow", "illumination", "light"], label: "Lighting inconsistency detected", color: "rgba(255, 50, 50, 0.75)", placement: "top" },
+  { keywords: ["compression", "jpeg", "artifact", "quality"], label: "Possible compression artifact detected", color: "rgba(255, 140, 0, 0.75)", placement: "scatter" },
+  { keywords: ["edge", "boundary", "outline", "halo", "border"], label: "Edge irregularity suggesting possible editing boundary", color: "rgba(220, 0, 255, 0.75)", placement: "edges" },
+  { keywords: ["clone", "repeating", "pattern", "duplicate", "copy"], label: "Possible clone pattern detected", color: "rgba(0, 210, 255, 0.75)", placement: "clone" },
+  { keywords: ["texture", "noise", "grain", "smoothing", "skin", "blur"], label: "Texture anomaly detected", color: "rgba(150, 80, 255, 0.75)", placement: "center" },
+  { keywords: ["metadata", "exif", "camera"], label: "Metadata anomaly detected", color: "rgba(255, 220, 0, 0.75)", placement: "bottom" },
+  { keywords: ["perspective", "distort", "warp", "stretch"], label: "Perspective inconsistency detected", color: "rgba(0, 255, 100, 0.75)", placement: "scatter" },
+  { keywords: ["reflection", "mirror"], label: "Inconsistent reflection detected", color: "rgba(255, 80, 80, 0.75)", placement: "center" },
 ];
 
 // Deterministic pseudo-random from string seed
@@ -54,11 +53,58 @@ function generateRegions(reasons: string[]): HeatmapRegion[] {
     if (!matched) return;
 
     const rand = seededRandom(signal.label + idx);
-    const count = Math.max(1, Math.floor(rand() * 3));
+    const count = signal.placement === "clone" ? 2 : Math.max(1, Math.floor(rand() * 3));
+
     for (let i = 0; i < count; i++) {
+      let x: number, y: number;
+
+      switch (signal.placement) {
+        case "top":
+          // Lighting/shadow → top third
+          x = 0.1 + rand() * 0.6;
+          y = 0.05 + rand() * 0.3;
+          break;
+        case "edges":
+          // Edge signals → near left or right edges
+          x = rand() > 0.5 ? 0.75 + rand() * 0.2 : 0.05 + rand() * 0.15;
+          y = 0.1 + rand() * 0.7;
+          break;
+        case "center":
+          // Texture/skin → center area
+          x = 0.25 + rand() * 0.5;
+          y = 0.2 + rand() * 0.5;
+          break;
+        case "bottom":
+          // Metadata → bottom third
+          x = 0.1 + rand() * 0.6;
+          y = 0.65 + rand() * 0.25;
+          break;
+        case "clone":
+          // Clone/pattern → pairs with similar positions
+          if (i === 0) {
+            x = 0.15 + rand() * 0.3;
+            y = 0.2 + rand() * 0.4;
+          } else {
+            // Mirror-ish position of previous region
+            const prev = regions[regions.length - 1];
+            x = prev ? 1 - prev.x - 0.15 + rand() * 0.1 : 0.5 + rand() * 0.3;
+            y = prev ? prev.y + (rand() * 0.1 - 0.05) : 0.2 + rand() * 0.4;
+          }
+          break;
+        default:
+          // Scatter across image
+          x = 0.1 + rand() * 0.7;
+          y = 0.1 + rand() * 0.7;
+          break;
+      }
+
+      // Clamp values
+      x = Math.max(0.05, Math.min(0.85, x));
+      y = Math.max(0.05, Math.min(0.85, y));
+
       regions.push({
-        x: 0.1 + rand() * 0.6,
-        y: 0.1 + rand() * 0.6,
+        x,
+        y,
         w: 0.15 + rand() * 0.2,
         h: 0.15 + rand() * 0.2,
         intensity: 0.4 + rand() * 0.5,
@@ -72,7 +118,7 @@ function generateRegions(reasons: string[]): HeatmapRegion[] {
 
 const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeatmapProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>("original");
-  const [hoveredRegion, setHoveredRegion] = useState<number | null>(null);
+  const [activeMarker, setActiveMarker] = useState<number | null>(null);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -88,7 +134,7 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
     setImgSize({ w: img.naturalWidth, h: img.naturalHeight });
   }, []);
 
-  // Draw heatmap on canvas
+  // Draw signal map on canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !imgRef.current || imgSize.w === 0) return;
@@ -108,7 +154,7 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
     ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
     ctx.fillRect(0, 0, displayW, displayH);
 
-    // Draw heat regions with radial gradients
+    // Draw signal regions with radial gradients
     regions.forEach((region, idx) => {
       const cx = region.x * displayW + (region.w * displayW) / 2;
       const cy = region.y * displayH + (region.h * displayH) / 2;
@@ -120,9 +166,9 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
       const matchedSignal = SIGNAL_MAP.find((s) =>
         s.keywords.some((kw) => region.label.toLowerCase().includes(kw))
       );
-      const color = matchedSignal?.color || "rgba(255, 60, 60, 0.5)";
-      const isHovered = hoveredRegion === idx;
-      const alpha = isHovered ? 0.8 : region.intensity * 0.6;
+      const color = matchedSignal?.color || "rgba(255, 50, 50, 0.75)";
+      const isActive = activeMarker === idx;
+      const alpha = isActive ? 0.9 : region.intensity * 0.85;
 
       gradient.addColorStop(0, color.replace(/[\d.]+\)$/, `${alpha})`));
       gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
@@ -132,11 +178,11 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
       ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
       ctx.fill();
     });
-  }, [imgSize, regions, hoveredRegion, viewMode]);
+  }, [imgSize, regions, activeMarker, viewMode]);
 
   const modeButtons: { mode: ViewMode; icon: React.ReactNode; label: string }[] = [
     { mode: "original", icon: <Eye className="h-3.5 w-3.5" />, label: "Original" },
-    { mode: "heatmap", icon: <Layers className="h-3.5 w-3.5" />, label: "Heatmap" },
+    { mode: "heatmap", icon: <Layers className="h-3.5 w-3.5" />, label: "Signal Map" },
     { mode: "split", icon: <SplitSquareHorizontal className="h-3.5 w-3.5" />, label: "Split" },
   ];
 
@@ -148,10 +194,41 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
     );
   }
 
+  const MarkerOverlay = ({ region, idx, small = false }: { region: HeatmapRegion; idx: number; small?: boolean }) => (
+    <div key={idx} className="absolute" style={{
+      left: `${(region.x + region.w / 2) * 100}%`,
+      top: `${(region.y + region.h / 2) * 100}%`,
+      transform: "translate(-50%, -50%)",
+      zIndex: activeMarker === idx ? 20 : 10,
+    }}>
+      <button
+        className={`flex items-center justify-center rounded-full border-2 transition-all cursor-pointer ${
+          small ? "w-4 h-4" : "w-5 h-5"
+        } ${
+          activeMarker === idx
+            ? "bg-destructive border-destructive-foreground scale-125 z-10"
+            : "bg-destructive/70 border-destructive-foreground/50 hover:scale-110"
+        }`}
+        onClick={(e) => {
+          e.stopPropagation();
+          setActiveMarker(activeMarker === idx ? null : idx);
+        }}
+      >
+        <MapPin className={`${small ? "h-2.5 w-2.5" : "h-3 w-3"} text-destructive-foreground`} />
+      </button>
+      {activeMarker === idx && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 rounded bg-popover border border-border shadow-lg text-xs text-popover-foreground max-w-[200px] whitespace-normal z-30">
+          {region.label}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-popover border-r border-b border-border rotate-45 -mt-1" />
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="mb-4">
       {/* View mode toggle */}
-      <div className="flex gap-1 mb-3 p-1 rounded-lg bg-muted/80 border border-border w-fit">
+      <div className="flex gap-1 mb-2 p-1 rounded-lg bg-muted/80 border border-border w-fit">
         {modeButtons.map((btn) => (
           <button
             key={btn.mode}
@@ -168,7 +245,28 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
         ))}
       </div>
 
-      <div ref={containerRef} className="relative overflow-hidden rounded-lg bg-muted">
+      {/* Disclaimer */}
+      <div className="flex items-start gap-2 mb-3 px-3 py-2 rounded-md bg-muted/50 border border-border">
+        <Info className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          <span className="font-medium text-foreground">Signal Map</span> shows illustrative indicators based on detected signal types. Regions are not pixel-precise — for forensic-level analysis see the Details tab.
+        </p>
+      </div>
+
+      {/* Sample indicator count */}
+      {viewMode !== "original" && (
+        <div className="mb-2">
+          <p className="text-[11px] text-muted-foreground">
+            Showing {regions.length} sample indicator{regions.length !== 1 ? "s" : ""} — tap markers for details
+          </p>
+        </div>
+      )}
+
+      <div
+        ref={containerRef}
+        className="relative overflow-hidden rounded-lg bg-muted"
+        onClick={() => setActiveMarker(null)}
+      >
         {viewMode === "original" && (
           <motion.img
             src={imageUrl}
@@ -183,7 +281,7 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
         {viewMode === "heatmap" && (
           <div className="relative">
             <button
-              onClick={() => setLightboxUrl(imageUrl)}
+              onClick={(e) => { e.stopPropagation(); setLightboxUrl(imageUrl); }}
               className="absolute top-2 right-2 z-10 rounded-full bg-background/80 border border-border p-1.5 hover:bg-muted transition-colors"
             >
               <ZoomIn className="h-3.5 w-3.5 text-foreground" />
@@ -198,45 +296,24 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
             />
             <canvas
               ref={canvasRef}
-              className="mx-auto max-h-64 rounded-lg object-contain w-full"
+              className="mx-auto max-h-64 rounded-lg object-contain w-full cursor-zoom-in"
+              onClick={(e) => { e.stopPropagation(); setLightboxUrl(imageUrl); }}
             />
             {/* Marker overlays */}
             {regions.map((region, idx) => (
-              <Tooltip key={idx}>
-                <TooltipTrigger asChild>
-                  <button
-                    className={`absolute flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all cursor-pointer ${
-                      hoveredRegion === idx
-                        ? "bg-destructive border-destructive-foreground scale-125 z-10"
-                        : "bg-destructive/70 border-destructive-foreground/50 hover:scale-110"
-                    }`}
-                    style={{
-                      left: `${(region.x + region.w / 2) * 100}%`,
-                      top: `${(region.y + region.h / 2) * 100}%`,
-                      transform: "translate(-50%, -50%)",
-                    }}
-                    onMouseEnter={() => setHoveredRegion(idx)}
-                    onMouseLeave={() => setHoveredRegion(null)}
-                  >
-                    <MapPin className="h-3 w-3 text-destructive-foreground" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-[200px] text-xs">
-                  {region.label}
-                </TooltipContent>
-              </Tooltip>
+              <MarkerOverlay key={idx} region={region} idx={idx} />
             ))}
           </div>
         )}
 
         {viewMode === "split" && (
           <div className="flex">
-            <div className="w-1/2 overflow-hidden border-r border-border">
+            <div className="w-1/2 overflow-hidden border-r border-border relative">
               <img
                 src={imageUrl}
                 alt="Original"
                 className="max-h-64 object-contain w-full cursor-zoom-in"
-                onClick={() => setLightboxUrl(imageUrl)}
+                onClick={(e) => { e.stopPropagation(); setLightboxUrl(imageUrl); }}
               />
               <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-background/80 text-[10px] font-medium text-foreground">
                 Original
@@ -252,29 +329,14 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
               />
               <canvas
                 ref={canvasRef}
-                className="max-h-64 object-contain w-full"
+                className="max-h-64 object-contain w-full cursor-zoom-in"
+                onClick={(e) => { e.stopPropagation(); setLightboxUrl(imageUrl); }}
               />
               {regions.map((region, idx) => (
-                <Tooltip key={idx}>
-                  <TooltipTrigger asChild>
-                    <button
-                      className="absolute flex items-center justify-center w-4 h-4 rounded-full bg-destructive/70 border border-destructive-foreground/50 cursor-pointer hover:scale-110 transition-transform"
-                      style={{
-                        left: `${(region.x + region.w / 2) * 100}%`,
-                        top: `${(region.y + region.h / 2) * 100}%`,
-                        transform: "translate(-50%, -50%)",
-                      }}
-                    >
-                      <MapPin className="h-2.5 w-2.5 text-destructive-foreground" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-[200px] text-xs">
-                    {region.label}
-                  </TooltipContent>
-                </Tooltip>
+                <MarkerOverlay key={idx} region={region} idx={idx} small />
               ))}
               <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-background/80 text-[10px] font-medium text-foreground">
-                Heatmap
+                Signal Map
               </div>
             </div>
           </div>
