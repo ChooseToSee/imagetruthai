@@ -118,6 +118,8 @@ export type Database = {
           file_size: number
           id: string
           image_url: string | null
+          manipulation: Json | null
+          model_breakdown: Json | null
           raw_response: Json | null
           reasons: string[]
           tips: string[]
@@ -131,6 +133,8 @@ export type Database = {
           file_size: number
           id?: string
           image_url?: string | null
+          manipulation?: Json | null
+          model_breakdown?: Json | null
           raw_response?: Json | null
           reasons?: string[]
           tips?: string[]
@@ -144,6 +148,8 @@ export type Database = {
           file_size?: number
           id?: string
           image_url?: string | null
+          manipulation?: Json | null
+          model_breakdown?: Json | null
           raw_response?: Json | null
           reasons?: string[]
           tips?: string[]
