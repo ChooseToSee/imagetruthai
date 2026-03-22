@@ -369,7 +369,7 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
               <canvas
                 ref={canvasRef}
                 className="max-h-64 object-contain w-full cursor-zoom-in"
-                onClick={(e) => { e.stopPropagation(); const c = canvasRef.current; setLightboxUrl(c ? c.toDataURL("image/png") : imageUrl); }}
+                onClick={(e) => { e.stopPropagation(); setLightboxUrl(captureCanvasWithMarkers()); }}
               />
               {regions.map((region, idx) => (
                 <MarkerOverlay key={idx} region={region} idx={idx} small />
