@@ -120,6 +120,8 @@ const History = () => {
         confidence: scan.confidence,
         reasons: scan.reasons,
         tips: scan.tips || [],
+        modelBreakdown: scan.model_breakdown || undefined,
+        manipulation: scan.manipulation || undefined,
       };
       await exportReportPdf(result, scan.image_url || "");
       toast({ title: "PDF exported successfully" });
