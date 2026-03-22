@@ -59,7 +59,7 @@ const History = () => {
     const fetchScans = async () => {
       const { data, error } = await supabase
         .from("scan_history")
-        .select("id, file_name, verdict, confidence, reasons, tips, created_at, image_url")
+        .select("id, file_name, verdict, confidence, reasons, tips, created_at, image_url, model_breakdown, manipulation")
         .order("created_at", { ascending: false })
         .limit(50);
       if (error) {
