@@ -174,7 +174,17 @@ const Navbar = () => {
                 <DropdownMenuSeparator />
 
                 {/* Navigation Links */}
-                <DropdownMenuItem onClick={() => navigate("/")}>
+                <DropdownMenuItem onClick={() => {
+                  const uploadSection = document.getElementById("upload");
+                  if (uploadSection) {
+                    uploadSection.scrollIntoView({ behavior: "smooth" });
+                  } else {
+                    navigate("/");
+                    setTimeout(() => {
+                      document.getElementById("upload")?.scrollIntoView({ behavior: "smooth" });
+                    }, 300);
+                  }
+                }}>
                   <Upload className="h-4 w-4 mr-2" />
                   Upload Image
                 </DropdownMenuItem>
