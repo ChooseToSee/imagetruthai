@@ -119,7 +119,7 @@ const Index = () => {
     }
   }, []);
 
-
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("checkout") === "success") {
       toast({ title: "Subscription activated!", description: "Your plan has been upgraded." });
