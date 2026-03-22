@@ -180,6 +180,7 @@ const Index = () => {
         setSingleResult({ result: finalResult, preview });
         setStreamProgress(null);
         saveToHistory(file, finalResult);
+        saveResultToSession(finalResult, preview);
       },
       onError: (error) => {
         toast({ title: "Analysis failed", description: error, variant: "destructive" });
