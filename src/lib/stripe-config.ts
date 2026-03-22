@@ -4,7 +4,7 @@ export const STRIPE_TIERS = {
   plus: {
     monthly_price_id: "price_1T8V0AANKKxH2qnACu534N2d",
     annual_price_id: "price_1TB4NgANKKxH2qnAVJZo3Wti",
-    product_id: "prod_U46ynL0lG0C32s",
+    product_id: "prod_U6iRCnETvveMML",
   },
   pro: {
     monthly_price_id: "price_1T8V0AANKKxH2qnAA1EizK0M",
