@@ -32,6 +32,8 @@ interface ScanRecord {
   tips: string[];
   created_at: string;
   image_url: string | null;
+  model_breakdown: any | null;
+  manipulation: any | null;
 }
 
 const History = () => {
@@ -57,7 +59,7 @@ const History = () => {
     const fetchScans = async () => {
       const { data, error } = await supabase
         .from("scan_history")
-        .select("id, file_name, verdict, confidence, reasons, tips, created_at, image_url")
+        .select("id, file_name, verdict, confidence, reasons, tips, created_at, image_url, model_breakdown, manipulation")
         .order("created_at", { ascending: false })
         .limit(50);
       if (error) {
@@ -118,6 +120,8 @@ const History = () => {
         confidence: scan.confidence,
         reasons: scan.reasons,
         tips: scan.tips || [],
+        modelBreakdown: scan.model_breakdown || undefined,
+        manipulation: scan.manipulation || undefined,
       };
       await exportReportPdf(result, scan.image_url || "");
       toast({ title: "PDF exported successfully" });
@@ -304,6 +308,19 @@ const History = () => {
                           <li key={i} className="text-xs text-muted-foreground">• {reason}</li>
                         ))}
                       </ul>
+                      {scan.manipulation && (
+                        <div className="mt-3">
+                          <p className="text-xs font-medium text-foreground mb-1">Edit Detection</p>
+                          <p className="text-xs text-muted-foreground">
+                            {scan.manipulation.confidence}% likely{scan.manipulation.edited ? " edited" : " unmodified"}
+                          </p>
+                          <ul className="space-y-1 mt-1">
+                            {(scan.manipulation.reasons || []).slice(0, 3).map((reason: string, i: number) => (
+                              <li key={i} className="text-xs text-muted-foreground">• {reason}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
