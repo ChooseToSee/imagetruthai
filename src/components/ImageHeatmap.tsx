@@ -281,7 +281,7 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
         {viewMode === "heatmap" && (
           <div className="relative">
             <button
-              onClick={(e) => { e.stopPropagation(); setLightboxUrl(imageUrl); }}
+              onClick={(e) => { e.stopPropagation(); const c = canvasRef.current; setLightboxUrl(c ? c.toDataURL("image/png") : imageUrl); }}
               className="absolute top-2 right-2 z-10 rounded-full bg-background/80 border border-border p-1.5 hover:bg-muted transition-colors"
             >
               <ZoomIn className="h-3.5 w-3.5 text-foreground" />
@@ -297,7 +297,7 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
             <canvas
               ref={canvasRef}
               className="mx-auto max-h-64 rounded-lg object-contain w-full cursor-zoom-in"
-              onClick={(e) => { e.stopPropagation(); setLightboxUrl(imageUrl); }}
+              onClick={(e) => { e.stopPropagation(); const c = canvasRef.current; setLightboxUrl(c ? c.toDataURL("image/png") : imageUrl); }}
             />
             {/* Marker overlays */}
             {regions.map((region, idx) => (
@@ -330,7 +330,7 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
               <canvas
                 ref={canvasRef}
                 className="max-h-64 object-contain w-full cursor-zoom-in"
-                onClick={(e) => { e.stopPropagation(); setLightboxUrl(imageUrl); }}
+                onClick={(e) => { e.stopPropagation(); const c = canvasRef.current; setLightboxUrl(c ? c.toDataURL("image/png") : imageUrl); }}
               />
               {regions.map((region, idx) => (
                 <MarkerOverlay key={idx} region={region} idx={idx} small />
