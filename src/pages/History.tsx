@@ -32,6 +32,8 @@ interface ScanRecord {
   tips: string[];
   created_at: string;
   image_url: string | null;
+  model_breakdown: any | null;
+  manipulation: any | null;
 }
 
 const History = () => {
