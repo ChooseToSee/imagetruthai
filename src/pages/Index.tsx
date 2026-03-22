@@ -198,6 +198,7 @@ const Index = () => {
     if (error) throw error;
     const result = data as AnalysisResult;
     await saveToHistory(file, result);
+    saveResultToSession(result, preview);
     return { result, preview };
   };
 
