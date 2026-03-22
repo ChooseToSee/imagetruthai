@@ -164,8 +164,13 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
       setShareLink(link);
       setShareReportId(data.id);
       setIsPublic(true);
-      await navigator.clipboard.writeText(link);
-      toast({ title: "Share link copied!", description: "Anyone with the link can view this report." });
+      try {
+        await navigator.clipboard.writeText(link);
+        toast({ title: "Share link copied!", description: "Anyone with the link can view this report." });
+      } catch (clipErr) {
+        console.warn("Clipboard write failed:", clipErr);
+        toast({ title: "Share link generated!", description: "Copy the link below to share." });
+      }
     } catch (err: any) {
       console.error("Full share error:", err);
       toast({ title: "Failed to generate link", description: err?.message || JSON.stringify(err) || "Unknown error", variant: "destructive" });
