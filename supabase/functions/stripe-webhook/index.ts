@@ -9,6 +9,7 @@ const corsHeaders = {
 
 const PRODUCT_TIER_MAP: Record<string, string> = {
   "prod_U46ynL0lG0C32s": "plus",
+  "prod_U6iRCnETvveMML": "plus",
   "prod_U46zg6w4ycRsro": "pro",
 };
 
