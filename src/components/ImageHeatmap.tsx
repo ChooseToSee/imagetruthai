@@ -180,6 +180,45 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
     });
   }, [imgSize, regions, activeMarker, viewMode]);
 
+  // Capture canvas with markers drawn directly onto it for lightbox
+  const captureCanvasWithMarkers = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return imageUrl;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return canvas.toDataURL("image/png");
+
+    // Save current canvas state
+    const savedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    // Draw markers onto canvas
+    regions.forEach((region) => {
+      const cx = (region.x + region.w / 2) * canvas.width;
+      const cy = (region.y + region.h / 2) * canvas.height;
+
+      // Circle marker
+      ctx.beginPath();
+      ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(220, 38, 38, 0.85)";
+      ctx.fill();
+      ctx.strokeStyle = "white";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Pin dot
+      ctx.beginPath();
+      ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+      ctx.fillStyle = "white";
+      ctx.fill();
+    });
+
+    const dataUrl = canvas.toDataURL("image/png");
+
+    // Restore canvas without markers
+    ctx.putImageData(savedImageData, 0, 0);
+
+    return dataUrl;
+  }, [regions, imageUrl]);
+
   const modeButtons: { mode: ViewMode; icon: React.ReactNode; label: string }[] = [
     { mode: "original", icon: <Eye className="h-3.5 w-3.5" />, label: "Original" },
     { mode: "heatmap", icon: <Layers className="h-3.5 w-3.5" />, label: "Signal Map" },
