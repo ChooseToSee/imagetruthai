@@ -77,6 +77,7 @@ export type Database = {
           is_pro: boolean
           scans_today: number
           scans_today_reset_at: string
+          stripe_customer_id: string | null
           subscription_tier: string
           updated_at: string
           user_id: string
@@ -89,6 +90,7 @@ export type Database = {
           is_pro?: boolean
           scans_today?: number
           scans_today_reset_at?: string
+          stripe_customer_id?: string | null
           subscription_tier?: string
           updated_at?: string
           user_id: string
@@ -101,6 +103,7 @@ export type Database = {
           is_pro?: boolean
           scans_today?: number
           scans_today_reset_at?: string
+          stripe_customer_id?: string | null
           subscription_tier?: string
           updated_at?: string
           user_id?: string
