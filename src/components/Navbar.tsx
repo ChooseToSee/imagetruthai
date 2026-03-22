@@ -278,9 +278,22 @@ const Navbar = () => {
                   </a>
                 )}
 
-                <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground">
+                <button
+                  onClick={() => {
+                    setMobileOpen(false);
+                    setTimeout(() => {
+                      const uploadSection = document.getElementById("upload");
+                      if (uploadSection) {
+                        uploadSection.scrollIntoView({ behavior: "smooth" });
+                      } else {
+                        window.location.href = "/#upload";
+                      }
+                    }, 100);
+                  }}
+                  className="flex items-center gap-2 text-sm text-muted-foreground"
+                >
                   <Upload className="h-4 w-4" /> Upload Image
-                </Link>
+                </button>
                 <Link to="/history" className="flex items-center gap-2 text-sm text-muted-foreground">
                   <History className="h-4 w-4" /> Scan History
                 </Link>
