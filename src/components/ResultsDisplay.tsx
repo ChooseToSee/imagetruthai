@@ -167,8 +167,8 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
       await navigator.clipboard.writeText(link);
       toast({ title: "Share link copied!", description: "Anyone with the link can view this report." });
     } catch (err: any) {
-      console.error("Share error:", err);
-      toast({ title: "Failed to generate link", description: err.message, variant: "destructive" });
+      console.error("Full share error:", err);
+      toast({ title: "Failed to generate link", description: err?.message || JSON.stringify(err) || "Unknown error", variant: "destructive" });
     } finally {
       setIsSharing(false);
     }
