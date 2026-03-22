@@ -154,24 +154,35 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
       if (imagePreview.startsWith("blob:")) {
         try {
           const response = await fetch(imagePreview);
+          if (!response.ok) throw new Error("Failed to fetch blob");
           const blob = await response.blob();
-          const ext = blob.type.split("/")[1] || "jpg";
-          const filePath = `shared/${crypto.randomUUID()}.${ext}`;
-          const { error: uploadError } = await supabase.storage
+          const ext = blob.type.includes("png") ? "png" : blob.type.includes("webp") ? "webp" : "jpg";
+          // Path must start with user_id to satisfy RLS upload policy
+          const filePath = `${user.id}/${crypto.randomUUID()}.${ext}`;
+
+          console.log("[Share] Uploading image:", filePath, "size:", blob.size, "type:", blob.type);
+
+          const { data: uploadData, error: uploadError } = await supabase.storage
             .from("scan-images")
             .upload(filePath, blob, { contentType: blob.type, upsert: false });
-          if (!uploadError) {
+
+          if (uploadError) {
+            console.error("[Share] Upload failed:", uploadError);
+          } else {
+            console.log("[Share] Upload success:", uploadData);
             const { data: urlData } = supabase.storage
               .from("scan-images")
               .getPublicUrl(filePath);
             publicImageUrl = urlData.publicUrl;
+            console.log("[Share] Public URL:", publicImageUrl);
           }
         } catch (uploadErr) {
-          console.error("Image upload failed:", uploadErr);
+          console.error("[Share] Upload exception:", uploadErr);
         }
       } else {
         publicImageUrl = imagePreview;
       }
+      console.log("[Share] Final image URL:", publicImageUrl);
 
       const { data, error } = await supabase.from("shared_reports").insert({
         user_id: user.id,
