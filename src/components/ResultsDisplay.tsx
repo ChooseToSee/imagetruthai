@@ -688,7 +688,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                       className="text-xs h-7"
                       onClick={() => {
                         navigator.clipboard.writeText(shareLink);
-                        toast({ title: "Link copied!" });
+                        toast({ title: "Link copied!", description: "Anyone with this link can view your full report." });
                       }}
                     >
                       Copy
