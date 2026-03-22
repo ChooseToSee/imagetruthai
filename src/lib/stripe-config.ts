@@ -9,7 +9,7 @@ export const STRIPE_TIERS = {
   pro: {
     monthly_price_id: "price_1T8V0AANKKxH2qnAA1EizK0M",
     annual_price_id: "price_1TB4TJANKKxH2qnAo1Ciwlem",
-    product_id: "prod_U46zg6w4ycRsro",
+    product_id: "prod_U6iRJ1APr8GFb2",
   },
 } as const;
 
