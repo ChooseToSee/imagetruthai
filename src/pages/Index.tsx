@@ -84,6 +84,31 @@ const Index = () => {
   const { user, refreshSubscription } = useAuth();
   const { toast } = useToast();
 
+  const saveResultToSession = useCallback((result: AnalysisResult, preview: string) => {
+    try {
+      sessionStorage.setItem("lastAnalysisResult", JSON.stringify({ result, preview, timestamp: Date.now() }));
+    } catch (e) {
+      console.error("Could not save to session:", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem("lastAnalysisResult");
+      if (saved) {
+        const { result, preview, timestamp } = JSON.parse(saved);
+        const twoHours = 2 * 60 * 60 * 1000;
+        if (Date.now() - timestamp < twoHours) {
+          setSingleResult({ result, preview });
+        } else {
+          sessionStorage.removeItem("lastAnalysisResult");
+        }
+      }
+    } catch (e) {
+      console.error("Could not restore result:", e);
+    }
+  }, []);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("checkout") === "success") {
@@ -155,6 +180,7 @@ const Index = () => {
         setSingleResult({ result: finalResult, preview });
         setStreamProgress(null);
         saveToHistory(file, finalResult);
+        saveResultToSession(finalResult, preview);
       },
       onError: (error) => {
         toast({ title: "Analysis failed", description: error, variant: "destructive" });
@@ -172,6 +198,7 @@ const Index = () => {
     if (error) throw error;
     const result = data as AnalysisResult;
     await saveToHistory(file, result);
+    saveResultToSession(result, preview);
     return { result, preview };
   };
 
@@ -219,6 +246,7 @@ const Index = () => {
   }, [user, toast]);
 
   const handleReset = useCallback(() => {
+    sessionStorage.removeItem("lastAnalysisResult");
     setSingleResult(null);
     setBatchResults(null);
     setPartialReady(false);
