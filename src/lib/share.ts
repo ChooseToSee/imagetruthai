@@ -8,11 +8,39 @@ export async function shareContent(
 
   if (navigator.share) {
     try {
-      await navigator.share({
+      const staticImageUrl =
+        `${window.location.origin}/share-image.png`;
+
+      let shareData: ShareData = {
         title,
         text,
         url: shareUrl,
-      });
+      };
+
+      // Try to include static branded image if supported
+      try {
+        const response = await fetch(staticImageUrl);
+        const blob = await response.blob();
+        const file = new File(
+          [blob],
+          "imagetruth-share.png",
+          { type: "image/png" }
+        );
+
+        if (navigator.canShare &&
+            navigator.canShare({ files: [file] })) {
+          shareData = {
+            title,
+            text,
+            url: shareUrl,
+            files: [file],
+          };
+        }
+      } catch {
+        // Fall back to no image if fetch fails
+      }
+
+      await navigator.share(shareData);
       return "shared";
     } catch (e) {
       if ((e as Error).name === "AbortError") return "copied";
