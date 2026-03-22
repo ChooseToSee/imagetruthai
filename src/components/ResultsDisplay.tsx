@@ -188,14 +188,34 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
 
   const handleShare = async () => {
     const editInfo = manipulation
-      ? ` | Edit detection: ${manipulation.confidence}% likely ${isEdited ? "edited" : "unmodified"}.`
+      ? `\nEdit detection: ${manipulation.confidence}% likely ${isEdited ? "edited" : "unmodified"}.`
       : "";
-    const text = `ImageTruth AI verdict: ${result.confidence}% likely ${isAI ? "AI-generated" : "human-created"}. ${result.reasons[0]}${editInfo}`;
-    const url = shareLink || "";
-    const res = await shareContent(text, "ImageTruth AI Result", url, imagePreview);
-    if (res === "copied") {
+    const modelCount = result.modelBreakdown?.length ?? 1;
+
+    const summary = `🔍 ImageTruth AI Analysis Result\nVerdict: ${result.confidence}% likely ${isAI ? "AI-Generated 🤖" : "Human-Created ✅"}\n${result.reasons[0]}${editInfo}\nAnalyzed using ${modelCount} AI model${modelCount !== 1 ? "s" : ""} for consensus accuracy.`;
+
+    const appUrl = "https://imagetruthai.com";
+    const reportUrl = shareLink || appUrl;
+
+    const fullText = shareLink
+      ? `${summary}\n\nView full report: ${shareLink}\n\nTry it free at ${appUrl}`
+      : `${summary}\n\nTry it free at ${appUrl}`;
+
+    const res = await shareContent(
+      fullText,
+      "ImageTruth AI Analysis",
+      reportUrl,
+      imagePreview
+    );
+
+    if (res === "copied" || res === "shared") {
       setCopied(true);
-      toast({ title: "Copied to clipboard!", description: "Share the result with anyone." });
+      toast({
+        title: res === "shared" ? "Shared successfully!" : "Copied to clipboard!",
+        description: res === "shared"
+          ? "Your analysis has been shared."
+          : "Paste anywhere to share your results.",
+      });
       setTimeout(() => setCopied(false), 2000);
     }
   };
