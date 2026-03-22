@@ -297,7 +297,7 @@ const ImageHeatmap = ({ imageUrl, reasons, manipulationReasons = [] }: ImageHeat
             <canvas
               ref={canvasRef}
               className="mx-auto max-h-64 rounded-lg object-contain w-full cursor-zoom-in"
-              onClick={(e) => { e.stopPropagation(); setLightboxUrl(imageUrl); }}
+              onClick={(e) => { e.stopPropagation(); const c = canvasRef.current; setLightboxUrl(c ? c.toDataURL("image/png") : imageUrl); }}
             />
             {/* Marker overlays */}
             {regions.map((region, idx) => (
