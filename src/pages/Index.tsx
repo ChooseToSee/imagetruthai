@@ -110,6 +110,16 @@ const Index = () => {
   }, []);
 
   useEffect(() => {
+    const shouldScroll = sessionStorage.getItem("scrollToUpload");
+    if (shouldScroll) {
+      sessionStorage.removeItem("scrollToUpload");
+      setTimeout(() => {
+        document.getElementById("upload")?.scrollIntoView({ behavior: "smooth" });
+      }, 500);
+    }
+  }, []);
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("checkout") === "success") {
       toast({ title: "Subscription activated!", description: "Your plan has been upgraded." });
