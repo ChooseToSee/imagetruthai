@@ -167,7 +167,7 @@ const History = () => {
           <div className="rounded-xl border border-border bg-card p-12 text-center">
             <Clock className="mx-auto mb-4 h-8 w-8 text-muted-foreground" />
             <p className="text-muted-foreground mb-4">No scans yet. Upload an image to get started.</p>
-            <Button onClick={() => navigate("/#upload")} className="gap-2 shadow-glow">
+            <Button onClick={() => { navigate("/"); setTimeout(() => { document.getElementById("upload")?.scrollIntoView({ behavior: "smooth" }); }, 300); }} className="gap-2 shadow-glow">
               <Upload className="h-4 w-4" />
               Upload Your First Image
             </Button>
