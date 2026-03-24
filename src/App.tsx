@@ -22,10 +22,12 @@ import HowItWorksPage from "./pages/HowItWorks";
 import PhotoshoppedSigns from "./pages/PhotoshoppedSigns";
 import SharedReport from "./pages/SharedReport";
 import FeedbackWidget from "./components/FeedbackWidget";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
 const App = () => (
+  <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
       <TooltipProvider>
