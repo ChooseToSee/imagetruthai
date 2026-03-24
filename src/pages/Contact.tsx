@@ -2,19 +2,21 @@ import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Send, ArrowLeft } from "lucide-react";
+import { Send, ArrowLeft, Loader2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be under 100 characters"),
   email: z.string().trim().email("Please enter a valid email").max(255, "Email must be under 255 characters"),
+  subject: z.string().trim().max(200, "Subject must be under 200 characters").optional().default(""),
   message: z.string().trim().min(1, "Message is required").max(2000, "Message must be under 2000 characters"),
 });
 
@@ -22,17 +24,73 @@ type ContactForm = z.infer<typeof contactSchema>;
 
 const Contact = () => {
   const [submitted, setSubmitted] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<ContactForm>({
     resolver: zodResolver(contactSchema),
-    defaultValues: { name: "", email: "", message: "" },
+    defaultValues: { name: "", email: "", subject: "", message: "" },
   });
 
-  const onSubmit = (data: ContactForm) => {
-    // For now, just show success. Can be wired to an edge function later.
-    setSubmitted(true);
-    toast({ title: "Message sent!", description: "We'll get back to you soon." });
+  const onSubmit = async (data: ContactForm) => {
+    setIsSubmitting(true);
+    try {
+      const submissionId = crypto.randomUUID();
+
+      // Save to database
+      const { error: dbError } = await supabase
+        .from("contact_submissions" as any)
+        .insert({
+          id: submissionId,
+          name: data.name,
+          email: data.email,
+          subject: data.subject || "",
+          message: data.message,
+        } as any);
+
+      if (dbError) throw new Error("Failed to save your message. Please try again.");
+
+      // Send confirmation email to the submitter
+      const confirmPromise = supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "contact-confirmation",
+          recipientEmail: data.email,
+          idempotencyKey: `contact-confirm-${submissionId}`,
+          templateData: { name: data.name, message: data.message },
+        },
+      });
+
+      // Send notification email to support
+      const notifyPromise = supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "contact-notification",
+          recipientEmail: "support@imagetruthai.com",
+          idempotencyKey: `contact-notify-${submissionId}`,
+          templateData: {
+            name: data.name,
+            email: data.email,
+            subject: data.subject || "No subject",
+            message: data.message,
+          },
+        },
+      });
+
+      // Fire both emails in parallel — don't block success on email delivery
+      await Promise.allSettled([confirmPromise, notifyPromise]);
+
+      setSubmittedEmail(data.email);
+      setSubmitted(true);
+      toast({ title: "Message sent!", description: "We'll get back to you within 24 hours." });
+    } catch (err: any) {
+      toast({
+        title: "Failed to send message",
+        description: err.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -51,13 +109,22 @@ const Contact = () => {
           {submitted ? (
             <div className="rounded-xl border border-border bg-card p-8 text-center shadow-card">
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
-                <Send className="h-5 w-5 text-success" />
+                <CheckCircle className="h-6 w-6 text-success" />
               </div>
-              <h2 className="font-display text-xl font-bold text-foreground mb-2">Thanks for reaching out!</h2>
-              <p className="text-sm text-muted-foreground mb-6">We'll review your message and get back to you as soon as possible.</p>
-              <Button variant="outline" asChild>
-                <Link to="/">Back to Home</Link>
-              </Button>
+              <h2 className="font-display text-xl font-bold text-foreground mb-2">Message Sent!</h2>
+              <p className="text-sm text-muted-foreground mb-1">We'll get back to you within 24 hours.</p>
+              <p className="text-xs text-muted-foreground/70 mb-6">
+                A confirmation has been sent to {submittedEmail}
+              </p>
+              <button
+                onClick={() => {
+                  setSubmitted(false);
+                  form.reset();
+                }}
+                className="text-sm text-primary hover:underline"
+              >
+                Send another message
+              </button>
             </div>
           ) : (
             <div className="rounded-xl border border-border bg-card p-6 shadow-card">
@@ -91,6 +158,19 @@ const Contact = () => {
                   />
                   <FormField
                     control={form.control}
+                    name="subject"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Subject <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                        <FormControl>
+                          <Input placeholder="What's this about?" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
                     name="message"
                     render={({ field }) => (
                       <FormItem>
@@ -102,9 +182,18 @@ const Contact = () => {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full gap-2">
-                    <Send className="h-4 w-4" />
-                    Send Message
+                  <Button type="submit" className="w-full gap-2" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Sending…
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4" />
+                        Send Message
+                      </>
+                    )}
                   </Button>
                 </form>
               </Form>
