@@ -141,29 +141,15 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
           </motion.div>
 
           <motion.h1
-            className="mb-4 font-display text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl"
+            className="mb-4 font-display text-4xl sm:text-5xl md:text-6xl font-bold text-foreground text-center leading-tight"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
             Is This Image{" "}
-            <span className="relative inline-flex items-baseline">
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={cycleWords[wordIndex]}
-                  className="text-gradient-brand inline-block"
-                  initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
-                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, y: -20, filter: "blur(4px)" }}
-                  transition={{ duration: 0.4, ease: "easeInOut" }}
-                >
-                  {cycleWords[wordIndex]}
-                </motion.span>
-              </AnimatePresence>
-              <span className="text-foreground">?</span>
-            </span>{" "}
-            <br className="hidden sm:block" />
-            <span className="text-gradient-brand">Analyze It With AI.</span>
+            <span className="text-primary">Fake?</span>
+            <br />
+            <span className="text-primary">Analyze It With AI.</span>
           </motion.h1>
 
           <motion.p
