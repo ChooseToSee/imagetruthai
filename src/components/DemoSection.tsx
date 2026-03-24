@@ -44,6 +44,9 @@ const DemoSection = () => {
               />
             </div>
             <p className="mt-2 text-xs text-muted-foreground">portrait_sample.jpg — 1.2 MB</p>
+            <p className="text-[10px] text-muted-foreground/60 text-center mt-1 italic">
+              Example only: this demo uses a sample AI-generated portrait for illustration purposes.
+            </p>
           </motion.div>
 
           {/* Arrow */}
