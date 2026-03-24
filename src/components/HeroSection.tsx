@@ -90,13 +90,39 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
         <div className="mx-auto max-w-3xl text-center">
           {/* Badge */}
           <motion.div
+            className="flex flex-wrap items-center justify-center gap-2 mb-6"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-medium text-primary"
+            transition={{ delay: 0.2 }}
           >
-            <Shield className="h-3.5 w-3.5" />
-            AI-Powered Image Analysis
+            <div className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5">
+              <div className="flex -space-x-1">
+                <div className="h-5 w-5 rounded-full bg-blue-500 border-2 border-background flex items-center justify-center">
+                  <span className="text-[8px] font-bold text-white">W</span>
+                </div>
+                <div className="h-5 w-5 rounded-full bg-orange-500 border-2 border-background flex items-center justify-center">
+                  <span className="text-[8px] font-bold text-white">S</span>
+                </div>
+                <div className="h-5 w-5 rounded-full bg-purple-500 border-2 border-background flex items-center justify-center">
+                  <span className="text-[8px] font-bold text-white">A</span>
+                </div>
+                <div className="h-5 w-5 rounded-full bg-green-500 border-2 border-background flex items-center justify-center">
+                  <span className="text-[8px] font-bold text-white">G</span>
+                </div>
+                <div className="h-5 w-5 rounded-full bg-red-500 border-2 border-background flex items-center justify-center">
+                  <span className="text-[8px] font-bold text-white">H</span>
+                </div>
+              </div>
+              <span className="text-xs font-semibold text-primary">
+                5 AI Models · Consensus Detection
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1.5">
+              <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">
+                AI Detection + Edit Analysis
+              </span>
+            </div>
           </motion.div>
 
           <motion.h1
