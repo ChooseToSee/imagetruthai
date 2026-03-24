@@ -59,13 +59,6 @@ const PricingSection = () => {
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
   const [billing, setBilling] = useState<BillingInterval>("monthly");
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setBilling("annual");
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
   const getPrice = (tier: "free" | "plus" | "pro") => {
     if (tier === "free") return "$0";
     if (billing === "annual") {
