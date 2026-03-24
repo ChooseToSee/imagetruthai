@@ -21,7 +21,7 @@ const steps = [
 
 const HowItWorks = () => {
   return (
-    <section id="how-it-works" className="py-24">
+    <section id="how-it-works" className="py-16">
       <div className="container mx-auto px-4">
         <div className="mb-16 text-center">
           <motion.h2

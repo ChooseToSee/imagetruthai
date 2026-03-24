@@ -3,7 +3,7 @@ import { Info } from "lucide-react";
 
 const TrustSection = () => {
   return (
-    <section className="py-20 bg-card/30">
+    <section className="py-12 bg-card/30">
       <div className="container mx-auto px-4">
         <motion.div
           className="mx-auto max-w-2xl rounded-xl border border-border bg-card p-8 text-center shadow-card"

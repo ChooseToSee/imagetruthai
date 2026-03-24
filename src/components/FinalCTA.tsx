@@ -8,7 +8,7 @@ interface FinalCTAProps {
 
 const FinalCTA = ({ onStartFree }: FinalCTAProps) => {
   return (
-    <section className="py-24">
+    <section className="py-16">
       <div className="container mx-auto px-4 text-center">
         <motion.h2
           className="mb-6 font-display text-3xl font-bold text-foreground sm:text-4xl"
