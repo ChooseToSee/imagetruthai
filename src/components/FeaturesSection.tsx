@@ -1,4 +1,4 @@
-import { Cpu, Layers, History, FileDown, Code } from "lucide-react";
+import { Cpu, Layers, History, FileDown, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 
 const features = [
@@ -23,9 +23,9 @@ const features = [
     description: "Download forensic reports as professional PDF documents.",
   },
   {
-    icon: Code,
-    title: "API Access",
-    description: "Integrate image analysis into your own applications.",
+    icon: FileText,
+    title: "Advanced Forensic Reports",
+    description: "Detailed PDF reports with per-model breakdown, edit detection results, and signal analysis for every scan.",
   },
 ];
 
