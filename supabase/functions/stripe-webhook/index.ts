@@ -133,8 +133,9 @@ serve(async (req) => {
         const isActive = status === "active" || status === "past_due" || status === "trialing";
         let tier = "free";
         if (isActive) {
+          const priceId = subscription.items.data[0]?.price?.id as string;
           const productId = subscription.items.data[0]?.price?.product as string;
-          tier = PRODUCT_TIER_MAP[productId] || "free";
+          tier = resolveTier(priceId, productId);
         }
 
         await updateProfile(matchedUser.id, isActive && tier !== "free", tier, customerId);
