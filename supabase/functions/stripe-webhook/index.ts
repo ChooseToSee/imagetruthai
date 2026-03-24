@@ -7,12 +7,24 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Dual mapping: price IDs (primary) and product IDs (fallback)
+const PRICE_TO_TIER: Record<string, string> = {
+  "price_1T8V0AANKKxH2qnACu534N2d": "plus",
+  "price_1TB4NgANKKxH2qnAVJZo3Wti": "plus",
+  "price_1T8V0AANKKxH2qnAA1EizK0M": "pro",
+  "price_1TB4TJANKKxH2qnAo1Ciwlem": "pro",
+};
+
 const PRODUCT_TIER_MAP: Record<string, string> = {
   "prod_U46ynL0lG0C32s": "plus",
   "prod_U6iRCnETvveMML": "plus",
   "prod_U46zg6w4ycRsro": "pro",
   "prod_U6iRJ1APr8GFb2": "pro",
 };
+
+function resolveTier(priceId: string, productId: string): string {
+  return PRICE_TO_TIER[priceId] || PRODUCT_TIER_MAP[productId] || "free";
+}
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -121,8 +133,9 @@ serve(async (req) => {
         const isActive = status === "active" || status === "past_due" || status === "trialing";
         let tier = "free";
         if (isActive) {
+          const priceId = subscription.items.data[0]?.price?.id as string;
           const productId = subscription.items.data[0]?.price?.product as string;
-          tier = PRODUCT_TIER_MAP[productId] || "free";
+          tier = resolveTier(priceId, productId);
         }
 
         await updateProfile(matchedUser.id, isActive && tier !== "free", tier, customerId);
