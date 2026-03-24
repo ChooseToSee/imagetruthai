@@ -102,19 +102,19 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
             >
               <div className="flex items-center gap-1.5">
                 <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#4d93ff' }}>
-                  <span className="text-[8px] font-bold text-white">W</span>
+                  <span className="text-[8px] font-bold text-black">W</span>
                 </div>
                 <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#c7c8ca' }}>
-                  <span className="text-[8px] font-bold text-white">S</span>
+                  <span className="text-[8px] font-bold text-black">S</span>
                 </div>
                 <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#a6c9ff' }}>
-                  <span className="text-[8px] font-bold text-white">A</span>
+                  <span className="text-[8px] font-bold text-black">A</span>
                 </div>
                 <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#939598' }}>
-                  <span className="text-[8px] font-bold text-white">G</span>
+                  <span className="text-[8px] font-bold text-black">G</span>
                 </div>
                 <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#79aeff' }}>
-                  <span className="text-[8px] font-bold text-white">H</span>
+                  <span className="text-[8px] font-bold text-black">H</span>
                 </div>
               </div>
               <span className="text-xs font-semibold text-primary">
