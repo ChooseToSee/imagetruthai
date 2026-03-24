@@ -201,11 +201,19 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
             </Button>
             <Button
               size="lg"
-              className="gap-2 px-8 text-base shadow-glow"
-              onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
+              className="gap-2 shadow-glow"
+              onClick={() => {
+                const pricingSection = document.getElementById("pricing");
+                if (pricingSection) {
+                  pricingSection.scrollIntoView({ behavior: "smooth" });
+                }
+              }}
             >
-              <Zap className="h-4 w-4" />
-              Get More Power
+              <Zap className="h-5 w-5 shrink-0" />
+              <span className="flex flex-col items-start leading-tight">
+                <span className="font-bold text-base">Boost Capacity</span>
+                <span className="text-[11px] font-normal opacity-80">Add Features &amp; Quantity</span>
+              </span>
             </Button>
           </motion.div>
 
