@@ -26,7 +26,7 @@ const useCases = [
 
 const WhoItsFor = () => {
   return (
-    <section id="who-its-for" className="py-24 bg-card/30">
+    <section id="who-its-for" className="py-16 bg-card/30">
       <div className="container mx-auto px-4">
         <div className="mb-16 text-center">
           <motion.h2

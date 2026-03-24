@@ -31,7 +31,7 @@ const features = [
 
 const FeaturesSection = () => {
   return (
-    <section id="features" className="py-24">
+    <section id="features" className="py-16">
       <div className="container mx-auto px-4">
         <div className="mb-16 text-center">
           <motion.h2
