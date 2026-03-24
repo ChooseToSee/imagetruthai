@@ -242,10 +242,15 @@ const PricingSection = () => {
                   <Button
                     className="mt-8 w-full"
                     variant="outline"
+                    disabled={currentTier === "free"}
                     onClick={() => !user && navigate(`/auth?plan=free&billing=${billing}`)}
-                    disabled={!!user}
                   >
-                    {user ? "Current Plan" : "Start Free"}
+                    {user && currentTier === "free"
+                      ? "Current Plan"
+                      : user && currentTier !== "free"
+                      ? "Downgrade to Free"
+                      : "Start Free"
+                    }
                   </Button>
                 ) : (
                   <div className="mt-8">
