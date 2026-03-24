@@ -34,6 +34,7 @@ const cycleWords = ["Real", "Fake", "AI-Generated", "Photoshopped", "Edited"];
 
 const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
   const [wordIndex, setWordIndex] = useState(0);
+  const [showModels, setShowModels] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
