@@ -45,7 +45,7 @@ const plans = [
       "Batch upload up to 20 images",
       "Unlimited scan history with full analysis results",
       "Exportable PDF reports",
-      "API access",
+      "Advanced forensic analysis reports",
       "Priority support",
     ],
     highlighted: true,
