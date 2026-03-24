@@ -51,6 +51,7 @@ const App = () => (
                 <Route path="/how-it-works" element={<HowItWorksPage />} />
                 <Route path="/blog/photoshopped-signs" element={<PhotoshoppedSigns />} />
                 <Route path="/report/:token" element={<SharedReport />} />
+                <Route path="/unsubscribe" element={<Unsubscribe />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <FeedbackWidget />
