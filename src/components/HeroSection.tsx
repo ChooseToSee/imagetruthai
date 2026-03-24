@@ -101,20 +101,20 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
               className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 hover:bg-primary/20 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-1.5">
-                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0 bg-primary">
+                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#4d93ff' }}>
                   <span className="text-[8px] font-bold text-white">W</span>
                 </div>
-                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0 bg-white border border-primary/30">
-                  <span className="text-[8px] font-bold text-primary">S</span>
+                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#c7c8ca' }}>
+                  <span className="text-[8px] font-bold text-white">S</span>
                 </div>
-                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0 bg-primary/40">
+                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#a6c9ff' }}>
                   <span className="text-[8px] font-bold text-white">A</span>
                 </div>
-                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-200">
-                  <span className="text-[8px] font-bold text-gray-400">G</span>
+                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#939598' }}>
+                  <span className="text-[8px] font-bold text-white">G</span>
                 </div>
-                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0 bg-primary/20">
-                  <span className="text-[8px] font-bold text-primary">H</span>
+                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#79aeff' }}>
+                  <span className="text-[8px] font-bold text-white">H</span>
                 </div>
               </div>
               <span className="text-xs font-semibold text-primary">
