@@ -101,20 +101,20 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
               className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 hover:bg-primary/20 transition-colors cursor-pointer"
             >
               <div className="flex -space-x-1">
-                <div className="h-5 w-5 rounded-full bg-blue-500 border-2 border-background flex items-center justify-center">
+                <div className="h-5 w-5 rounded-full bg-primary border-2 border-background flex items-center justify-center">
                   <span className="text-[8px] font-bold text-white">W</span>
                 </div>
-                <div className="h-5 w-5 rounded-full bg-orange-500 border-2 border-background flex items-center justify-center">
-                  <span className="text-[8px] font-bold text-white">S</span>
+                <div className="h-5 w-5 rounded-full bg-white border-2 border-background border border-primary/20 flex items-center justify-center">
+                  <span className="text-[8px] font-bold text-primary">S</span>
                 </div>
-                <div className="h-5 w-5 rounded-full bg-purple-500 border-2 border-background flex items-center justify-center">
+                <div className="h-5 w-5 rounded-full bg-primary/40 border-2 border-background flex items-center justify-center">
                   <span className="text-[8px] font-bold text-white">A</span>
                 </div>
-                <div className="h-5 w-5 rounded-full bg-green-500 border-2 border-background flex items-center justify-center">
-                  <span className="text-[8px] font-bold text-white">G</span>
+                <div className="h-5 w-5 rounded-full bg-muted border-2 border-background flex items-center justify-center">
+                  <span className="text-[8px] font-bold text-muted-foreground">G</span>
                 </div>
-                <div className="h-5 w-5 rounded-full bg-red-500 border-2 border-background flex items-center justify-center">
-                  <span className="text-[8px] font-bold text-white">H</span>
+                <div className="h-5 w-5 rounded-full bg-primary/20 border-2 border-background flex items-center justify-center">
+                  <span className="text-[8px] font-bold text-primary">H</span>
                 </div>
               </div>
               <span className="text-xs font-semibold text-primary">
