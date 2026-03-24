@@ -1,4 +1,4 @@
-import { Cpu, Layers, History, FileDown, Code } from "lucide-react";
+import { Cpu, Layers, History, FileDown, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 
 const features = [
