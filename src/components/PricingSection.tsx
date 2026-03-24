@@ -136,27 +136,41 @@ const PricingSection = () => {
 
           {/* Billing toggle */}
           <motion.div
-            className="inline-flex items-center gap-3"
+            className="flex items-center justify-center mb-10"
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
           >
-            <span className={`text-sm font-medium ${billing === "monthly" ? "text-foreground" : "text-muted-foreground"}`}>
-              Monthly
-            </span>
-            <Switch
-              checked={billing === "annual"}
-              onCheckedChange={(checked) => setBilling(checked ? "annual" : "monthly")}
-            />
-            <span className={`text-sm font-medium ${billing === "annual" ? "text-foreground" : "text-muted-foreground"}`}>
-              Annual
-            </span>
-            {billing === "annual" && (
-              <Badge className="bg-green-600 text-white hover:bg-green-700 text-xs">
-                2 months free
-              </Badge>
-            )}
+            <div className="relative flex items-center gap-1 rounded-xl border-2 border-primary/30 bg-card p-1 shadow-lg">
+              <button
+                onClick={() => setBilling("monthly")}
+                className={`relative px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                  billing === "monthly"
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setBilling("annual")}
+                className={`relative px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                  billing === "annual"
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Annual
+                <span className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-bold transition-all ${
+                  billing === "annual"
+                    ? "bg-primary-foreground/20 text-primary-foreground"
+                    : "bg-green-500/20 text-green-600"
+                }`}>
+                  2 months free
+                </span>
+              </button>
+            </div>
           </motion.div>
         </div>
 
