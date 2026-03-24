@@ -95,7 +95,10 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5">
+            <button
+              onClick={() => setShowModels(!showModels)}
+              className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 hover:bg-primary/20 transition-colors cursor-pointer"
+            >
               <div className="flex -space-x-1">
                 <div className="h-5 w-5 rounded-full bg-blue-500 border-2 border-background flex items-center justify-center">
                   <span className="text-[8px] font-bold text-white">W</span>
@@ -116,13 +119,24 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
               <span className="text-xs font-semibold text-primary">
                 5 AI Models · Consensus Detection
               </span>
-            </div>
-            <div className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1.5">
-              <Shield className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">
+              <ChevronDown className={`h-3 w-3 text-primary transition-transform ${showModels ? "rotate-180" : ""}`} />
+            </button>
+            <div className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5">
+              <Shield className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-semibold text-primary">
                 AI Detection + Edit Analysis
               </span>
             </div>
+            {showModels && (
+              <motion.p
+                className="text-xs text-muted-foreground mt-2 text-center w-full"
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                Winston AI | SightEngine | AI or Not | Gemini | Hive
+              </motion.p>
+            )}
           </motion.div>
 
           <motion.h1
