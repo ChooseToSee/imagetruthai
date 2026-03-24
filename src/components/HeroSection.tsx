@@ -100,20 +100,20 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
               onClick={() => setShowModels(!showModels)}
               className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 hover:bg-primary/20 transition-colors cursor-pointer"
             >
-              <div className="flex -space-x-1">
-                <div className="h-5 w-5 rounded-full bg-primary border-2 border-background flex items-center justify-center">
+              <div className="flex items-center gap-1.5">
+                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0 bg-primary">
                   <span className="text-[8px] font-bold text-white">W</span>
                 </div>
-                <div className="h-5 w-5 rounded-full bg-white border-2 border-background border border-primary/20 flex items-center justify-center">
+                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0 bg-white border border-primary/30">
                   <span className="text-[8px] font-bold text-primary">S</span>
                 </div>
-                <div className="h-5 w-5 rounded-full bg-primary/40 border-2 border-background flex items-center justify-center">
+                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0 bg-primary/40">
                   <span className="text-[8px] font-bold text-white">A</span>
                 </div>
-                <div className="h-5 w-5 rounded-full bg-muted border-2 border-background flex items-center justify-center">
-                  <span className="text-[8px] font-bold text-muted-foreground">G</span>
+                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-200">
+                  <span className="text-[8px] font-bold text-gray-400">G</span>
                 </div>
-                <div className="h-5 w-5 rounded-full bg-primary/20 border-2 border-background flex items-center justify-center">
+                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0 bg-primary/20">
                   <span className="text-[8px] font-bold text-primary">H</span>
                 </div>
               </div>
