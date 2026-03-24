@@ -664,12 +664,6 @@ serve(async (req) => {
     type EditTask = { run: () => Promise<EditResult>; label: string };
     const editTasks: EditTask[] = [];
 
-    if (SIGHTENGINE_API_USER && SIGHTENGINE_API_SECRET) {
-      editTasks.push({
-        label: "SightEngine",
-        run: () => checkSightEngineQuality(imageBytes, mimeType, SIGHTENGINE_API_USER, SIGHTENGINE_API_SECRET),
-      });
-    }
     if (GOOGLE_AI_API_KEY) {
       editTasks.push({
         label: "Gemini",
