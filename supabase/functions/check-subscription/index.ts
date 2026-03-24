@@ -7,12 +7,24 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Dual mapping: price IDs (primary) and product IDs (fallback)
+const PRICE_TO_TIER: Record<string, string> = {
+  "price_1T8V0AANKKxH2qnACu534N2d": "plus",
+  "price_1TB4NgANKKxH2qnAVJZo3Wti": "plus",
+  "price_1T8V0AANKKxH2qnAA1EizK0M": "pro",
+  "price_1TB4TJANKKxH2qnAo1Ciwlem": "pro",
+};
+
 const PRODUCT_TIER_MAP: Record<string, string> = {
   "prod_U46ynL0lG0C32s": "plus",
   "prod_U6iRCnETvveMML": "plus",
   "prod_U46zg6w4ycRsro": "pro",
   "prod_U6iRJ1APr8GFb2": "pro",
 };
+
+function resolveTier(priceId: string, productId: string): string {
+  return PRICE_TO_TIER[priceId] || PRODUCT_TIER_MAP[productId] || "free";
+}
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -74,7 +86,6 @@ serve(async (req) => {
       if (customers.data.length > 0) {
         customerId = customers.data[0].id;
         logStep("Found customer by email", { customerId });
-        // Save for future lookups
         await supabaseClient
           .from("profiles")
           .update({ stripe_customer_id: customerId })
@@ -117,10 +128,11 @@ serve(async (req) => {
       } catch (e) {
         logStep("WARN: Could not parse current_period_end", { periodEnd, error: String(e) });
       }
+      const priceId = subscription.items.data[0].price.id;
       productId = subscription.items.data[0].price.product;
       status = subscription.status;
-      subscriptionTier = PRODUCT_TIER_MAP[productId as string] || "free";
-      logStep("Valid subscription", { productId, subscriptionEnd, status, subscriptionTier });
+      subscriptionTier = resolveTier(priceId, productId as string);
+      logStep("Valid subscription", { priceId, productId, subscriptionEnd, status, subscriptionTier });
     }
 
     // Sync tier to database
@@ -145,7 +157,42 @@ serve(async (req) => {
     logStep("ERROR", { message: errorMessage });
     const isKeyError = errorMessage.includes("Invalid API Key") || errorMessage.includes("api_key_expired");
     if (isKeyError) {
-      logStep("WARN: Stripe key invalid/expired, returning free tier fallback");
+      logStep("WARN: Stripe key invalid/expired, returning DB tier fallback (NOT overwriting)");
+      // Read current tier from DB instead of defaulting to free
+      try {
+        const authHeader = req.headers.get("Authorization");
+        if (authHeader) {
+          const token = authHeader.replace("Bearer ", "");
+          const { data: userData } = await createClient(
+            Deno.env.get("SUPABASE_URL") ?? "",
+            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+            { auth: { persistSession: false } }
+          ).auth.getUser(token);
+          if (userData?.user) {
+            const { data: profile } = await createClient(
+              Deno.env.get("SUPABASE_URL") ?? "",
+              Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+              { auth: { persistSession: false } }
+            ).from("profiles").select("subscription_tier, is_pro").eq("user_id", userData.user.id).single();
+            if (profile) {
+              logStep("Returning cached DB tier during key error", { tier: profile.subscription_tier });
+              return new Response(JSON.stringify({
+                subscribed: profile.subscription_tier !== "free",
+                product_id: null,
+                subscription_end: null,
+                subscription_tier: profile.subscription_tier,
+                _stripe_key_error: true,
+              }), {
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+                status: 200,
+              });
+            }
+          }
+        }
+      } catch (dbErr) {
+        logStep("WARN: Could not read DB tier fallback", { error: String(dbErr) });
+      }
+      // Final fallback if DB read also fails
       return new Response(JSON.stringify({
         subscribed: false, product_id: null, subscription_end: null,
         subscription_tier: "free", _stripe_key_error: true,
