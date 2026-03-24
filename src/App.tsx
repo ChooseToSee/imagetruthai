@@ -21,6 +21,7 @@ import AiDisclaimer from "./pages/AiDisclaimer";
 import HowItWorksPage from "./pages/HowItWorks";
 import PhotoshoppedSigns from "./pages/PhotoshoppedSigns";
 import SharedReport from "./pages/SharedReport";
+import Unsubscribe from "./pages/Unsubscribe";
 import FeedbackWidget from "./components/FeedbackWidget";
 import ErrorBoundary from "./components/ErrorBoundary";
 
