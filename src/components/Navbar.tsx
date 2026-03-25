@@ -17,6 +17,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+const ADMIN_EMAIL = "jethrun@comcast.net";
+
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [shareIcon, setShareIcon] = useState(false);
