@@ -1,4 +1,4 @@
-import { Menu, X, History, LogOut, Share2, Check, ChevronDown, User, Crown, Zap, CreditCard, Upload } from "lucide-react";
+import { Menu, X, History, LogOut, Share2, Check, ChevronDown, User, Crown, Zap, CreditCard, Upload, ShieldCheck } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
