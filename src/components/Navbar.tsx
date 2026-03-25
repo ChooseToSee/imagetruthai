@@ -1,4 +1,4 @@
-import { Menu, X, History, LogOut, Share2, Check, ChevronDown, User, Crown, Zap, CreditCard, Upload } from "lucide-react";
+import { Menu, X, History, LogOut, Share2, Check, ChevronDown, User, Crown, Zap, CreditCard, Upload, ShieldCheck } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+const ADMIN_EMAIL = "jethrun@comcast.net";
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -229,6 +231,16 @@ const Navbar = () => {
                   </>
                 )}
 
+                {user?.email === ADMIN_EMAIL && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate("/admin")}>
+                      <ShieldCheck className="h-4 w-4 mr-2" />
+                      Admin Dashboard
+                    </DropdownMenuItem>
+                  </>
+                )}
+
                 <DropdownMenuSeparator />
 
                 {/* Sign Out */}
@@ -327,6 +339,11 @@ const Navbar = () => {
                   >
                     <CreditCard className="h-4 w-4" /> Manage Subscription
                   </button>
+                )}
+                {user?.email === ADMIN_EMAIL && (
+                  <Link to="/admin" className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <ShieldCheck className="h-4 w-4" /> Admin Dashboard
+                  </Link>
                 )}
                 <Button
                   variant="ghost"
