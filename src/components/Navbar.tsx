@@ -231,6 +231,16 @@ const Navbar = () => {
                   </>
                 )}
 
+                {user?.email === ADMIN_EMAIL && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate("/admin")}>
+                      <ShieldCheck className="h-4 w-4 mr-2" />
+                      Admin Dashboard
+                    </DropdownMenuItem>
+                  </>
+                )}
+
                 <DropdownMenuSeparator />
 
                 {/* Sign Out */}
