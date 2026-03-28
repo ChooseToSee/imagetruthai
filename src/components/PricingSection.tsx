@@ -98,6 +98,12 @@ const PricingSection = () => {
   const handleManage = async () => {
     setLoadingTier("manage");
     try {
+      // Refresh session to ensure a valid token is sent
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        toast({ title: "Please sign in", description: "You need to be signed in to manage your subscription.", variant: "destructive" });
+        return;
+      }
       const { data, error } = await supabase.functions.invoke("customer-portal");
       if (error) throw error;
       if (data?.url) window.open(data.url, "_blank");
