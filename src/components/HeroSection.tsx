@@ -98,48 +98,50 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <button
-              onClick={() => setShowModels(!showModels)}
-              className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 hover:bg-primary/20 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-1.5">
-                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#4d93ff' }}>
-                  <span className="text-[8px] font-bold text-black">W</span>
+            <div className="flex flex-col items-center">
+              <button
+                onClick={() => setShowModels(!showModels)}
+                className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 hover:bg-primary/20 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-1.5">
+                  <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#4d93ff' }}>
+                    <span className="text-[8px] font-bold text-black">W</span>
+                  </div>
+                  <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#c7c8ca' }}>
+                    <span className="text-[8px] font-bold text-black">S</span>
+                  </div>
+                  <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#a6c9ff' }}>
+                    <span className="text-[8px] font-bold text-black">A</span>
+                  </div>
+                  <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#939598' }}>
+                    <span className="text-[8px] font-bold text-black">G</span>
+                  </div>
+                  <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#79aeff' }}>
+                    <span className="text-[8px] font-bold text-black">H</span>
+                  </div>
                 </div>
-                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#c7c8ca' }}>
-                  <span className="text-[8px] font-bold text-black">S</span>
-                </div>
-                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#a6c9ff' }}>
-                  <span className="text-[8px] font-bold text-black">A</span>
-                </div>
-                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#939598' }}>
-                  <span className="text-[8px] font-bold text-black">G</span>
-                </div>
-                <div className="h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#79aeff' }}>
-                  <span className="text-[8px] font-bold text-black">H</span>
-                </div>
-              </div>
-              <span className="text-xs font-semibold text-primary">
-                5 AI Models · Consensus Detection
-              </span>
-              <ChevronDown className={`h-3 w-3 text-primary transition-transform ${showModels ? "rotate-180" : ""}`} />
-            </button>
+                <span className="text-xs font-semibold text-primary">
+                  5 AI Models · Consensus Detection
+                </span>
+                <ChevronDown className={`h-3 w-3 text-primary transition-transform ${showModels ? "rotate-180" : ""}`} />
+              </button>
+              {showModels && (
+                <motion.p
+                  className="text-sm text-muted-foreground mt-1.5 text-center whitespace-nowrap"
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  Winston AI | SightEngine | AI or Not | Gemini | Hive
+                </motion.p>
+              )}
+            </div>
             <div className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5">
               <Shield className="h-3.5 w-3.5 text-primary" />
               <span className="text-xs font-semibold text-primary">
                 AI Detection + Edit Analysis
               </span>
             </div>
-            {showModels && (
-              <motion.p
-                className="text-xs text-muted-foreground mt-2 text-center w-full"
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                Winston AI | SightEngine | AI or Not | Gemini | Hive
-              </motion.p>
-            )}
           </motion.div>
 
           <motion.h1
