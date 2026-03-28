@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -25,6 +26,13 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Mail,
   MessageSquare,
   AlertTriangle,
@@ -34,8 +42,11 @@ import {
   Loader2,
   ShieldCheck,
   MessageCircle,
+  Reply,
+  Send,
 } from "lucide-react";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 const ADMIN_EMAIL = "jethrun@comcast.net";
 
@@ -106,6 +117,7 @@ const statusIcon = (status: string) => {
 export default function Admin() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [contacts, setContacts] = useState<ContactSubmission[]>([]);
   const [emails, setEmails] = useState<EmailLog[]>([]);
@@ -114,6 +126,9 @@ export default function Admin() {
   const [emailStatusFilter, setEmailStatusFilter] = useState("all");
   const [templateFilter, setTemplateFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [replyContact, setReplyContact] = useState<ContactSubmission | null>(null);
+  const [replyMessage, setReplyMessage] = useState("");
+  const [replySending, setReplySending] = useState(false);
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 
@@ -390,13 +405,14 @@ export default function Admin() {
                         <TableHead>Email</TableHead>
                         <TableHead>Subject</TableHead>
                         <TableHead>Message</TableHead>
-                        <TableHead>Date</TableHead>
+                      <TableHead>Date</TableHead>
+                        <TableHead className="w-[80px]">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredContacts.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                          <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                             No submissions found
                           </TableCell>
                         </TableRow>
@@ -411,6 +427,20 @@ export default function Admin() {
                             </TableCell>
                             <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                               {format(new Date(c.created_at), "MMM d, HH:mm")}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => {
+                                  setReplyContact(c);
+                                  setReplyMessage("");
+                                }}
+                                title="Reply"
+                              >
+                                <Reply className="h-4 w-4" />
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))
@@ -463,6 +493,82 @@ export default function Admin() {
             </TabsContent>
           </Tabs>
         )}
+
+        {/* Reply Dialog */}
+        <Dialog open={!!replyContact} onOpenChange={(open) => !open && setReplyContact(null)}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Reply className="h-5 w-5" />
+                Reply to {replyContact?.name}
+              </DialogTitle>
+            </DialogHeader>
+            {replyContact && (
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">To:</span> {replyContact.email}
+                </div>
+                <div className="rounded-lg bg-muted/50 p-3 text-sm">
+                  <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">Original message:</p>
+                  <p className="text-foreground">{replyContact.message}</p>
+                </div>
+                <Textarea
+                  placeholder="Type your reply…"
+                  rows={5}
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                />
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setReplyContact(null)}>
+                Cancel
+              </Button>
+              <Button
+                className="gap-2"
+                disabled={!replyMessage.trim() || replySending}
+                onClick={async () => {
+                  if (!replyContact || !replyMessage.trim()) return;
+                  setReplySending(true);
+                  try {
+                    const { error } = await supabase.functions.invoke("send-transactional-email", {
+                      body: {
+                        templateName: "contact-reply",
+                        recipientEmail: replyContact.email,
+                        idempotencyKey: `contact-reply-${replyContact.id}-${Date.now()}`,
+                        templateData: {
+                          name: replyContact.name,
+                          originalMessage: replyContact.message,
+                          replyMessage: replyMessage.trim(),
+                          subject: replyContact.subject,
+                        },
+                      },
+                    });
+                    if (error) throw error;
+                    toast({ title: "Reply sent!", description: `Email sent to ${replyContact.email}` });
+                    setReplyContact(null);
+                    setReplyMessage("");
+                  } catch (err: any) {
+                    toast({
+                      title: "Failed to send reply",
+                      description: err.message || "Something went wrong",
+                      variant: "destructive",
+                    });
+                  } finally {
+                    setReplySending(false);
+                  }
+                }}
+              >
+                {replySending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                Send Reply
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
       <Footer />
     </div>
