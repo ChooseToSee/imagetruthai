@@ -84,7 +84,7 @@ const Contact = () => {
       );
 
       // Fire both emails in parallel — don't block success on email delivery
-      await Promise.allSettled([confirmPromise, notifyPromise]);
+      await Promise.allSettled([confirmPromise, ...notifyPromises]);
 
       setSubmittedEmail(data.email);
       setSubmitted(true);
