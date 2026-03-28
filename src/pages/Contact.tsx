@@ -61,23 +61,30 @@ const Contact = () => {
         },
       });
 
-      // Send notification email to support
-      const notifyPromise = supabase.functions.invoke("send-transactional-email", {
-        body: {
-          templateName: "contact-notification",
-          recipientEmail: "support@imagetruthai.com",
-          idempotencyKey: `contact-notify-${submissionId}`,
-          templateData: {
-            name: data.name,
-            email: data.email,
-            subject: data.subject || "No subject",
-            message: data.message,
+      // Send notification emails to all admins
+      const notifyRecipients = [
+        "jethrun@comcast.net",
+        "imagetruthai.test@proton.me",
+        "jason.thrun@colliers.com",
+      ];
+      const notifyPromises = notifyRecipients.map((email) =>
+        supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "contact-notification",
+            recipientEmail: email,
+            idempotencyKey: `contact-notify-${submissionId}-${email}`,
+            templateData: {
+              name: data.name,
+              email: data.email,
+              subject: data.subject || "No subject",
+              message: data.message,
+            },
           },
-        },
-      });
+        })
+      );
 
       // Fire both emails in parallel — don't block success on email delivery
-      await Promise.allSettled([confirmPromise, notifyPromise]);
+      await Promise.allSettled([confirmPromise, ...notifyPromises]);
 
       setSubmittedEmail(data.email);
       setSubmitted(true);
