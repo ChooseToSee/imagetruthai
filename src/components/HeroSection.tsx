@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Upload, Zap, Shield, Search, Fingerprint, FileWarning, ScanEye, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -199,22 +200,24 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
               <Upload className="h-4 w-4 text-primary" />
               Upload Image
             </Button>
-            <Button
-              size="lg"
-              className="gap-2 shadow-glow"
-              onClick={() => {
-                const pricingSection = document.getElementById("pricing");
-                if (pricingSection) {
-                  pricingSection.scrollIntoView({ behavior: "smooth" });
-                }
-              }}
-            >
-              <Zap className="h-5 w-5 shrink-0" />
-              <span className="flex flex-col items-start leading-tight">
-                <span className="font-bold text-base">Boost Capacity</span>
-                <span className="text-[11px] font-normal opacity-80">Add Features &amp; Quantity</span>
-              </span>
-            </Button>
+            {subscription.tier !== "pro" && (
+              <Button
+                size="lg"
+                className="gap-2 shadow-glow"
+                onClick={() => {
+                  const pricingSection = document.getElementById("pricing");
+                  if (pricingSection) {
+                    pricingSection.scrollIntoView({ behavior: "smooth" });
+                  }
+                }}
+              >
+                <Zap className="h-5 w-5 shrink-0" />
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="font-bold text-base">Boost Capacity</span>
+                  <span className="text-[11px] font-normal opacity-80">Add Features &amp; Quantity</span>
+                </span>
+              </Button>
+            )}
           </motion.div>
 
           {/* Disclaimer */}
