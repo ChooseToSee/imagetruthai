@@ -136,6 +136,12 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
                 </motion.p>
               )}
             </div>
+            <div className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5">
+              <Shield className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-semibold text-primary">
+                AI Detection + Edit Analysis
+              </span>
+            </div>
           </motion.div>
 
           <motion.h1
