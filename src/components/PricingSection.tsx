@@ -57,7 +57,7 @@ const PricingSection = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
-  const [billing, setBilling] = useState<BillingInterval>("monthly");
+  const [billing, setBilling] = useState<BillingInterval>("annual");
 
   const getPrice = (tier: "free" | "plus" | "pro") => {
     if (tier === "free") return "$0";
