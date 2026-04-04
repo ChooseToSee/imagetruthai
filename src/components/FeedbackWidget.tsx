@@ -16,16 +16,37 @@ const FeedbackWidget = () => {
   const handleSubmit = async () => {
     if (!message.trim()) return;
     setLoading(true);
+    const userEmail = user?.email;
+    const name = userEmail || "Anonymous visitor";
+    const email = userEmail || "anonymous@imagetruthai.com";
+    const subject = type === "bug" ? "Bug Report" : "Feedback";
+    const trimmed = message.trim();
+    const id = crypto.randomUUID();
+
     try {
-      const { error } = await supabase.functions.invoke("submit-feedback", {
-        body: { type, message: message.trim() },
+      const { error: dbError } = await supabase
+        .from("contact_submissions")
+        .insert({ id, name, email, subject, message: trimmed });
+      if (dbError) throw dbError;
+
+      await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "contact-notification",
+          recipientEmail: "support@imagetruthai.com",
+          idempotencyKey: `feedback-notify-${id}`,
+          templateData: { name, email, subject, message: trimmed },
+        },
       });
-      if (error) throw error;
-      toast({ title: "Thanks for your feedback!", description: "We'll review it shortly." });
+
+      toast({ title: "Thanks for your feedback!", description: "We read every submission." });
       setMessage("");
       setOpen(false);
     } catch {
-      toast({ title: "Couldn't send feedback", description: "Please try again later.", variant: "destructive" });
+      toast({
+        title: "Couldn't send feedback",
+        description: "Could not send feedback. Please try imagetruthai.com/contact instead.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
