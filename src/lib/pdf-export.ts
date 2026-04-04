@@ -221,12 +221,34 @@ export async function exportReportPdf(
 
   pdf.setFontSize(9);
   pdf.setFont("helvetica", "normal");
-  signals.forEach((s) => {
+
+  signals.forEach((s, index) => {
     if (y > 270) { pdf.addPage(); y = 15; }
-    const status = s.detected ? "✓ Detected" : "✗ Not detected";
-    pdf.text(`${s.label}: ${status}`, 18, y);
-    y += 5;
+
+    // Alternating row background
+    if (index % 2 === 0) {
+      pdf.setFillColor(245, 245, 245);
+      pdf.rect(15, y - 3.5, pageW - 30, 7, 'F');
+    }
+
+    // Signal label on left
+    pdf.setTextColor(40, 40, 40);
+    pdf.text(s.label, 18, y);
+
+    // Status on right with color
+    if (s.detected) {
+      pdf.setTextColor(200, 50, 50);
+      pdf.text("Detected", pageW - 40, y);
+    } else {
+      pdf.setTextColor(50, 160, 80);
+      pdf.text("Not detected", pageW - 48, y);
+    }
+
+    y += 7;
   });
+
+  // Reset text color after table
+  pdf.setTextColor(40, 40, 40);
   y += 6;
 
   // Disclaimer
