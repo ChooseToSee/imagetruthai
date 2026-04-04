@@ -92,7 +92,7 @@ const Contact = () => {
     } catch (err: any) {
       toast({
         title: "Failed to send message",
-        description: err.message || "Something went wrong. Please try again.",
+        description: err.message || "Something went wrong. Please try again or email us directly at support@imagetruthai.com",
         variant: "destructive",
       });
     } finally {
@@ -111,7 +111,13 @@ const Contact = () => {
           </Link>
 
           <h1 className="font-display text-3xl font-bold text-foreground mb-2">Contact Us</h1>
-          <p className="text-muted-foreground mb-8">Have a question or feedback? We'd love to hear from you.</p>
+          <p className="text-muted-foreground mb-2">Have a question or feedback? We'd love to hear from you.</p>
+          <p className="text-sm text-muted-foreground mb-8">
+            Or email us directly at{" "}
+            <a href="mailto:support@imagetruthai.com" className="text-primary hover:underline font-medium">
+              support@imagetruthai.com
+            </a>
+          </p>
 
           {submitted ? (
             <div className="rounded-xl border border-border bg-card p-8 text-center shadow-card">
