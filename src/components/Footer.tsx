@@ -19,6 +19,7 @@ const Footer = () => {
             <a href="/refund-policy" className="hover:text-foreground transition-colors">Refund Policy</a>
             <a href="/ai-disclaimer" className="hover:text-foreground transition-colors">AI Disclaimer</a>
             <a href="/contact" className="hover:text-foreground transition-colors">Contact</a>
+            <a href="mailto:support@imagetruthai.com" className="hover:text-foreground transition-colors">support@imagetruthai.com</a>
           </div>
           <p className="max-w-lg text-[11px] text-muted-foreground/70">
             ImageTruth AI is a trade name (DBA) of Choose To See, LLC, a Colorado limited liability company.
