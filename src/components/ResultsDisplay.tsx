@@ -752,32 +752,44 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                 </div>
               )}
 
-              <div className="flex flex-wrap justify-center gap-3">
-                <Button variant="outline" onClick={onReset} className="gap-2">
-                  <RotateCcw className="h-4 w-4" />
-                  Analyze Another
-                </Button>
-                {plan === "pro" ? (
-                  <Button variant="secondary" onClick={handleDownloadPdf} disabled={isExportingPdf} className="gap-2">
-                    {isExportingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                    Download PDF
+              <div className="space-y-3">
+                {/* Primary actions */}
+                <div className="flex flex-wrap justify-center gap-3">
+                  <Button variant="outline" onClick={onReset} className="gap-2">
+                    <RotateCcw className="h-4 w-4" />
+                    Analyze Another
                   </Button>
-                ) : (
-                  <Button variant="secondary" disabled className="gap-2 opacity-60" title="PDF export is available on the Pro plan">
-                    <Lock className="h-4 w-4" />
-                    PDF (Pro only)
+                  {plan === "pro" ? (
+                    <Button variant="secondary" onClick={handleDownloadPdf} disabled={isExportingPdf} className="gap-2">
+                      {isExportingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                      Download PDF
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+                      }}
+                      className="gap-2 opacity-80"
+                    >
+                      <Lock className="h-4 w-4" />
+                      Unlock PDF Reports
+                    </Button>
+                  )}
+                </div>
+                {/* Secondary actions */}
+                <div className="flex flex-wrap justify-center gap-3">
+                  {!shareLink && (
+                    <Button variant="ghost" size="sm" onClick={handleGenerateShareLink} disabled={isSharing} className="gap-2 text-xs">
+                      {isSharing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LinkIcon className="h-3.5 w-3.5" />}
+                      Generate Share Link
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={handleShare} className="gap-2 text-xs">
+                    {copied ? <Check className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
+                    Share
                   </Button>
-                )}
-                {!shareLink && (
-                  <Button variant="secondary" onClick={handleGenerateShareLink} disabled={isSharing} className="gap-2">
-                    {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <LinkIcon className="h-4 w-4" />}
-                    Generate Share Link
-                  </Button>
-                )}
-                <Button variant="secondary" onClick={handleShare} className="gap-2">
-                  {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
-                  Share
-                </Button>
+                </div>
               </div>
             </div>
           </motion.div>
