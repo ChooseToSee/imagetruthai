@@ -92,7 +92,7 @@ const Contact = () => {
     } catch (err: any) {
       toast({
         title: "Failed to send message",
-        description: err.message || "Something went wrong. Please try again.",
+        description: err.message || "Something went wrong. Please try again or email us directly at support@imagetruthai.com",
         variant: "destructive",
       });
     } finally {
