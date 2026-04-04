@@ -291,7 +291,7 @@ const Index = () => {
       <DemoSection />
       <PricingSection />
       <TrustSection />
-      <FinalCTA onStartFree={handleStartFree} />
+      {subscription.tier === "free" && <FinalCTA onStartFree={handleStartFree} />}
       <Footer />
     </div>
   );
