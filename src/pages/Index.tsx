@@ -81,7 +81,7 @@ const Index = () => {
   const [streamProgress, setStreamProgress] = useState<{ completed: number; total: number } | null>(null);
   const [partialReady, setPartialReady] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { user, refreshSubscription } = useAuth();
+  const { user, refreshSubscription, subscription } = useAuth();
   const { toast } = useToast();
 
   const saveResultToSession = useCallback((result: AnalysisResult, preview: string) => {
@@ -291,7 +291,7 @@ const Index = () => {
       <DemoSection />
       <PricingSection />
       <TrustSection />
-      <FinalCTA onStartFree={handleStartFree} />
+      {subscription.tier === "free" && <FinalCTA onStartFree={handleStartFree} />}
       <Footer />
     </div>
   );
