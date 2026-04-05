@@ -54,6 +54,24 @@ const History = () => {
   const canDownloadPdf = plan === "pro";
   const selectionMode = selectedIds.size > 0;
 
+  useEffect(() => {
+    if (!user) return;
+    const fetchScans = async () => {
+      const { data, error } = await supabase
+        .from("scan_history")
+        .select("id, file_name, verdict, confidence, reasons, tips, created_at, image_url, model_breakdown, manipulation")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) {
+        toast({ title: "Error loading history", description: error.message, variant: "destructive" });
+      } else {
+        setScans(data || []);
+      }
+      setLoading(false);
+    };
+    fetchScans();
+  }, [user]);
+
   if (plan === "free") {
     return (
       <div className="min-h-screen bg-background">
@@ -81,24 +99,6 @@ const History = () => {
       </div>
     );
   }
-
-  useEffect(() => {
-    if (!user) return;
-    const fetchScans = async () => {
-      const { data, error } = await supabase
-        .from("scan_history")
-        .select("id, file_name, verdict, confidence, reasons, tips, created_at, image_url, model_breakdown, manipulation")
-        .order("created_at", { ascending: false })
-        .limit(50);
-      if (error) {
-        toast({ title: "Error loading history", description: error.message, variant: "destructive" });
-      } else {
-        setScans(data || []);
-      }
-      setLoading(false);
-    };
-    fetchScans();
-  }, [user]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
