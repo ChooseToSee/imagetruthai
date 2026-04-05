@@ -22,6 +22,7 @@ const ADMIN_EMAIL = "jethrun@comcast.net";
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [shareIcon, setShareIcon] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { user, signOut, subscription } = useAuth();
   const { plan, limits } = usePlan();
   const navigate = useNavigate();
