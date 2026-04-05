@@ -1,5 +1,5 @@
 import { Menu, X, History, LogOut, Share2, Check, ChevronDown, User, Crown, Zap, CreditCard, Upload, ShieldCheck } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,7 +22,6 @@ const ADMIN_EMAIL = "jethrun@comcast.net";
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [shareIcon, setShareIcon] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { user, signOut, subscription } = useAuth();
   const { plan, limits } = usePlan();
   const navigate = useNavigate();
@@ -30,6 +29,7 @@ const Navbar = () => {
   const [scanCount, setScanCount] = useState<number | null>(null);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -110,6 +110,26 @@ const Navbar = () => {
     if (data?.url) window.open(data.url, "_blank");
   };
 
+  const closeDropdownMenu = () => {
+    const wrapper = dropdownRef.current;
+    const outsideTarget = wrapper?.parentElement ?? document.body;
+
+    requestAnimationFrame(() => {
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+
+      outsideTarget.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
+      outsideTarget.dispatchEvent(new MouseEvent("mouseup", { bubbles: true, cancelable: true }));
+      outsideTarget.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    });
+  };
+
+  const runDropdownAction = (action: () => void) => {
+    closeDropdownMenu();
+    window.setTimeout(action, 0);
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -137,15 +157,16 @@ const Navbar = () => {
             {shareIcon ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
           </Button>
           {user ? (
-            <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <span className={planColor}>{planIcon}</span>
-                  <span className="text-sm">{user.email?.split("@")[0]}</span>
-                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72">
+            <div ref={dropdownRef}>
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <span className={planColor}>{planIcon}</span>
+                    <span className="text-sm">{user.email?.split("@")[0]}</span>
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-72">
                 {/* Account Status Header */}
                 <DropdownMenuLabel className="p-3">
                   <div className="flex flex-col gap-1">
@@ -210,30 +231,37 @@ const Navbar = () => {
                 <DropdownMenuSeparator />
 
                 {/* Navigation Links */}
-                <DropdownMenuItem onSelect={() => {
-                  setTimeout(() => setDropdownOpen(false), 0);
-                  const uploadSection = document.getElementById("upload");
-                  if (uploadSection) {
-                    uploadSection.scrollIntoView({ behavior: "smooth" });
-                  } else {
-                    navigate("/");
-                    setTimeout(() => {
-                      document.getElementById("upload")?.scrollIntoView({ behavior: "smooth" });
-                    }, 300);
-                  }
+                <DropdownMenuItem onSelect={(event) => {
+                  event.preventDefault();
+                  runDropdownAction(() => {
+                    const uploadSection = document.getElementById("upload");
+                    if (uploadSection) {
+                      uploadSection.scrollIntoView({ behavior: "smooth" });
+                    } else {
+                      navigate("/");
+                      window.setTimeout(() => {
+                        document.getElementById("upload")?.scrollIntoView({ behavior: "smooth" });
+                      }, 300);
+                    }
+                  });
                 }}>
                   <Upload className="h-4 w-4 mr-2" />
                   Upload Image
                 </DropdownMenuItem>
                 {plan !== "free" ? (
-                  <DropdownMenuItem onSelect={() => { setTimeout(() => setDropdownOpen(false), 0); navigate("/history"); }}>
+                  <DropdownMenuItem onSelect={(event) => {
+                    event.preventDefault();
+                    runDropdownAction(() => navigate("/history"));
+                  }}>
                     <History className="h-4 w-4 mr-2" />
                     Scan History
                   </DropdownMenuItem>
                 ) : (
-                  <DropdownMenuItem onSelect={() => {
-                    setTimeout(() => setDropdownOpen(false), 0);
-                    document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+                  <DropdownMenuItem onSelect={(event) => {
+                    event.preventDefault();
+                    runDropdownAction(() => {
+                      document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+                    });
                   }}>
                     <History className="h-4 w-4 mr-2" />
                     <span>
@@ -248,18 +276,22 @@ const Navbar = () => {
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onSelect={async () => {
-                        setTimeout(() => setDropdownOpen(false), 0);
-                        try {
-                          const { data, error } = await supabase.functions.invoke("customer-portal");
-                          if (error) throw error;
-                          if (data?.url) window.open(data.url, "_blank");
-                        } catch (err) {
-                          toast({
-                            title: "Could not open billing portal",
-                            variant: "destructive",
-                          });
-                        }
+                      onSelect={(event) => {
+                        event.preventDefault();
+                        runDropdownAction(() => {
+                          void (async () => {
+                            try {
+                              const { data, error } = await supabase.functions.invoke("customer-portal");
+                              if (error) throw error;
+                              if (data?.url) window.open(data.url, "_blank");
+                            } catch (err) {
+                              toast({
+                                title: "Could not open billing portal",
+                                variant: "destructive",
+                              });
+                            }
+                          })();
+                        });
                       }}
                     >
                       <CreditCard className="h-4 w-4 mr-2" />
@@ -271,7 +303,10 @@ const Navbar = () => {
                 {user?.email === ADMIN_EMAIL && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={() => { setTimeout(() => setDropdownOpen(false), 0); navigate("/admin"); }}>
+                    <DropdownMenuItem onSelect={(event) => {
+                      event.preventDefault();
+                      runDropdownAction(() => navigate("/admin"));
+                    }}>
                       <ShieldCheck className="h-4 w-4 mr-2" />
                       Admin Dashboard
                     </DropdownMenuItem>
@@ -281,12 +316,21 @@ const Navbar = () => {
                 <DropdownMenuSeparator />
 
                 {/* Sign Out */}
-                <DropdownMenuItem onSelect={() => { setTimeout(() => setDropdownOpen(false), 0); handleSignOut(); }} className="text-destructive focus:text-destructive">
+                <DropdownMenuItem
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    runDropdownAction(() => {
+                      void handleSignOut();
+                    });
+                  }}
+                  className="text-destructive focus:text-destructive"
+                >
                   <LogOut className="h-4 w-4 mr-2" />
                   Sign Out
                 </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           ) : (
             <>
               <Button variant="outline" size="sm" onClick={() => navigate("/auth")}>
