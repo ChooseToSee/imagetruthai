@@ -8,14 +8,6 @@ import { shareContent } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import logoSvg from "@/assets/logo.svg";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const ADMIN_EMAIL = "jethrun@comcast.net";
 
@@ -29,7 +21,27 @@ const Navbar = () => {
   const [scanCount, setScanCount] = useState<number | null>(null);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    const handleTouchOutside = (e: TouchEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleTouchOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleTouchOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -105,30 +117,7 @@ const Navbar = () => {
     navigate("/");
   };
 
-  const handleManageSubscription = async () => {
-    const { data } = await supabase.functions.invoke("customer-portal");
-    if (data?.url) window.open(data.url, "_blank");
-  };
-
-  const closeDropdownMenu = () => {
-    const wrapper = dropdownRef.current;
-    const outsideTarget = wrapper?.parentElement ?? document.body;
-
-    requestAnimationFrame(() => {
-      if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-      }
-
-      outsideTarget.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
-      outsideTarget.dispatchEvent(new MouseEvent("mouseup", { bubbles: true, cancelable: true }));
-      outsideTarget.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
-    });
-  };
-
-  const runDropdownAction = (action: () => void) => {
-    closeDropdownMenu();
-    window.setTimeout(action, 0);
-  };
+  const menuItemClass = "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted cursor-pointer";
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
@@ -157,129 +146,143 @@ const Navbar = () => {
             {shareIcon ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
           </Button>
           {user ? (
-            <div ref={dropdownRef}>
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <span className={planColor}>{planIcon}</span>
-                    <span className="text-sm">{user.email?.split("@")[0]}</span>
-                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-72">
-                {/* Account Status Header */}
-                <DropdownMenuLabel className="p-3">
-                  <div className="flex flex-col gap-1">
+            <div ref={menuRef} className="relative">
+              {/* Trigger button */}
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm hover:bg-muted transition-colors"
+              >
+                <span className={planColor}>{planIcon}</span>
+                <span>{user.email?.split("@")[0]}</span>
+                <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${menuOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {/* Dropdown panel */}
+              {menuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-72 rounded-lg border border-border bg-card shadow-lg z-50 overflow-hidden">
+                  {/* Header */}
+                  <div className="border-b border-border px-4 py-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold">{user.email?.split("@")[0]}</span>
+                      <span className="text-sm font-semibold text-foreground">{user.email?.split("@")[0]}</span>
                       <span className={`flex items-center gap-1 text-xs font-bold ${planColor}`}>
                         {planIcon} {planLabel}
                       </span>
                     </div>
                     <span className="text-xs text-muted-foreground">{user.email}</span>
                   </div>
-                </DropdownMenuLabel>
 
-                <DropdownMenuSeparator />
-
-                {/* Usage Stats */}
-                <div className="px-3 py-2">
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="rounded-md bg-muted/50 px-2 py-1.5">
-                      <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
-                        <Upload className="h-3 w-3" />
-                        Scans today
-                      </div>
-                      <div className="text-xs font-bold">
-                        {scanCount ?? "..."} / {limits.scansPerDay === Infinity ? "∞" : limits.scansPerDay}
-                      </div>
-                    </div>
-                    <div className="rounded-md bg-muted/50 px-2 py-1.5">
-                      <div className="text-[10px] text-muted-foreground">Remaining</div>
-                      <div className="text-xs font-bold">{scansRemaining}</div>
-                    </div>
-                    {subscription.subscriptionEnd && (
+                  {/* Usage stats */}
+                  <div className="border-b border-border px-4 py-3">
+                    <div className="grid grid-cols-3 gap-2 text-center">
                       <div className="rounded-md bg-muted/50 px-2 py-1.5">
-                        <div className="text-[10px] text-muted-foreground">Renews</div>
-                        <div className="text-xs font-bold">
-                          {new Date(subscription.subscriptionEnd).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}
+                        <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
+                          <Upload className="h-3 w-3" />
+                          Scans today
+                        </div>
+                        <div className="text-xs font-bold text-foreground">
+                          {scanCount ?? "..."} / {limits.scansPerDay === Infinity ? "∞" : limits.scansPerDay}
                         </div>
                       </div>
+                      <div className="rounded-md bg-muted/50 px-2 py-1.5">
+                        <div className="text-[10px] text-muted-foreground">Remaining</div>
+                        <div className="text-xs font-bold text-foreground">{scansRemaining}</div>
+                      </div>
+                      {subscription.subscriptionEnd && (
+                        <div className="rounded-md bg-muted/50 px-2 py-1.5">
+                          <div className="text-[10px] text-muted-foreground">Renews</div>
+                          <div className="text-xs font-bold text-foreground">
+                            {new Date(subscription.subscriptionEnd).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Upsell */}
+                  {plan === "free" && (
+                    <div className="border-b border-border px-4 py-2">
+                      <a
+                        href="/#pricing"
+                        onClick={() => setMenuOpen(false)}
+                        className="block rounded-lg bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-primary font-medium hover:bg-primary/15 transition-colors text-center"
+                      >
+                        ⚡ Upgrade to Plus — 50 scans/day + batch uploads
+                      </a>
+                    </div>
+                  )}
+                  {plan === "plus" && (
+                    <div className="border-b border-border px-4 py-2">
+                      <a
+                        href="/#pricing"
+                        onClick={() => setMenuOpen(false)}
+                        className="block rounded-lg bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-primary font-medium hover:bg-primary/15 transition-colors text-center"
+                      >
+                        👑 Upgrade to Pro — unlimited scans + PDF reports
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Menu items */}
+                  <div className="py-1">
+                    <button
+                      className={menuItemClass}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        const uploadSection = document.getElementById("upload");
+                        if (uploadSection) {
+                          uploadSection.scrollIntoView({ behavior: "smooth" });
+                        } else {
+                          navigate("/");
+                          setTimeout(() => {
+                            document.getElementById("upload")?.scrollIntoView({ behavior: "smooth" });
+                          }, 300);
+                        }
+                      }}
+                    >
+                      <Upload className="h-4 w-4" />
+                      Upload Image
+                    </button>
+
+                    {plan !== "free" ? (
+                      <button
+                        className={menuItemClass}
+                        onClick={() => {
+                          setMenuOpen(false);
+                          navigate("/history");
+                        }}
+                      >
+                        <History className="h-4 w-4" />
+                        Scan History
+                      </button>
+                    ) : (
+                      <button
+                        className={menuItemClass}
+                        onClick={() => {
+                          setMenuOpen(false);
+                          document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+                        }}
+                      >
+                        <History className="h-4 w-4" />
+                        <span>
+                          Scan History{" "}
+                          <span className="text-xs text-primary ml-1">Plus+</span>
+                        </span>
+                      </button>
                     )}
                   </div>
-                </div>
 
-                {/* Upsell for free/plus users */}
-                {plan === "free" && (
-                  <div className="px-3 pb-2">
-                    <a href="/#pricing" className="block rounded-md bg-primary/10 px-3 py-2 text-center text-xs font-medium text-primary transition-colors hover:bg-primary/20">
-                      ⚡ Upgrade to Plus — 50 scans/day + batch uploads
-                    </a>
-                  </div>
-                )}
-                {plan === "plus" && (
-                  <div className="px-3 pb-2">
-                    <a href="/#pricing" className="block rounded-md bg-primary/10 px-3 py-2 text-center text-xs font-medium text-primary transition-colors hover:bg-primary/20">
-                      👑 Upgrade to Pro — unlimited scans + PDF reports
-                    </a>
-                  </div>
-                )}
-
-                <DropdownMenuSeparator />
-
-                {/* Navigation Links */}
-                <DropdownMenuItem onSelect={(event) => {
-                  event.preventDefault();
-                  runDropdownAction(() => {
-                    const uploadSection = document.getElementById("upload");
-                    if (uploadSection) {
-                      uploadSection.scrollIntoView({ behavior: "smooth" });
-                    } else {
-                      navigate("/");
-                      window.setTimeout(() => {
-                        document.getElementById("upload")?.scrollIntoView({ behavior: "smooth" });
-                      }, 300);
-                    }
-                  });
-                }}>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Image
-                </DropdownMenuItem>
-                {plan !== "free" ? (
-                  <DropdownMenuItem onSelect={(event) => {
-                    event.preventDefault();
-                    runDropdownAction(() => navigate("/history"));
-                  }}>
-                    <History className="h-4 w-4 mr-2" />
-                    Scan History
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem onSelect={(event) => {
-                    event.preventDefault();
-                    runDropdownAction(() => {
-                      document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
-                    });
-                  }}>
-                    <History className="h-4 w-4 mr-2" />
-                    <span>
-                      Scan History{" "}
-                      <span className="text-xs text-primary ml-1">Plus+</span>
-                    </span>
-                  </DropdownMenuItem>
-                )}
-
-                {/* Manage Subscription */}
-                {subscription.subscribed && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onSelect={(event) => {
-                        event.preventDefault();
-                        runDropdownAction(() => {
-                          void (async () => {
+                  {/* Manage Subscription */}
+                  {subscription.subscribed && (
+                    <>
+                      <div className="mx-3 border-t border-border" />
+                      <div className="py-1">
+                        <button
+                          className={menuItemClass}
+                          onClick={async () => {
+                            setMenuOpen(false);
                             try {
                               const { data, error } = await supabase.functions.invoke("customer-portal");
                               if (error) throw error;
@@ -290,46 +293,50 @@ const Navbar = () => {
                                 variant: "destructive",
                               });
                             }
-                          })();
-                        });
+                          }}
+                        >
+                          <CreditCard className="h-4 w-4" />
+                          Manage Subscription
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Admin */}
+                  {user?.email === ADMIN_EMAIL && (
+                    <>
+                      <div className="mx-3 border-t border-border" />
+                      <div className="py-1">
+                        <button
+                          className={menuItemClass}
+                          onClick={() => {
+                            setMenuOpen(false);
+                            navigate("/admin");
+                          }}
+                        >
+                          <ShieldCheck className="h-4 w-4" />
+                          Admin Dashboard
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Sign Out */}
+                  <div className="mx-3 border-t border-border" />
+                  <div className="py-1">
+                    <button
+                      className={`${menuItemClass} text-destructive hover:text-destructive`}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        void handleSignOut();
                       }}
                     >
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      Manage Subscription
-                    </DropdownMenuItem>
-                  </>
-                )}
-
-                {user?.email === ADMIN_EMAIL && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={(event) => {
-                      event.preventDefault();
-                      runDropdownAction(() => navigate("/admin"));
-                    }}>
-                      <ShieldCheck className="h-4 w-4 mr-2" />
-                      Admin Dashboard
-                    </DropdownMenuItem>
-                  </>
-                )}
-
-                <DropdownMenuSeparator />
-
-                {/* Sign Out */}
-                <DropdownMenuItem
-                  onSelect={(event) => {
-                    event.preventDefault();
-                    runDropdownAction(() => {
-                      void handleSignOut();
-                    });
-                  }}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
-                </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                      <LogOut className="h-4 w-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <>
