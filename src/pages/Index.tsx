@@ -10,6 +10,7 @@ import UploadSection from "@/components/UploadSection";
 import ResultsDisplay, { type AnalysisResult } from "@/components/ResultsDisplay";
 import BatchResultsDisplay, { type BatchItem } from "@/components/BatchResultsDisplay";
 import HowItWorks from "@/components/HowItWorks";
+import WhyFiveModels from "@/components/WhyFiveModels";
 import WhoItsFor from "@/components/WhoItsFor";
 import FeaturesSection from "@/components/FeaturesSection";
 import PricingSection from "@/components/PricingSection";
