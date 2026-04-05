@@ -23,6 +23,20 @@ const Navbar = () => {
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [showIOSBanner, setShowIOSBanner] = useState(false);
+
+  useEffect(() => {
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isInStandaloneMode =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+    if (isIOS && !isInStandaloneMode) {
+      const dismissed = sessionStorage.getItem("iosBannerDismissed");
+      if (!dismissed) {
+        setTimeout(() => setShowIOSBanner(true), 3000);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
