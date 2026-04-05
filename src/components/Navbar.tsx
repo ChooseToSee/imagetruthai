@@ -211,6 +211,7 @@ const Navbar = () => {
 
                 {/* Navigation Links */}
                 <DropdownMenuItem onClick={() => {
+                  setDropdownOpen(false);
                   const uploadSection = document.getElementById("upload");
                   if (uploadSection) {
                     uploadSection.scrollIntoView({ behavior: "smooth" });
