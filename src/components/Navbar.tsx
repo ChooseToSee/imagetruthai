@@ -23,6 +23,20 @@ const Navbar = () => {
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [showIOSBanner, setShowIOSBanner] = useState(false);
+
+  useEffect(() => {
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isInStandaloneMode =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+    if (isIOS && !isInStandaloneMode) {
+      const dismissed = sessionStorage.getItem("iosBannerDismissed");
+      if (!dismissed) {
+        setTimeout(() => setShowIOSBanner(true), 3000);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -466,6 +480,35 @@ const Navbar = () => {
               <X className="h-4 w-4" />
             </button>
           </div>
+        </div>
+      )}
+
+      {showIOSBanner && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-card border-t border-border px-4 py-3 md:hidden animate-in slide-in-from-bottom-2">
+          <div className="flex items-center gap-3">
+            <img
+              src="/icons/icon-72x72.png"
+              className="h-10 w-10 rounded-xl border border-border"
+              alt="ImageTruth AI"
+            />
+            <div>
+              <p className="text-sm font-semibold text-foreground">Add to Home Screen</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                Tap{" "}
+                <span className="inline-flex items-center justify-center w-4 h-4 border border-border rounded text-[10px]">↑</span>{" "}
+                then "Add to Home Screen"
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              sessionStorage.setItem("iosBannerDismissed", "true");
+              setShowIOSBanner(false);
+            }}
+            className="shrink-0 text-muted-foreground hover:text-foreground p-1"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       )}
     </nav>
