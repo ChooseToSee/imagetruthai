@@ -137,7 +137,7 @@ const Navbar = () => {
             {shareIcon ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
           </Button>
           {user ? (
-            <DropdownMenu>
+            <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">
                   <span className={planColor}>{planIcon}</span>
