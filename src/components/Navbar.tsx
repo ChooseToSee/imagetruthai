@@ -493,10 +493,12 @@ const Navbar = () => {
             />
             <div>
               <p className="text-sm font-semibold text-foreground">Add to Home Screen</p>
-              <p className="text-xs text-muted-foreground flex items-center gap-1 flex-wrap">
-                <span>Tap ⋯ then</span>
-                <svg className="inline-block h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                <span>Share, then "Add to Home Screen"</span>
+              <p className="text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <span>Tap ⋯ then Share</span>
+                  <svg className="inline-block h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                </span>
+                <span>then "Add to Home Screen"</span>
               </p>
             </div>
           </div>
