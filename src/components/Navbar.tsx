@@ -384,6 +384,26 @@ const Navbar = () => {
           </div>
         </div>
       )}
+
+      {showInstallBanner && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 border-t border-border bg-card px-4 py-3 md:hidden">
+          <div className="flex items-center gap-3">
+            <img src="/icons/icon-72x72.png" className="h-10 w-10 rounded-xl" alt="ImageTruth AI" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">Install ImageTruth AI</p>
+              <p className="text-xs text-muted-foreground">Add to your home screen</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={handleInstall} className="text-xs">
+              Install
+            </Button>
+            <button onClick={() => setShowInstallBanner(false)} className="text-muted-foreground hover:text-foreground">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };
