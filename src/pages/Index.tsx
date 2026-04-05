@@ -285,11 +285,11 @@ const Index = () => {
         <UploadSection ref={uploadRef} onAnalyze={handleAnalyze} isAnalyzing={isAnalyzing} />
       )}
 
+      <PricingSection />
       <HowItWorks />
       <WhoItsFor />
       <FeaturesSection />
       <DemoSection />
-      <PricingSection />
       <TrustSection />
       {subscription.tier === "free" && <FinalCTA onStartFree={handleStartFree} />}
       <Footer />

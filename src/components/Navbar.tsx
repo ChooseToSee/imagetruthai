@@ -210,8 +210,8 @@ const Navbar = () => {
                 <DropdownMenuSeparator />
 
                 {/* Navigation Links */}
-                <DropdownMenuItem onClick={() => {
-                  setDropdownOpen(false);
+                <DropdownMenuItem onSelect={() => {
+                  setTimeout(() => setDropdownOpen(false), 0);
                   const uploadSection = document.getElementById("upload");
                   if (uploadSection) {
                     uploadSection.scrollIntoView({ behavior: "smooth" });
@@ -226,13 +226,13 @@ const Navbar = () => {
                   Upload Image
                 </DropdownMenuItem>
                 {plan !== "free" ? (
-                  <DropdownMenuItem onClick={() => { setDropdownOpen(false); navigate("/history"); }}>
+                  <DropdownMenuItem onSelect={() => { setTimeout(() => setDropdownOpen(false), 0); navigate("/history"); }}>
                     <History className="h-4 w-4 mr-2" />
                     Scan History
                   </DropdownMenuItem>
                 ) : (
-                  <DropdownMenuItem onClick={() => {
-                    setDropdownOpen(false);
+                  <DropdownMenuItem onSelect={() => {
+                    setTimeout(() => setDropdownOpen(false), 0);
                     document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
                   }}>
                     <History className="h-4 w-4 mr-2" />
@@ -248,8 +248,8 @@ const Navbar = () => {
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onClick={async () => {
-                        setDropdownOpen(false);
+                      onSelect={async () => {
+                        setTimeout(() => setDropdownOpen(false), 0);
                         try {
                           const { data, error } = await supabase.functions.invoke("customer-portal");
                           if (error) throw error;
@@ -271,7 +271,7 @@ const Navbar = () => {
                 {user?.email === ADMIN_EMAIL && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => { setDropdownOpen(false); navigate("/admin"); }}>
+                    <DropdownMenuItem onSelect={() => { setTimeout(() => setDropdownOpen(false), 0); navigate("/admin"); }}>
                       <ShieldCheck className="h-4 w-4 mr-2" />
                       Admin Dashboard
                     </DropdownMenuItem>
@@ -281,7 +281,7 @@ const Navbar = () => {
                 <DropdownMenuSeparator />
 
                 {/* Sign Out */}
-                <DropdownMenuItem onClick={() => { setDropdownOpen(false); handleSignOut(); }} className="text-destructive focus:text-destructive">
+                <DropdownMenuItem onSelect={() => { setTimeout(() => setDropdownOpen(false), 0); handleSignOut(); }} className="text-destructive focus:text-destructive">
                   <LogOut className="h-4 w-4 mr-2" />
                   Sign Out
                 </DropdownMenuItem>
