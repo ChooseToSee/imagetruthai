@@ -236,6 +236,7 @@ const Navbar = () => {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={async () => {
+                        setDropdownOpen(false);
                         try {
                           const { data, error } = await supabase.functions.invoke("customer-portal");
                           if (error) throw error;
