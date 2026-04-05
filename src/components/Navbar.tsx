@@ -225,10 +225,23 @@ const Navbar = () => {
                   <Upload className="h-4 w-4 mr-2" />
                   Upload Image
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => { setDropdownOpen(false); navigate("/history"); }}>
-                  <History className="h-4 w-4 mr-2" />
-                  Scan History
-                </DropdownMenuItem>
+                {plan !== "free" ? (
+                  <DropdownMenuItem onClick={() => { setDropdownOpen(false); navigate("/history"); }}>
+                    <History className="h-4 w-4 mr-2" />
+                    Scan History
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onClick={() => {
+                    setDropdownOpen(false);
+                    document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+                  }}>
+                    <History className="h-4 w-4 mr-2" />
+                    <span>
+                      Scan History{" "}
+                      <span className="text-xs text-primary ml-1">Plus+</span>
+                    </span>
+                  </DropdownMenuItem>
+                )}
 
                 {/* Manage Subscription */}
                 {subscription.subscribed && (

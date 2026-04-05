@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Clock, AlertTriangle, CheckCircle, Lock, FileDown, ChevronDown, ChevronUp, ZoomIn, Home, Upload } from "lucide-react";
+import { Trash2, Clock, AlertTriangle, CheckCircle, Lock, FileDown, ChevronDown, ChevronUp, ZoomIn, Home, Upload, History as HistoryIcon, Zap } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ImageLightbox from "@/components/ImageLightbox";
@@ -71,6 +71,34 @@ const History = () => {
     };
     fetchScans();
   }, [user]);
+
+  if (plan === "free") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 pt-32 pb-16 text-center max-w-md">
+          <HistoryIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+          <h1 className="text-2xl font-bold text-foreground mb-3">Scan History</h1>
+          <p className="text-muted-foreground mb-6">
+            Scan history is available on Plus and Pro plans. Upgrade to keep a full record of all your image analyses.
+          </p>
+          <Button
+            onClick={() => {
+              navigate("/");
+              setTimeout(() => {
+                document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+              }, 300);
+            }}
+            className="gap-2 shadow-glow"
+          >
+            <Zap className="h-4 w-4" />
+            Upgrade to Plus
+          </Button>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
