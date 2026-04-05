@@ -22,6 +22,7 @@ const ADMIN_EMAIL = "jethrun@comcast.net";
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [shareIcon, setShareIcon] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { user, signOut, subscription } = useAuth();
   const { plan, limits } = usePlan();
   const navigate = useNavigate();
@@ -136,7 +137,7 @@ const Navbar = () => {
             {shareIcon ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
           </Button>
           {user ? (
-            <DropdownMenu>
+            <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">
                   <span className={planColor}>{planIcon}</span>
@@ -210,6 +211,7 @@ const Navbar = () => {
 
                 {/* Navigation Links */}
                 <DropdownMenuItem onClick={() => {
+                  setDropdownOpen(false);
                   const uploadSection = document.getElementById("upload");
                   if (uploadSection) {
                     uploadSection.scrollIntoView({ behavior: "smooth" });
@@ -223,7 +225,7 @@ const Navbar = () => {
                   <Upload className="h-4 w-4 mr-2" />
                   Upload Image
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/history")}>
+                <DropdownMenuItem onClick={() => { setDropdownOpen(false); navigate("/history"); }}>
                   <History className="h-4 w-4 mr-2" />
                   Scan History
                 </DropdownMenuItem>
@@ -234,6 +236,7 @@ const Navbar = () => {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={async () => {
+                        setDropdownOpen(false);
                         try {
                           const { data, error } = await supabase.functions.invoke("customer-portal");
                           if (error) throw error;
@@ -255,7 +258,7 @@ const Navbar = () => {
                 {user?.email === ADMIN_EMAIL && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate("/admin")}>
+                    <DropdownMenuItem onClick={() => { setDropdownOpen(false); navigate("/admin"); }}>
                       <ShieldCheck className="h-4 w-4 mr-2" />
                       Admin Dashboard
                     </DropdownMenuItem>
@@ -265,7 +268,7 @@ const Navbar = () => {
                 <DropdownMenuSeparator />
 
                 {/* Sign Out */}
-                <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
+                <DropdownMenuItem onClick={() => { setDropdownOpen(false); handleSignOut(); }} className="text-destructive focus:text-destructive">
                   <LogOut className="h-4 w-4 mr-2" />
                   Sign Out
                 </DropdownMenuItem>
