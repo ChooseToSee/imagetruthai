@@ -130,9 +130,6 @@ const Navbar = () => {
           }}
         >
           <img src={logoSvg} alt="ImageTruth AI" className="h-8" />
-          <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
-            Beta
-          </span>
         </Link>
 
         <div className="hidden items-center gap-6 md:flex">
