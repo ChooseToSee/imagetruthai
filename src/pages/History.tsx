@@ -40,6 +40,19 @@ const History = () => {
   const { user } = useAuth();
   const { plan } = usePlan();
   const navigate = useNavigate();
+  const [scans, setScans] = useState<ScanRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const { toast } = useToast();
+
+  const showFullResults = plan === "plus" || plan === "pro";
+  const canDownloadPdf = plan === "pro";
+  const selectionMode = selectedIds.size > 0;
 
   if (plan === "free") {
     return (
@@ -68,20 +81,6 @@ const History = () => {
       </div>
     );
   }
-
-  const [scans, setScans] = useState<ScanRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkDeleting, setBulkDeleting] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const { toast } = useToast();
-
-  const showFullResults = plan === "plus" || plan === "pro";
-  const canDownloadPdf = plan === "pro";
-  const selectionMode = selectedIds.size > 0;
 
   useEffect(() => {
     if (!user) return;
