@@ -288,6 +288,7 @@ const Index = () => {
 
       <PricingSection />
       <HowItWorks />
+      <WhyFiveModels />
       <WhoItsFor />
       <FeaturesSection />
       <DemoSection />
