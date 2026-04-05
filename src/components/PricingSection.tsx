@@ -262,7 +262,7 @@ const PricingSection = () => {
                     {loadingTier === plan.tier ? "Loading…" : "Start 7-day free trial"}
                   </Button>
                     <p className="mt-2 text-center text-xs text-muted-foreground">
-                      No credit card required for trial
+                      Free for 7 days · Cancel anytime
                     </p>
                   </div>
                 )}
