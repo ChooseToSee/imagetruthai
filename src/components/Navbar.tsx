@@ -225,7 +225,7 @@ const Navbar = () => {
                   <Upload className="h-4 w-4 mr-2" />
                   Upload Image
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/history")}>
+                <DropdownMenuItem onClick={() => { setDropdownOpen(false); navigate("/history"); }}>
                   <History className="h-4 w-4 mr-2" />
                   Scan History
                 </DropdownMenuItem>
