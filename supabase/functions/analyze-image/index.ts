@@ -163,12 +163,7 @@ async function analyzeEditWithAI(
           {
             parts: [
               {
-                text: `You are a forensic image analyst. Analyze this image for any signs of editing or manipulation including: Photoshop edits, cloning, splicing, retouching, inpainting, face swapping, background replacement, color manipulation, or any other post-processing.
-
-Return your analysis as JSON with exactly this structure:
-{"edited": true/false, "confidence": 50-99, "reasons": ["reason1", "reason2", "reason3"]}
-
-If you detect editing, explain specifically what was edited. If the image appears unedited, explain what indicates it is authentic.`,
+                text: `You are a forensic image analyst. Your task is specifically to detect POST-PROCESSING MANIPULATION of originally captured photographs.\n\nAnswer YES (edited=true) ONLY if you detect:\n- Cloning or copy-paste within the image\n- Splicing of multiple photographs together\n- Object removal or insertion into a photo\n- Face swapping or retouching of a real photo\n- Background replacement in a real photograph\n- Selective color manipulation of a photo\n\nAnswer NO (edited=false) if:\n- The image appears to be original digital art created from scratch (painting, illustration, 3D render, AI-generated art)\n- The image is a straightforward unmanipulated photograph\n- You cannot determine if manipulation occurred\n\nIMPORTANT: Digital art, illustrations, and AI-generated images created from scratch are NOT considered edited/manipulated for this purpose. Only post-processing changes to originally captured photographs count.\n\nReturn ONLY valid JSON:\n{"edited": true_or_false, "confidence": 50_to_99, "reasons": ["reason1", "reason2", "reason3"]}`,
               },
               {
                 inlineData: { mimeType, data: b64 },
@@ -252,7 +247,7 @@ async function analyzeEditWithAIFallback(
         {
           parts: [
             {
-              text: `Analyze this image for editing/manipulation signs. Reply with ONLY valid JSON, no markdown: {"edited": true_or_false, "confidence": 50_to_99, "reasons": ["reason1", "reason2"]}`,
+              text: `You are a forensic image analyst. Your task is specifically to detect POST-PROCESSING MANIPULATION of originally captured photographs.\n\nAnswer YES (edited=true) ONLY if you detect:\n- Cloning or copy-paste within the image\n- Splicing of multiple photographs together\n- Object removal or insertion into a photo\n- Face swapping or retouching of a real photo\n- Background replacement in a real photograph\n- Selective color manipulation of a photo\n\nAnswer NO (edited=false) if:\n- The image appears to be original digital art created from scratch (painting, illustration, 3D render, AI-generated art)\n- The image is a straightforward unmanipulated photograph\n- You cannot determine if manipulation occurred\n\nIMPORTANT: Digital art, illustrations, and AI-generated images created from scratch are NOT considered edited/manipulated for this purpose. Only post-processing changes to originally captured photographs count.\n\nReturn ONLY valid JSON, no markdown:\n{"edited": true_or_false, "confidence": 50_to_99, "reasons": ["reason1", "reason2", "reason3"]}`,
             },
             { inlineData: { mimeType, data: b64 } },
           ],
@@ -364,7 +359,7 @@ async function analyzeEditWithHive(
             content: [
               {
                 type: "text",
-                text: `You are a forensic image analyst. Examine this image for signs of editing or manipulation including: cloning, splicing, retouching, inpainting, face swapping, background replacement, or color manipulation.\n\nReturn ONLY valid JSON with no markdown:\n{"edited": true_or_false, "confidence": 50_to_99, "reasons": ["reason1", "reason2", "reason3"]}`,
+                text: `You are a forensic image analyst. Your task is specifically to detect POST-PROCESSING MANIPULATION of originally captured photographs.\n\nAnswer YES (edited=true) ONLY if you detect:\n- Cloning or copy-paste within the image\n- Splicing of multiple photographs together\n- Object removal or insertion into a photo\n- Face swapping or retouching of a real photo\n- Background replacement in a real photograph\n- Selective color manipulation of a photo\n\nAnswer NO (edited=false) if:\n- The image appears to be original digital art created from scratch (painting, illustration, 3D render, AI-generated art)\n- The image is a straightforward unmanipulated photograph\n- You cannot determine if manipulation occurred\n\nIMPORTANT: Digital art, illustrations, and AI-generated images created from scratch are NOT considered edited/manipulated for this purpose. Only post-processing changes to originally captured photographs count.\n\nReturn ONLY valid JSON:\n{"edited": true_or_false, "confidence": 50_to_99, "reasons": ["reason1", "reason2", "reason3"]}`,
               },
               {
                 type: "image_url",
@@ -523,39 +518,89 @@ function computeConsensus(results: ModelResult[], expectedTotal = results.length
   return { verdict, confidence, reasons: allReasons.slice(0, 5), tips };
 }
 
-// ── Compute manipulation consensus ──────────────────────────────────
-function computeManipulation(editResults: { edited: boolean; confidence: number; reasons: string[] }[]) {
-  if (editResults.length === 0) return undefined;
-
-  let editScore = 0;
-  let totalWeight = 0;
-  const allReasons: string[] = [];
-
-  for (const r of editResults) {
-    const w = 1;
-    totalWeight += w;
-    // editScore: 0 = definitely not edited, 1 = definitely edited
-    if (r.edited) {
-      editScore += (r.confidence / 100) * w;
-    } else {
-      // Not edited with high confidence → low edit score
-      editScore += (1 - r.confidence / 100) * w;
-    }
-    allReasons.push(...r.reasons.slice(0, 2));
-  }
-
-  editScore = totalWeight > 0 ? editScore / totalWeight : 0.5;
-  const edited = editScore >= 0.5;
-  const confidence = Math.max(50, Math.min(99, Math.round(Math.max(editScore, 1 - editScore) * 100)));
-
-  const tips = [
+// ── Compute manipulation consensus (power-scaling with outlier penalization) ──
+function getManipulationTips(): string[] {
+  return [
     "Check EXIF data for editing software markers",
     "Look for inconsistent lighting, shadows, or perspective",
     "Zoom in to edges for signs of cloning or splicing",
     "Compare noise grain patterns across different areas",
   ];
+}
 
-  return { edited, confidence, reasons: allReasons.slice(0, 5), tips };
+function computeManipulation(editResults: { edited: boolean; confidence: number; reasons: string[] }[]) {
+  if (editResults.length === 0) return undefined;
+
+  if (editResults.length === 1) {
+    const r = editResults[0];
+    return {
+      edited: r.edited,
+      confidence: r.confidence,
+      reasons: r.reasons.slice(0, 5),
+      tips: getManipulationTips(),
+    };
+  }
+
+  // Convert each result to a -100 to +100 score
+  // Positive = not edited, Negative = edited
+  const scores = editResults.map((r) => {
+    const magnitude = r.confidence / 100;
+    return r.edited ? -(magnitude * 100) : magnitude * 100;
+  });
+
+  const totalModels = scores.length;
+
+  // Determine consensus direction
+  const editedCount = editResults.filter((r) => r.edited).length;
+  const notEditedCount = totalModels - editedCount;
+  const consensusIsEdited = editedCount > notEditedCount;
+
+  // Calculate weights with outlier penalization
+  const weights = scores.map((score, i) => {
+    const modelIsEdited = editResults[i].edited;
+    const isOutlier = modelIsEdited !== consensusIsEdited;
+
+    if (!isOutlier) return 1.0;
+
+    // Dynamic penalty based on how strongly the outlier disagrees
+    const outlierStrength = Math.abs(score) / 100;
+    const penalty = 0.3 + outlierStrength * 0.2; // range: 0.3 to 0.5
+    return 1.0 - penalty;
+  });
+
+  // Calculate weighted average score
+  const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+  const weightedScore = scores.reduce((sum, score, i) => sum + score * weights[i], 0) / totalWeight;
+
+  // Convert back to verdict and confidence
+  const edited = weightedScore < 0;
+
+  const rawConfidence = Math.abs(weightedScore);
+
+  // Boost confidence when all models agree
+  const agreementBonus = editedCount === totalModels || notEditedCount === totalModels ? 10 : 0;
+
+  const confidence = Math.max(50, Math.min(99, Math.round(rawConfidence + agreementBonus)));
+
+  // Collect reasons from consensus models first, then outliers
+  const allReasons: string[] = [];
+  editResults.forEach((r) => {
+    if (r.edited === consensusIsEdited) {
+      allReasons.push(...r.reasons.slice(0, 2));
+    }
+  });
+  editResults.forEach((r) => {
+    if (r.edited !== consensusIsEdited) {
+      allReasons.push(...r.reasons.slice(0, 1));
+    }
+  });
+
+  return {
+    edited,
+    confidence,
+    reasons: allReasons.slice(0, 5),
+    tips: getManipulationTips(),
+  };
 }
 
 // ── Main handler ─────────────────────────────────────────────────────
