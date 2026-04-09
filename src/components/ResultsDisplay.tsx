@@ -463,10 +463,10 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
 
               {/* Edit Detection Tab */}
               <TabsContent value="edit-detection">
-                <div className="flex items-start gap-2 rounded-lg bg-muted/50 border border-border px-3 py-2 mb-4">
-                  <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Edit detection uses visual AI analysis from Gemini and Hive to identify signs of manipulation, retouching, and digital alterations.
+                <div className="flex items-start gap-1.5 mb-4">
+                  <Info className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    <span className="font-medium">Edit detection</span>{" "}identifies post-processing manipulation of photographs such as cloning, splicing, object removal, and retouching. Original digital art and AI-generated images created from scratch are not considered manipulated for this purpose.
                   </p>
                 </div>
                 {manipulation ? (
