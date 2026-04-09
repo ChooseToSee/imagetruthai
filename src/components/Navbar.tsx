@@ -157,7 +157,7 @@ const Navbar = () => {
             {shareIcon ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
           </Button>
           {user ? (
-            <div ref={menuRef} className="relative">
+            <div ref={menuRef} className="relative hidden md:block">
               {/* Trigger button */}
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
@@ -375,89 +375,142 @@ const Navbar = () => {
               {shareIcon ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />} Share
             </button>
             {user ? (
-              <>
-                {/* Mobile Plan Badge */}
-                <div className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold">{user.email?.split("@")[0]}</span>
-                    <span className="text-[11px] text-muted-foreground">
-                      {scanCount ?? "..."} scans today · {scansRemaining} remaining
+              <div className="flex flex-col gap-2">
+                {/* Account info card */}
+                <div className="rounded-lg bg-muted/50 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-foreground">{user.email?.split("@")[0]}</span>
+                      <span className="text-[11px] text-muted-foreground">{user.email}</span>
+                    </div>
+                    <span className={`flex items-center gap-1 text-xs font-bold ${planColor}`}>
+                      {planIcon} {planLabel}
                     </span>
                   </div>
-                  <span className={`flex items-center gap-1 text-xs font-bold ${planColor}`}>
-                    {planIcon} {planLabel}
-                  </span>
+                  <div className="flex items-center justify-between rounded-md bg-background/60 px-2.5 py-1.5">
+                    <span className="text-[11px] text-muted-foreground">Scans today</span>
+                    <span className="text-xs font-bold text-foreground">
+                      {scanCount ?? "..."} / {limits.scansPerDay === Infinity ? "∞" : limits.scansPerDay}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Upsell */}
                 {plan === "free" && (
-                  <a href="/#pricing" className="text-xs text-primary font-medium">
-                    ⚡ Upgrade to Plus for more scans
+                  <a
+                    href="/#pricing"
+                    onClick={() => setMobileOpen(false)}
+                    className="block rounded-lg bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-primary font-medium mb-1"
+                  >
+                    ⚡ Upgrade to Plus — 50 scans/day
                   </a>
                 )}
                 {plan === "plus" && (
-                  <a href="/#pricing" className="text-xs text-primary font-medium">
-                    👑 Upgrade to Pro for unlimited scans
+                  <a
+                    href="/#pricing"
+                    onClick={() => setMobileOpen(false)}
+                    className="block rounded-lg bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-primary font-medium mb-1"
+                  >
+                    👑 Upgrade to Pro — unlimited scans
                   </a>
                 )}
 
+                {/* Nav links */}
                 <button
                   onClick={() => {
                     setMobileOpen(false);
                     setTimeout(() => {
-                      const uploadSection = document.getElementById("upload");
-                      if (uploadSection) {
-                        uploadSection.scrollIntoView({ behavior: "smooth" });
+                      const upload = document.getElementById("upload");
+                      if (upload) {
+                        upload.scrollIntoView({ behavior: "smooth" });
                       } else {
                         window.location.href = "/#upload";
                       }
                     }, 100);
                   }}
-                  className="flex items-center gap-2 text-sm text-muted-foreground"
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
                 >
-                  <Upload className="h-4 w-4" /> Upload Image
+                  <Upload className="h-4 w-4" />
+                  Upload Image
                 </button>
-                <Link to="/history" className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <History className="h-4 w-4" /> Scan History
-                </Link>
+
+                {plan !== "free" ? (
+                  <button
+                    onClick={() => {
+                      setMobileOpen(false);
+                      navigate("/history");
+                    }}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                  >
+                    <History className="h-4 w-4" />
+                    Scan History
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setMobileOpen(false);
+                      document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                  >
+                    <History className="h-4 w-4" />
+                    <span>
+                      Scan History{" "}
+                      <span className="text-xs text-primary ml-1">Plus+</span>
+                    </span>
+                  </button>
+                )}
+
                 {subscription.subscribed && (
                   <button
                     onClick={async () => {
+                      setMobileOpen(false);
                       try {
                         const { data, error } = await supabase.functions.invoke("customer-portal");
                         if (error) throw error;
                         if (data?.url) window.open(data.url, "_blank");
-                      } catch (err) {
-                        toast({
-                          title: "Could not open billing portal",
-                          variant: "destructive",
-                        });
+                      } catch {
+                        toast({ title: "Could not open portal", variant: "destructive" });
                       }
                     }}
-                    className="flex items-center gap-2 text-sm text-muted-foreground"
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
                   >
-                    <CreditCard className="h-4 w-4" /> Manage Subscription
+                    <CreditCard className="h-4 w-4" />
+                    Manage Subscription
                   </button>
                 )}
+
                 {user?.email === ADMIN_EMAIL && (
-                  <Link to="/admin" className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <ShieldCheck className="h-4 w-4" /> Admin Dashboard
-                  </Link>
+                  <button
+                    onClick={() => {
+                      setMobileOpen(false);
+                      navigate("/admin");
+                    }}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    Admin Dashboard
+                  </button>
                 )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="w-full justify-start text-destructive hover:text-destructive"
+
+                <div className="my-1 border-t border-border" />
+
+                <button
+                  onClick={() => {
+                    setMobileOpen(false);
+                    handleSignOut();
+                  }}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive hover:bg-muted transition-colors"
                 >
-                  <LogOut className="h-4 w-4 mr-2" /> Sign Out
-                </Button>
-              </>
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </button>
+              </div>
             ) : (
-              <>
-                <Button variant="outline" size="sm" className="w-full" onClick={() => navigate("/auth")}>Sign In</Button>
-                <Button size="sm" className="w-full" onClick={() => navigate("/auth")}>Get Started Free</Button>
-              </>
+              <div className="flex flex-col gap-2">
+                <Button variant="outline" size="sm" className="w-full" onClick={() => { setMobileOpen(false); navigate("/auth"); }}>Sign In</Button>
+                <Button size="sm" className="w-full" onClick={() => { setMobileOpen(false); navigate("/auth"); }}>Get Started Free</Button>
+              </div>
             )}
           </div>
         </div>
