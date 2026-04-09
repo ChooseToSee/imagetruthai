@@ -157,7 +157,7 @@ const Navbar = () => {
             {shareIcon ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
           </Button>
           {user ? (
-            <div ref={menuRef} className="relative">
+            <div ref={menuRef} className="relative hidden md:block">
               {/* Trigger button */}
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
