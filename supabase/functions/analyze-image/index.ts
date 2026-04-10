@@ -471,22 +471,52 @@ async function checkC2PA(
   modified: boolean | null;
   summary: string;
 } | null> {
+  console.log("[C2PA] Starting check, image size:", imageBytes.length, "type:", mimeType);
+
   try {
     const b64 = base64Encode(imageBytes);
     const dataUrl = `data:${mimeType};base64,${b64}`;
 
-    const res = await fetch(
-      "https://verify.contentauthenticity.org/api/verify",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: dataUrl }),
-      }
-    );
+    console.log("[C2PA] Calling verify API...");
 
-    if (!res.ok) return null;
+    let res: Response;
+    try {
+      res = await fetch(
+        "https://verify.contentauthenticity.org/api/verify",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+          },
+          body: JSON.stringify({ image: dataUrl }),
+        }
+      );
+    } catch (fetchErr: any) {
+      console.error("[C2PA] Network error:", fetchErr.message);
+      return null;
+    }
 
-    const data = await res.json();
+    console.log("[C2PA] Response status:", res.status, res.statusText);
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("[C2PA] Non-200 response:", res.status, errorText.slice(0, 200));
+      return null;
+    }
+
+    const rawText = await res.text();
+    console.log("[C2PA] Raw response:", rawText.slice(0, 300));
+
+    let data: any;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      console.error("[C2PA] Failed to parse response as JSON");
+      return null;
+    }
+
+    console.log("[C2PA] has_c2pa:", data.has_c2pa, "valid:", data.valid);
 
     if (!data.has_c2pa) {
       return {
@@ -501,19 +531,20 @@ async function checkC2PA(
     const manifest = data.manifest;
     const valid = data.valid ?? false;
     const issuer = manifest?.claim_generator || manifest?.issuer || "Unknown";
-    const modified = !valid;
+
+    console.log("[C2PA] Issuer:", issuer, "Valid:", valid);
 
     return {
       hasC2PA: true,
       valid,
       issuer,
-      modified,
+      modified: !valid,
       summary: valid
         ? `Authentic provenance from ${issuer}`
         : `Provenance signature invalid — possible modification detected`,
     };
-  } catch (err) {
-    console.error("[C2PA] Check failed:", err);
+  } catch (err: any) {
+    console.error("[C2PA] Unexpected error:", err.message || String(err));
     return null;
   }
 }
