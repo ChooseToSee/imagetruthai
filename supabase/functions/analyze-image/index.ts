@@ -145,8 +145,9 @@ async function analyzeWithSightEngine(
 // ── Direct Gemini Edit Detection ────────────────────────────────────
 const GEMINI_EDIT_MODELS = [
   "gemini-2.5-flash",
-  "gemini-1.5-flash",
-  "gemini-1.5-pro",
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
+  "gemini-2.5-flash-lite",
 ];
 
 const EDIT_PROMPT = `You are a forensic image analyst. Detect any form of POST-PROCESSING or COMPOSITING applied to this image.\n\nAnswer YES (edited=true) if you detect ANY of:\n- Text, graphics, logos, or watermarks overlaid on a photograph\n- Cloning or copy-paste within the image\n- Splicing of multiple images together\n- Object removal or insertion\n- Face swapping or retouching\n- Background replacement\n- Color grading or filter effects applied to a photograph\n- Any composite of photo + graphic elements\n\nAnswer NO (edited=false) ONLY if:\n- The image is a completely unmodified photograph straight from a camera\n- The image is original digital art created entirely from scratch with no photo base\n\nIMPORTANT: Text on photos, watermarks, graphics overlaid on photographs, and composite images ARE considered edited.\n\nReturn ONLY valid JSON:\n{"edited": true_or_false, "confidence": 50_to_99, "reasons": ["reason1", "reason2", "reason3"]}`;
