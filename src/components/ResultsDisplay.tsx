@@ -724,22 +724,48 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                   </div>
                   <div className="flex items-center gap-2">
                     <input
-                      readOnly
-                      value={shareLink}
-                      className="flex-1 bg-muted rounded px-2 py-1 text-xs text-foreground border border-border"
-                      onClick={(e) => (e.target as HTMLInputElement).select()}
-                    />
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs h-7"
-                      onClick={() => {
-                        navigator.clipboard.writeText(shareLink);
-                        toast({ title: "Link copied!", description: "Anyone with this link can view your full report." });
-                      }}
-                    >
-                      Copy
-                    </Button>
+                       readOnly
+                       value={shareLink}
+                       className="flex-1 bg-muted rounded px-2 py-1 text-xs text-foreground border border-border"
+                       onClick={(e) => (e.target as HTMLInputElement).select()}
+                       onFocus={(e) => (e.target as HTMLInputElement).select()}
+                     />
+                     <Button
+                       size="sm"
+                       variant="outline"
+                       className="text-xs h-7"
+                       onClick={async () => {
+                         if (!shareLink) return;
+                         try {
+                           await navigator.clipboard.writeText(shareLink);
+                           toast({ title: "Link copied!", description: "Paste it anywhere to share your report." });
+                         } catch (err) {
+                           try {
+                             const textArea = document.createElement("textarea");
+                             textArea.value = shareLink;
+                             textArea.style.position = "fixed";
+                             textArea.style.left = "-9999px";
+                             textArea.style.top = "-9999px";
+                             document.body.appendChild(textArea);
+                             textArea.focus();
+                             textArea.select();
+                             const success = document.execCommand("copy");
+                             document.body.removeChild(textArea);
+                             if (success) {
+                               toast({ title: "Link copied!", description: "Paste it anywhere to share your report." });
+                             } else {
+                               throw new Error("execCommand failed");
+                             }
+                           } catch (fallbackErr) {
+                             const input = document.querySelector('input[value="' + shareLink + '"]') as HTMLInputElement;
+                             if (input) { input.focus(); input.select(); }
+                             toast({ title: "Please copy manually", description: "Press Ctrl+C to copy the selected link.", variant: "destructive" });
+                           }
+                         }
+                       }}
+                     >
+                       Copy
+                     </Button>
                   </div>
                   <div className="mt-2 rounded-lg bg-muted/30 border border-border p-3">
                     <p className="text-[10px] font-medium text-foreground mb-1">
