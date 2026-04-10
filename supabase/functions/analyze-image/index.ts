@@ -143,6 +143,14 @@ async function analyzeWithSightEngine(
 }
 
 // ── Direct Gemini Edit Detection ────────────────────────────────────
+const GEMINI_EDIT_MODELS = [
+  "gemini-2.5-flash",
+  "gemini-1.5-flash",
+  "gemini-1.5-pro",
+];
+
+const EDIT_PROMPT = `You are a forensic image analyst. Detect any form of POST-PROCESSING or COMPOSITING applied to this image.\n\nAnswer YES (edited=true) if you detect ANY of:\n- Text, graphics, logos, or watermarks overlaid on a photograph\n- Cloning or copy-paste within the image\n- Splicing of multiple images together\n- Object removal or insertion\n- Face swapping or retouching\n- Background replacement\n- Color grading or filter effects applied to a photograph\n- Any composite of photo + graphic elements\n\nAnswer NO (edited=false) ONLY if:\n- The image is a completely unmodified photograph straight from a camera\n- The image is original digital art created entirely from scratch with no photo base\n\nIMPORTANT: Text on photos, watermarks, graphics overlaid on photographs, and composite images ARE considered edited.\n\nReturn ONLY valid JSON:\n{"edited": true_or_false, "confidence": 50_to_99, "reasons": ["reason1", "reason2", "reason3"]}`;
+
 async function analyzeEditWithAI(
   imageBytes: Uint8Array,
   mimeType: string,
@@ -151,128 +159,136 @@ async function analyzeEditWithAI(
   const b64 = base64Encode(imageBytes);
   const normalizedApiKey = apiKey.trim();
 
-  console.log("[EditDetection] Starting Gemini analysis...");
+  console.log("[EditDetection] API key present:", !!apiKey, "length:", apiKey?.length);
+  console.log("[EditDetection] Starting Gemini analysis with model fallback...");
 
-  let res: Response;
-  try {
-    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${normalizedApiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
+  let lastError = "";
+
+  for (const model of GEMINI_EDIT_MODELS) {
+    try {
+      console.log("[EditDetection] Trying model:", model);
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${normalizedApiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
               {
-                text: `You are a forensic image analyst. Detect any form of POST-PROCESSING or COMPOSITING applied to this image.\n\nAnswer YES (edited=true) if you detect ANY of:\n- Text, graphics, logos, or watermarks overlaid on a photograph\n- Cloning or copy-paste within the image\n- Splicing of multiple images together\n- Object removal or insertion\n- Face swapping or retouching\n- Background replacement\n- Color grading or filter effects applied to a photograph\n- Any composite of photo + graphic elements\n\nAnswer NO (edited=false) ONLY if:\n- The image is a completely unmodified photograph straight from a camera\n- The image is original digital art created entirely from scratch with no photo base\n\nIMPORTANT: Text on photos, watermarks, graphics overlaid on photographs, and composite images ARE considered edited.\n\nReturn ONLY valid JSON:\n{"edited": true_or_false, "confidence": 50_to_99, "reasons": ["reason1", "reason2", "reason3"]}`,
-              },
-              {
-                inlineData: { mimeType, data: b64 },
+                parts: [
+                  { text: EDIT_PROMPT },
+                  { inlineData: { mimeType, data: b64 } },
+                ],
               },
             ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 1024,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "OBJECT",
-            properties: {
-              edited: { type: "BOOLEAN" },
-              confidence: { type: "NUMBER" },
-              reasons: {
-                type: "ARRAY",
-                items: { type: "STRING" },
+            generationConfig: {
+              temperature: 0.1,
+              maxOutputTokens: 1024,
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: "OBJECT",
+                properties: {
+                  edited: { type: "BOOLEAN" },
+                  confidence: { type: "NUMBER" },
+                  reasons: {
+                    type: "ARRAY",
+                    items: { type: "STRING" },
+                  },
+                },
+                required: ["edited", "confidence", "reasons"],
               },
             },
-            required: ["edited", "confidence", "reasons"],
-          },
-        },
-      }),
-    });
-  } catch (fetchErr: any) {
-    console.error("[EditDetection] Fetch error:", sanitizeErrorText(fetchErr.message));
-    return {
-      edited: false,
-      confidence: 50,
-      reasons: ["Edit detection service temporarily unavailable"],
-    };
-  }
+          }),
+        }
+      );
 
-  if (!res.ok) {
-    const errorBody = await res.text();
-    console.error(`[EditDetection] Gemini API error [${res.status}]:`, sanitizeErrorText(errorBody));
-    
-    // If structured output fails, retry without responseSchema
-    if (res.status === 400) {
-      console.log("[EditDetection] Retrying without responseSchema...");
-      return analyzeEditWithAIFallback(imageBytes, mimeType, normalizedApiKey);
+      if (res.ok) {
+        const data = await res.json();
+        const rawText = data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text || "").join("\n")?.trim() ?? "";
+        console.log("[EditDetection] Raw response from", model, ":", rawText.slice(0, 300));
+
+        const parsed = parseEditAnalysisFromText(rawText);
+        if (parsed) {
+          console.log("[EditDetection] Success with model:", model, "edited:", parsed.edited);
+          return parsed;
+        }
+        // Parsed failed but response was ok — try fallback without schema
+        console.warn("[EditDetection] Parse failed for", model, "- trying fallback without schema...");
+        const fallback = await analyzeEditWithAIFallback(imageBytes, mimeType, normalizedApiKey, model);
+        if (fallback) return fallback;
+      } else {
+        const errorBody = await res.text();
+        lastError = `${model}: ${res.status}`;
+        console.error("[EditDetection] Model failed:", model, res.status, sanitizeErrorText(errorBody).slice(0, 200));
+
+        // For 400 errors, try fallback without schema before moving to next model
+        if (res.status === 400) {
+          console.log("[EditDetection] Trying", model, "without responseSchema...");
+          const fallback = await analyzeEditWithAIFallback(imageBytes, mimeType, normalizedApiKey, model);
+          if (fallback) return fallback;
+        }
+      }
+    } catch (err: any) {
+      lastError = err.message;
+      console.error("[EditDetection] Model error:", model, err.message);
     }
-    
-    return {
-      edited: false,
-      confidence: 50,
-      reasons: ["Edit detection service temporarily unavailable"],
-    };
   }
 
-  const data = await res.json();
-  const rawText = data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text || "").join("\n")?.trim() ?? "";
-  console.log("[EditDetection] Raw response:", rawText.slice(0, 300));
-
-  const parsed = parseEditAnalysisFromText(rawText);
-
-  if (parsed) {
-    console.log("[EditDetection] Parsed successfully, edited:", parsed.edited, "reasons:", parsed.reasons.length);
-    return parsed;
-  }
-
-  console.warn("[EditDetection] Failed to parse structured response, trying fallback...");
-  return analyzeEditWithAIFallback(imageBytes, mimeType, normalizedApiKey);
+  console.error("[EditDetection] All models failed:", lastError);
+  return {
+    edited: false,
+    confidence: 50,
+    reasons: ["Edit detection temporarily unavailable"],
+  };
 }
 
 // Fallback without responseSchema (plain text prompt)
 async function analyzeEditWithAIFallback(
   imageBytes: Uint8Array,
   mimeType: string,
-  apiKey: string
-): Promise<{ edited: boolean; confidence: number; reasons: string[] }> {
+  apiKey: string,
+  model?: string
+): Promise<{ edited: boolean; confidence: number; reasons: string[] } | null> {
   const b64 = base64Encode(imageBytes);
+  const useModel = model || GEMINI_EDIT_MODELS[0];
 
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [
-        {
-          parts: [
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${useModel}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
             {
-              text: `You are a forensic image analyst. Detect any form of POST-PROCESSING or COMPOSITING applied to this image.\n\nAnswer YES (edited=true) if you detect ANY of:\n- Text, graphics, logos, or watermarks overlaid on a photograph\n- Cloning or copy-paste within the image\n- Splicing of multiple images together\n- Object removal or insertion\n- Face swapping or retouching\n- Background replacement\n- Color grading or filter effects applied to a photograph\n- Any composite of photo + graphic elements\n\nAnswer NO (edited=false) ONLY if:\n- The image is a completely unmodified photograph straight from a camera\n- The image is original digital art created entirely from scratch with no photo base\n\nIMPORTANT: Text on photos, watermarks, graphics overlaid on photographs, and composite images ARE considered edited.\n\nReturn ONLY valid JSON, no markdown:\n{"edited": true_or_false, "confidence": 50_to_99, "reasons": ["reason1", "reason2", "reason3"]}`,
+              parts: [
+                {
+                  text: EDIT_PROMPT + `\n\nReturn ONLY valid JSON, no markdown.`,
+                },
+                { inlineData: { mimeType, data: b64 } },
+              ],
             },
-            { inlineData: { mimeType, data: b64 } },
           ],
-        },
-      ],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 512 },
-    }),
-  });
+          generationConfig: { temperature: 0.1, maxOutputTokens: 512 },
+        }),
+      }
+    );
 
-  if (!res.ok) {
-    const t = await res.text();
-    console.error("[EditDetection Fallback] Error:", sanitizeErrorText(t));
-    return { edited: false, confidence: 50, reasons: ["Edit analysis unavailable"] };
+    if (!res.ok) {
+      const t = await res.text();
+      console.error("[EditDetection Fallback]", useModel, "error:", sanitizeErrorText(t).slice(0, 200));
+      return null;
+    }
+
+    const data = await res.json();
+    const rawText = data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text || "").join("\n")?.trim() ?? "";
+    console.log("[EditDetection Fallback]", useModel, "raw:", rawText.slice(0, 300));
+
+    return parseEditAnalysisFromText(rawText);
+  } catch (err: any) {
+    console.error("[EditDetection Fallback]", useModel, "fetch error:", err.message);
+    return null;
   }
-
-  const data = await res.json();
-  const rawText = data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text || "").join("\n")?.trim() ?? "";
-  console.log("[EditDetection Fallback] Raw:", rawText.slice(0, 300));
-
-  const parsed = parseEditAnalysisFromText(rawText);
-  if (parsed) {
-    return parsed;
-  }
-
-  return { edited: false, confidence: 55, reasons: ["Could not parse edit analysis response"] };
 }
 
 // Robust JSON parser
