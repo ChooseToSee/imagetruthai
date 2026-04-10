@@ -879,10 +879,9 @@ serve(async (req) => {
 
     if (!wantsStream) {
       // Run AI detection and edit detection in parallel
-      const [aiResults, editResults, c2paResult] = await Promise.all([
+      const [aiResults, editResults] = await Promise.all([
         Promise.allSettled(tasks.map((t) => t.run())),
         Promise.allSettled(editTasks.map((t) => t.run())),
-        checkC2PA(imageBytes, mimeType),
       ]);
 
       const successfulResults: ModelResult[] = [];
@@ -912,7 +911,7 @@ serve(async (req) => {
       await cleanupTemp();
 
       return new Response(
-        JSON.stringify({ ...consensus, modelBreakdown: successfulResults, manipulation, c2pa: c2paResult }),
+        JSON.stringify({ ...consensus, modelBreakdown: successfulResults, manipulation }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -928,7 +927,7 @@ serve(async (req) => {
         const successfulResults: ModelResult[] = [];
         const labeledEdits: { label: string; result: { edited: boolean; confidence: number; reasons: string[] } }[] = [];
 
-        // Run edit detection and C2PA in background
+        // Run edit detection in background
         const editPromise = Promise.allSettled(editTasks.map(async (task) => {
           try {
             const result = await task.run();
@@ -937,7 +936,6 @@ serve(async (req) => {
             console.error(`${task.label} edit failed:`, err);
           }
         }));
-        const c2paPromise = checkC2PA(imageBytes, mimeType);
 
         // Stream AI detection results
         const aiPromises = tasks.map(async (task) => {
@@ -961,7 +959,7 @@ serve(async (req) => {
         });
 
         await Promise.allSettled(aiPromises);
-        const [, c2paResult] = await Promise.all([editPromise, c2paPromise]);
+        await editPromise;
 
         if (successfulResults.length === 0) {
           send("error", { error: "All detection services failed" });
@@ -969,7 +967,7 @@ serve(async (req) => {
           const final = computeConsensus(successfulResults, tasks.length);
           const manipulation = computeManipulation(labeledEdits.map(e => ({ label: e.label, ...e.result })));
           attachEditToModels(successfulResults, labeledEdits);
-          send("done", { ...final, modelBreakdown: successfulResults, manipulation, c2pa: c2paResult });
+          send("done", { ...final, modelBreakdown: successfulResults, manipulation });
         }
 
         await cleanupTemp();
