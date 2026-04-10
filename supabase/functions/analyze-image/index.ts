@@ -480,18 +480,38 @@ async function analyzeWithAIorNot(
 
 // ── Weighted consensus ───────────────────────────────────────────────
 function computeConsensus(results: ModelResult[], expectedTotal = results.length) {
-  const weights: Record<string, number> = {
+  const baseWeights: Record<string, number> = {
     Winston: 0.40,
     SightEngine: 0.30,
     "AI or Not": 0.30,
   };
+
+  // Count how many models agree on each verdict
+  const aiCount = results.filter(r => r.verdict === "ai").length;
+  const humanCount = results.filter(r => r.verdict === "human").length;
+
+  // Detect if one model is the sole dissenter
+  const hasLoneSoloDissenters = aiCount === 1 || humanCount === 1;
 
   let aiWeightedScore = 0;
   let humanWeightedScore = 0;
   let totalWeight = 0;
 
   for (const r of results) {
-    const w = weights[r.model] ?? 0.30;
+    let w = baseWeights[r.model] ?? 0.30;
+
+    // If this model is the lone dissenter, reduce its weight significantly
+    if (hasLoneSoloDissenters && results.length >= 3) {
+      const modelIsMinority =
+        (r.verdict === "ai" && aiCount === 1) ||
+        (r.verdict === "human" && humanCount === 1);
+
+      if (modelIsMinority) {
+        w = w * 0.40;
+        console.log(`[Consensus] Lone dissenter penalty applied to ${r.model}: weight reduced to ${w.toFixed(2)}`);
+      }
+    }
+
     totalWeight += w;
     const score = r.confidence / 100;
     if (r.verdict === "ai") {
