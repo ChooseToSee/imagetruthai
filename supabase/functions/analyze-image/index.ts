@@ -163,7 +163,7 @@ async function analyzeEditWithAI(
           {
             parts: [
               {
-                text: `You are a forensic image analyst. Your task is specifically to detect POST-PROCESSING MANIPULATION of originally captured photographs.\n\nAnswer YES (edited=true) ONLY if you detect:\n- Cloning or copy-paste within the image\n- Splicing of multiple photographs together\n- Object removal or insertion into a photo\n- Face swapping or retouching of a real photo\n- Background replacement in a real photograph\n- Selective color manipulation of a photo\n\nAnswer NO (edited=false) if:\n- The image appears to be original digital art created from scratch (painting, illustration, 3D render, AI-generated art)\n- The image is a straightforward unmanipulated photograph\n- You cannot determine if manipulation occurred\n\nIMPORTANT: Digital art, illustrations, and AI-generated images created from scratch are NOT considered edited/manipulated for this purpose. Only post-processing changes to originally captured photographs count.\n\nReturn ONLY valid JSON:\n{"edited": true_or_false, "confidence": 50_to_99, "reasons": ["reason1", "reason2", "reason3"]}`,
+                text: `You are a forensic image analyst. Detect any form of POST-PROCESSING or COMPOSITING applied to this image.\n\nAnswer YES (edited=true) if you detect ANY of:\n- Text, graphics, logos, or watermarks overlaid on a photograph\n- Cloning or copy-paste within the image\n- Splicing of multiple images together\n- Object removal or insertion\n- Face swapping or retouching\n- Background replacement\n- Color grading or filter effects applied to a photograph\n- Any composite of photo + graphic elements\n\nAnswer NO (edited=false) ONLY if:\n- The image is a completely unmodified photograph straight from a camera\n- The image is original digital art created entirely from scratch with no photo base\n\nIMPORTANT: Text on photos, watermarks, graphics overlaid on photographs, and composite images ARE considered edited.\n\nReturn ONLY valid JSON:\n{"edited": true_or_false, "confidence": 50_to_99, "reasons": ["reason1", "reason2", "reason3"]}`,
               },
               {
                 inlineData: { mimeType, data: b64 },
@@ -247,7 +247,7 @@ async function analyzeEditWithAIFallback(
         {
           parts: [
             {
-              text: `You are a forensic image analyst. Your task is specifically to detect POST-PROCESSING MANIPULATION of originally captured photographs.\n\nAnswer YES (edited=true) ONLY if you detect:\n- Cloning or copy-paste within the image\n- Splicing of multiple photographs together\n- Object removal or insertion into a photo\n- Face swapping or retouching of a real photo\n- Background replacement in a real photograph\n- Selective color manipulation of a photo\n\nAnswer NO (edited=false) if:\n- The image appears to be original digital art created from scratch (painting, illustration, 3D render, AI-generated art)\n- The image is a straightforward unmanipulated photograph\n- You cannot determine if manipulation occurred\n\nIMPORTANT: Digital art, illustrations, and AI-generated images created from scratch are NOT considered edited/manipulated for this purpose. Only post-processing changes to originally captured photographs count.\n\nReturn ONLY valid JSON, no markdown:\n{"edited": true_or_false, "confidence": 50_to_99, "reasons": ["reason1", "reason2", "reason3"]}`,
+              text: `You are a forensic image analyst. Detect any form of POST-PROCESSING or COMPOSITING applied to this image.\n\nAnswer YES (edited=true) if you detect ANY of:\n- Text, graphics, logos, or watermarks overlaid on a photograph\n- Cloning or copy-paste within the image\n- Splicing of multiple images together\n- Object removal or insertion\n- Face swapping or retouching\n- Background replacement\n- Color grading or filter effects applied to a photograph\n- Any composite of photo + graphic elements\n\nAnswer NO (edited=false) ONLY if:\n- The image is a completely unmodified photograph straight from a camera\n- The image is original digital art created entirely from scratch with no photo base\n\nIMPORTANT: Text on photos, watermarks, graphics overlaid on photographs, and composite images ARE considered edited.\n\nReturn ONLY valid JSON, no markdown:\n{"edited": true_or_false, "confidence": 50_to_99, "reasons": ["reason1", "reason2", "reason3"]}`,
             },
             { inlineData: { mimeType, data: b64 } },
           ],
@@ -359,7 +359,7 @@ async function analyzeEditWithHive(
             content: [
               {
                 type: "text",
-                text: `You are a forensic image analyst. Your task is specifically to detect POST-PROCESSING MANIPULATION of originally captured photographs.\n\nAnswer YES (edited=true) ONLY if you detect:\n- Cloning or copy-paste within the image\n- Splicing of multiple photographs together\n- Object removal or insertion into a photo\n- Face swapping or retouching of a real photo\n- Background replacement in a real photograph\n- Selective color manipulation of a photo\n\nAnswer NO (edited=false) if:\n- The image appears to be original digital art created from scratch (painting, illustration, 3D render, AI-generated art)\n- The image is a straightforward unmanipulated photograph\n- You cannot determine if manipulation occurred\n\nIMPORTANT: Digital art, illustrations, and AI-generated images created from scratch are NOT considered edited/manipulated for this purpose. Only post-processing changes to originally captured photographs count.\n\nReturn ONLY valid JSON:\n{"edited": true_or_false, "confidence": 50_to_99, "reasons": ["reason1", "reason2", "reason3"]}`,
+                text: `You are a forensic image analyst. Detect any form of POST-PROCESSING or COMPOSITING applied to this image.\n\nAnswer YES (edited=true) if you detect ANY of:\n- Text, graphics, logos, or watermarks overlaid on a photograph\n- Cloning or copy-paste within the image\n- Splicing of multiple images together\n- Object removal or insertion\n- Face swapping or retouching\n- Background replacement\n- Color grading or filter effects applied to a photograph\n- Any composite of photo + graphic elements\n\nAnswer NO (edited=false) ONLY if:\n- The image is a completely unmodified photograph straight from a camera\n- The image is original digital art created entirely from scratch with no photo base\n\nIMPORTANT: Text on photos, watermarks, graphics overlaid on photographs, and composite images ARE considered edited.\n\nReturn ONLY valid JSON:\n{"edited": true_or_false, "confidence": 50_to_99, "reasons": ["reason1", "reason2", "reason3"]}`,
               },
               {
                 type: "image_url",
@@ -528,7 +528,7 @@ function getManipulationTips(): string[] {
   ];
 }
 
-function computeManipulation(editResults: { edited: boolean; confidence: number; reasons: string[] }[]) {
+function computeManipulation(editResults: { label: string; edited: boolean; confidence: number; reasons: string[] }[]) {
   if (editResults.length === 0) return undefined;
 
   if (editResults.length === 1) {
@@ -555,17 +555,26 @@ function computeManipulation(editResults: { edited: boolean; confidence: number;
   const notEditedCount = totalModels - editedCount;
   const consensusIsEdited = editedCount > notEditedCount;
 
+  // Model-specific base weights
+  // Gemini gets higher base weight due to more thorough visual analysis
+  const modelBaseWeights: Record<string, number> = {
+    "Gemini": 1.4,
+    "Hive": 1.0,
+    "SightEngine": 0.6,
+  };
+
   // Calculate weights with outlier penalization
   const weights = scores.map((score, i) => {
     const modelIsEdited = editResults[i].edited;
     const isOutlier = modelIsEdited !== consensusIsEdited;
+    const baseWeight = modelBaseWeights[editResults[i].label] ?? 1.0;
 
-    if (!isOutlier) return 1.0;
+    if (!isOutlier) return baseWeight;
 
     // Dynamic penalty based on how strongly the outlier disagrees
     const outlierStrength = Math.abs(score) / 100;
     const penalty = 0.3 + outlierStrength * 0.2; // range: 0.3 to 0.5
-    return 1.0 - penalty;
+    return baseWeight * (1.0 - penalty);
   });
 
   // Calculate weighted average score
@@ -791,7 +800,7 @@ serve(async (req) => {
       }
 
       const consensus = computeConsensus(successfulResults, tasks.length);
-      const manipulation = computeManipulation(successfulEdits.map(e => e.result));
+      const manipulation = computeManipulation(successfulEdits.map(e => ({ label: e.label, ...e.result })));
       attachEditToModels(successfulResults, successfulEdits);
 
       await cleanupTemp();
@@ -851,7 +860,7 @@ serve(async (req) => {
           send("error", { error: "All detection services failed" });
         } else {
           const final = computeConsensus(successfulResults, tasks.length);
-          const manipulation = computeManipulation(labeledEdits.map(e => e.result));
+          const manipulation = computeManipulation(labeledEdits.map(e => ({ label: e.label, ...e.result })));
           attachEditToModels(successfulResults, labeledEdits);
           send("done", { ...final, modelBreakdown: successfulResults, manipulation });
         }
