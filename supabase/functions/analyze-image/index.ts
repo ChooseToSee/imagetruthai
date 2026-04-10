@@ -476,94 +476,6 @@ async function analyzeWithAIorNot(
   return { model: "AI or Not", verdict, confidence, reasons };
 }
 
-// ── C2PA Content Authenticity Check ─────────────────────────────────
-async function checkC2PA(
-  imageBytes: Uint8Array,
-  mimeType: string
-): Promise<{
-  hasC2PA: boolean;
-  valid: boolean | null;
-  issuer: string | null;
-  modified: boolean | null;
-  summary: string;
-} | null> {
-  console.log("[C2PA] Starting check, image size:", imageBytes.length, "type:", mimeType);
-
-  try {
-    const b64 = base64Encode(imageBytes);
-    const dataUrl = `data:${mimeType};base64,${b64}`;
-
-    console.log("[C2PA] Calling verify API...");
-
-    let res: Response;
-    try {
-      res = await fetch(
-        "https://verify.contentauthenticity.org/api/verify",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-          },
-          body: JSON.stringify({ image: dataUrl }),
-        }
-      );
-    } catch (fetchErr: any) {
-      console.error("[C2PA] Network error:", fetchErr.message);
-      return null;
-    }
-
-    console.log("[C2PA] Response status:", res.status, res.statusText);
-
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error("[C2PA] Non-200 response:", res.status, errorText.slice(0, 200));
-      return null;
-    }
-
-    const rawText = await res.text();
-    console.log("[C2PA] Raw response:", rawText.slice(0, 300));
-
-    let data: any;
-    try {
-      data = JSON.parse(rawText);
-    } catch {
-      console.error("[C2PA] Failed to parse response as JSON");
-      return null;
-    }
-
-    console.log("[C2PA] has_c2pa:", data.has_c2pa, "valid:", data.valid);
-
-    if (!data.has_c2pa) {
-      return {
-        hasC2PA: false,
-        valid: null,
-        issuer: null,
-        modified: null,
-        summary: "No content provenance data",
-      };
-    }
-
-    const manifest = data.manifest;
-    const valid = data.valid ?? false;
-    const issuer = manifest?.claim_generator || manifest?.issuer || "Unknown";
-
-    console.log("[C2PA] Issuer:", issuer, "Valid:", valid);
-
-    return {
-      hasC2PA: true,
-      valid,
-      issuer,
-      modified: !valid,
-      summary: valid
-        ? `Authentic provenance from ${issuer}`
-        : `Provenance signature invalid — possible modification detected`,
-    };
-  } catch (err: any) {
-    console.error("[C2PA] Unexpected error:", err.message || String(err));
-    return null;
-  }
-}
 
 // ── Weighted consensus ───────────────────────────────────────────────
 function computeConsensus(results: ModelResult[], expectedTotal = results.length) {
@@ -879,10 +791,9 @@ serve(async (req) => {
 
     if (!wantsStream) {
       // Run AI detection and edit detection in parallel
-      const [aiResults, editResults, c2paResult] = await Promise.all([
+      const [aiResults, editResults] = await Promise.all([
         Promise.allSettled(tasks.map((t) => t.run())),
         Promise.allSettled(editTasks.map((t) => t.run())),
-        checkC2PA(imageBytes, mimeType),
       ]);
 
       const successfulResults: ModelResult[] = [];
@@ -912,7 +823,7 @@ serve(async (req) => {
       await cleanupTemp();
 
       return new Response(
-        JSON.stringify({ ...consensus, modelBreakdown: successfulResults, manipulation, c2pa: c2paResult }),
+        JSON.stringify({ ...consensus, modelBreakdown: successfulResults, manipulation }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -928,7 +839,7 @@ serve(async (req) => {
         const successfulResults: ModelResult[] = [];
         const labeledEdits: { label: string; result: { edited: boolean; confidence: number; reasons: string[] } }[] = [];
 
-        // Run edit detection and C2PA in background
+        // Run edit detection in background
         const editPromise = Promise.allSettled(editTasks.map(async (task) => {
           try {
             const result = await task.run();
@@ -937,7 +848,6 @@ serve(async (req) => {
             console.error(`${task.label} edit failed:`, err);
           }
         }));
-        const c2paPromise = checkC2PA(imageBytes, mimeType);
 
         // Stream AI detection results
         const aiPromises = tasks.map(async (task) => {
@@ -961,7 +871,7 @@ serve(async (req) => {
         });
 
         await Promise.allSettled(aiPromises);
-        const [, c2paResult] = await Promise.all([editPromise, c2paPromise]);
+        await editPromise;
 
         if (successfulResults.length === 0) {
           send("error", { error: "All detection services failed" });
@@ -969,7 +879,7 @@ serve(async (req) => {
           const final = computeConsensus(successfulResults, tasks.length);
           const manipulation = computeManipulation(labeledEdits.map(e => ({ label: e.label, ...e.result })));
           attachEditToModels(successfulResults, labeledEdits);
-          send("done", { ...final, modelBreakdown: successfulResults, manipulation, c2pa: c2paResult });
+          send("done", { ...final, modelBreakdown: successfulResults, manipulation });
         }
 
         await cleanupTemp();
