@@ -460,6 +460,64 @@ async function analyzeWithAIorNot(
   return { model: "AI or Not", verdict, confidence, reasons };
 }
 
+// ── C2PA Content Authenticity Check ─────────────────────────────────
+async function checkC2PA(
+  imageBytes: Uint8Array,
+  mimeType: string
+): Promise<{
+  hasC2PA: boolean;
+  valid: boolean | null;
+  issuer: string | null;
+  modified: boolean | null;
+  summary: string;
+} | null> {
+  try {
+    const b64 = base64Encode(imageBytes);
+    const dataUrl = `data:${mimeType};base64,${b64}`;
+
+    const res = await fetch(
+      "https://verify.contentauthenticity.org/api/verify",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: dataUrl }),
+      }
+    );
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+
+    if (!data.has_c2pa) {
+      return {
+        hasC2PA: false,
+        valid: null,
+        issuer: null,
+        modified: null,
+        summary: "No content provenance data",
+      };
+    }
+
+    const manifest = data.manifest;
+    const valid = data.valid ?? false;
+    const issuer = manifest?.claim_generator || manifest?.issuer || "Unknown";
+    const modified = !valid;
+
+    return {
+      hasC2PA: true,
+      valid,
+      issuer,
+      modified,
+      summary: valid
+        ? `Authentic provenance from ${issuer}`
+        : `Provenance signature invalid — possible modification detected`,
+    };
+  } catch (err) {
+    console.error("[C2PA] Check failed:", err);
+    return null;
+  }
+}
+
 // ── Weighted consensus ───────────────────────────────────────────────
 function computeConsensus(results: ModelResult[], expectedTotal = results.length) {
   const weights: Record<string, number> = {
@@ -774,9 +832,10 @@ serve(async (req) => {
 
     if (!wantsStream) {
       // Run AI detection and edit detection in parallel
-      const [aiResults, editResults] = await Promise.all([
+      const [aiResults, editResults, c2paResult] = await Promise.all([
         Promise.allSettled(tasks.map((t) => t.run())),
         Promise.allSettled(editTasks.map((t) => t.run())),
+        checkC2PA(imageBytes, mimeType),
       ]);
 
       const successfulResults: ModelResult[] = [];
@@ -806,7 +865,7 @@ serve(async (req) => {
       await cleanupTemp();
 
       return new Response(
-        JSON.stringify({ ...consensus, modelBreakdown: successfulResults, manipulation }),
+        JSON.stringify({ ...consensus, modelBreakdown: successfulResults, manipulation, c2pa: c2paResult }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -822,7 +881,7 @@ serve(async (req) => {
         const successfulResults: ModelResult[] = [];
         const labeledEdits: { label: string; result: { edited: boolean; confidence: number; reasons: string[] } }[] = [];
 
-        // Run edit detection in background
+        // Run edit detection and C2PA in background
         const editPromise = Promise.allSettled(editTasks.map(async (task) => {
           try {
             const result = await task.run();
@@ -831,6 +890,7 @@ serve(async (req) => {
             console.error(`${task.label} edit failed:`, err);
           }
         }));
+        const c2paPromise = checkC2PA(imageBytes, mimeType);
 
         // Stream AI detection results
         const aiPromises = tasks.map(async (task) => {
@@ -854,7 +914,7 @@ serve(async (req) => {
         });
 
         await Promise.allSettled(aiPromises);
-        await editPromise;
+        const [, c2paResult] = await Promise.all([editPromise, c2paPromise]);
 
         if (successfulResults.length === 0) {
           send("error", { error: "All detection services failed" });
@@ -862,7 +922,7 @@ serve(async (req) => {
           const final = computeConsensus(successfulResults, tasks.length);
           const manipulation = computeManipulation(labeledEdits.map(e => ({ label: e.label, ...e.result })));
           attachEditToModels(successfulResults, labeledEdits);
-          send("done", { ...final, modelBreakdown: successfulResults, manipulation });
+          send("done", { ...final, modelBreakdown: successfulResults, manipulation, c2pa: c2paResult });
         }
 
         await cleanupTemp();

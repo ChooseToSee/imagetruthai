@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { AlertTriangle, CheckCircle, Info, RotateCcw, ChevronDown, ChevronUp, Brain, Share2, Check, Pencil, ShieldCheck, Download, FileText, Eye, Link as LinkIcon, Lock, Globe, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, RotateCcw, ChevronDown, ChevronUp, Brain, Share2, Check, Pencil, ShieldCheck, Shield, Download, FileText, Eye, Link as LinkIcon, Lock, Globe, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -37,6 +37,13 @@ export interface AnalysisResult {
   tips: string[];
   modelBreakdown?: ModelBreakdown[];
   manipulation?: ManipulationResult;
+  c2pa?: {
+    hasC2PA: boolean;
+    valid: boolean | null;
+    issuer: string | null;
+    modified: boolean | null;
+    summary: string;
+  } | null;
 }
 
 interface ResultsDisplayProps {
@@ -682,6 +689,42 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                     )}
                   </div>
                 </div>
+
+                {/* C2PA Content Provenance */}
+                {result.c2pa && result.c2pa.hasC2PA && (
+                  <div className="mb-4">
+                    <h3 className="mb-3 font-display text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-primary" />
+                      Content Provenance (C2PA)
+                    </h3>
+                    <div className={`rounded-lg border p-3 ${
+                      result.c2pa.valid
+                        ? "border-success/20 bg-success/5"
+                        : "border-destructive/20 bg-destructive/5"
+                    }`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        {result.c2pa.valid
+                          ? <CheckCircle className="h-4 w-4 text-success" />
+                          : <AlertTriangle className="h-4 w-4 text-destructive" />
+                        }
+                        <span className="text-sm font-semibold text-foreground">
+                          {result.c2pa.valid ? "Provenance Verified" : "Provenance Invalid"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-1">
+                        {result.c2pa.summary}
+                      </p>
+                      {result.c2pa.issuer && (
+                        <p className="text-xs text-muted-foreground">
+                          Issuer: {result.c2pa.issuer}
+                        </p>
+                      )}
+                      <p className="text-[10px] text-muted-foreground/60 mt-2 italic">
+                        C2PA is a cryptographic signing standard. Most images do not contain provenance data — absence does not indicate manipulation.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* AI Observational Notes */}
                 <div className="rounded-lg bg-muted/50 p-4">
