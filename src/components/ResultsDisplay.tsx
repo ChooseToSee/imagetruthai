@@ -236,21 +236,121 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
       ? `${summary}\n\nView full report: ${shareLink}\n\nTry it free at ${appUrl}`
       : `${summary}\n\nTry it free at ${appUrl}`;
 
-    const res = await shareContent(
-      fullText,
-      "ImageTruth AI Analysis",
-      reportUrl,
-      imagePreview
-    );
+    // Try to share with the actual analyzed image attached
+    if (navigator.share) {
+      try {
+        // If imagePreview is a blob URL, fetch and convert to file
+        if (imagePreview.startsWith("blob:")) {
+          try {
+            const response = await fetch(imagePreview);
+            const blob = await response.blob();
+            const ext = blob.type.includes("png")
+              ? "png"
+              : blob.type.includes("webp")
+              ? "webp"
+              : "jpg";
+            const file = new File(
+              [blob],
+              `imagetruth-analysis.${ext}`,
+              { type: blob.type }
+            );
 
-    if (res === "copied" || res === "shared") {
+            if (
+              navigator.canShare &&
+              navigator.canShare({ files: [file] })
+            ) {
+              await navigator.share({
+                title: "ImageTruth AI Analysis",
+                text: fullText,
+                url: reportUrl,
+                files: [file],
+              });
+              setCopied(true);
+              toast({
+                title: "Shared successfully!",
+                description: "Your analysis has been shared.",
+              });
+              setTimeout(() => setCopied(false), 2000);
+              return;
+            }
+          } catch (fileErr) {
+            console.log(
+              "[Share] File share failed, trying without image:",
+              fileErr
+            );
+          }
+        }
+
+        // If imagePreview is a public URL (from Supabase storage), fetch it
+        if (imagePreview.startsWith("https:")) {
+          try {
+            const response = await fetch(imagePreview);
+            const blob = await response.blob();
+            const file = new File(
+              [blob],
+              "imagetruth-analysis.jpg",
+              { type: blob.type }
+            );
+
+            if (
+              navigator.canShare &&
+              navigator.canShare({ files: [file] })
+            ) {
+              await navigator.share({
+                title: "ImageTruth AI Analysis",
+                text: fullText,
+                url: reportUrl,
+                files: [file],
+              });
+              setCopied(true);
+              toast({ title: "Shared successfully!" });
+              setTimeout(() => setCopied(false), 2000);
+              return;
+            }
+          } catch (fileErr) {
+            console.log("[Share] URL file share failed:", fileErr);
+          }
+        }
+
+        // Fallback: share without image file
+        await navigator.share({
+          title: "ImageTruth AI Analysis",
+          text: fullText,
+          url: reportUrl,
+        });
+        setCopied(true);
+        toast({ title: "Shared successfully!" });
+        setTimeout(() => setCopied(false), 2000);
+        return;
+      } catch (e) {
+        if ((e as Error).name === "AbortError") {
+          return;
+        }
+        // Fall through to clipboard
+      }
+    }
+
+    // Desktop fallback: copy to clipboard
+    try {
+      await navigator.clipboard.writeText(fullText);
       setCopied(true);
       toast({
-        title: res === "shared" ? "Shared successfully!" : "Copied to clipboard!",
-        description: res === "shared"
-          ? "Your analysis has been shared."
-          : "Paste anywhere to share your results.",
+        title: "Copied to clipboard!",
+        description: "Paste anywhere to share your results.",
       });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      const textArea = document.createElement("textarea");
+      textArea.value = fullText;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setCopied(true);
+      toast({ title: "Copied to clipboard!" });
       setTimeout(() => setCopied(false), 2000);
     }
   };
