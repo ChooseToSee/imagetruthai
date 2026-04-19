@@ -234,13 +234,35 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
       setShareReportId(data.id);
       setIsPublic(true);
       toast({ title: "Share link ready!", description: "Copy the link below to share your report." });
+      return link;
     } catch (err: any) {
       console.error("Full share error:", err);
       toast({ title: "Failed to generate link", description: err?.message || JSON.stringify(err) || "Unknown error", variant: "destructive" });
+      return null;
     } finally {
       setIsSharing(false);
     }
   }, [user, result, imagePreview, toast]);
+
+  const handleXShare = useCallback(async () => {
+    let linkToShare = shareLink;
+    if (!linkToShare) {
+      try {
+        linkToShare = await handleGenerateShareLink();
+      } catch {
+        linkToShare = null;
+      }
+    }
+    const finalLink = linkToShare || "https://imagetruthai.com";
+    const xText = encodeURIComponent(
+      `🔍 ${result.confidence}% — ${
+        isAI
+          ? "AI generation indicators detected 🤖"
+          : "No AI generation indicators detected ✅"
+      }\n\nAnalyzed by 5 independent AI models.\nSee what the models found 👇\n\n${finalLink}\n\nvia @ImageTruthAI`
+    );
+    window.open(`https://twitter.com/intent/tweet?text=${xText}`, "_blank");
+  }, [shareLink, handleGenerateShareLink, result.confidence, isAI]);
 
   const handleTogglePrivacy = useCallback(async () => {
     if (!shareReportId) return;
