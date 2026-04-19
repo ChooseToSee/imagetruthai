@@ -761,6 +761,7 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const authHeader = req.headers.get("Authorization");
     let userTier: string = "free"; // anonymous treated as free for downstream checks (e.g. reCAPTCHA)
+    let userIdForLog: string | null = null;
     if (authHeader) {
       try {
         const userClient = createClient(supabaseUrlForLimit, supabaseAnonKey, {
@@ -769,6 +770,7 @@ serve(async (req) => {
         const { data: { user } } = await userClient.auth.getUser();
 
         if (user) {
+          userIdForLog = user.id;
           const adminClient = createClient(supabaseUrlForLimit, supabaseServiceKeyForLimit);
           const { data: profile } = await adminClient
             .from("profiles")
@@ -822,6 +824,20 @@ serve(async (req) => {
         // Fail-open on transient errors so legitimate users aren't blocked
         console.error("[ScanLimit] Check failed, allowing request:", (limitErr as Error).message);
       }
+    } else {
+      // Visibility into unauthenticated traffic (no blocking primitives available yet)
+      console.log("[RateLimit] Unauthenticated request from IP:", clientIP);
+    }
+
+    // Free-tier usage visibility (helps spot abuse patterns)
+    if (userTier === "free") {
+      console.log(
+        "[Scan] Free tier scan:",
+        userIdForLog?.slice(0, 8) ?? "anon",
+        "IP:", clientIP,
+        "Size:", imageFile.size,
+        "Type:", mimeType,
+      );
     }
 
     // ── reCAPTCHA v3 check (free tier + anonymous only) ─────────────
@@ -830,7 +846,7 @@ serve(async (req) => {
       if (recaptchaToken) {
         const isHuman = await verifyRecaptcha(recaptchaToken);
         if (!isHuman) {
-          console.warn("[reCAPTCHA] Bot signal detected, blocking request");
+          console.warn("[reCAPTCHA] Bot signal detected, blocking request from IP:", clientIP);
           return new Response(
             JSON.stringify({ error: "Request blocked. Please try again.", recaptchaFailed: true }),
             { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
