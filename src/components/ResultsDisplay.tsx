@@ -100,6 +100,12 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
   const totalModels = result.modelBreakdown?.length ?? 0;
 
   const confidenceLabel = result.confidence >= 85 ? "High" : result.confidence >= 60 ? "Moderate" : "Low";
+  const confidenceLabelDescription =
+    confidenceLabel === "High"
+      ? "High confidence in model findings"
+      : confidenceLabel === "Moderate"
+      ? "Moderate confidence — independent verification suggested"
+      : "Low confidence — results inconclusive, verify independently";
 
   // Build detected signals from reasons
   const signalKeywords = [
@@ -469,10 +475,10 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {totalModels > 0
-                        ? `Consensus from ${totalModels} AI models — ${modelsAgreed}/${totalModels} agree`
+                        ? `${modelsAgreed} of ${totalModels} models found ${isAI ? "indicators of AI generation" : "no indicators of AI generation"}`
                         : isAI
-                        ? "This image shows strong indicators of AI generation."
-                        : "This image appears to be authentically captured."}
+                        ? "Indicators of AI generation were detected."
+                        : "No indicators of AI generation were detected."}
                     </p>
                   </div>
                 </motion.div>
@@ -566,7 +572,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                 <div className="flex items-start gap-1.5 mb-4">
                   <Info className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                   <p className="text-[10px] text-muted-foreground leading-relaxed">
-                    <span className="font-medium">Edit detection</span>{" "}identifies post-processing manipulation of photographs such as cloning, splicing, object removal, and retouching. Original digital art and AI-generated images created from scratch are not considered manipulated for this purpose.
+                    Edit detection models analyze this image for specific manipulation indicators such as compositing, cloning, splicing, and object insertion. They report what they find — not what type of image this is. Absence of findings does not guarantee the image is unmodified.
                   </p>
                 </div>
                 {manipulation ? (
@@ -766,6 +772,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                       <span className="text-muted-foreground">Confidence Level</span>
                       <span className="font-medium text-foreground">{confidenceLabel}</span>
                     </div>
+                    <p className="text-[10px] text-muted-foreground/70 italic -mt-1">{confidenceLabelDescription}</p>
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">AI Detection Models</span>
                       <span className="font-medium text-foreground">{totalModels > 0 ? `${totalModels} models analyzed` : "N/A"}</span>
@@ -790,10 +797,18 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                     AI Observational Notes
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed mb-2">
-                    The signals identified above are based on pattern analysis by multiple AI models.
-                    They do not guarantee that manipulation has occurred. Image compression, camera
-                    processing, social media re-encoding, and other non-malicious factors can produce
-                    similar artifacts. Results should be interpreted cautiously and independently verified.
+                    The 5 AI models in this analysis each look for specific indicators based on their training:
+                  </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed mb-2">
+                    <span className="font-medium text-foreground">AI Detection (Winston AI, SightEngine, AI or Not):</span>{" "}
+                    These models look for statistical patterns associated with AI generation tools. They report the probability that this image was created by an AI generator.
+                  </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed mb-2">
+                    <span className="font-medium text-foreground">Edit Detection (Gemini, Hive):</span>{" "}
+                    These models look for visual signs of post-processing manipulation. They report whether they found indicators of editing — not what type of image this is.
+                  </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed mb-2">
+                    All results are probabilistic. Models report what they find based on their training data and may interpret the same image differently.
                   </p>
                   <p className="text-[10px] text-muted-foreground/70 italic">
                     AI-generated analysis may be inaccurate. Results are informational only and should be independently verified.
