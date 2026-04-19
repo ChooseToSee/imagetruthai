@@ -109,9 +109,10 @@ const Navbar = () => {
     : "text-primary";
 
   const handleShare = async () => {
+    const shareText = "🔍 ImageTruth AI — 5 independent AI models analyze any image for AI generation indicators and post-processing manipulation. See what the models find.\n\nTry it free: https://imagetruthai.com";
     const result = await shareContent(
-      "Check out ImageTruth AI — instantly detect AI-generated and edited images using multiple AI models for consensus accuracy. Try it free!",
-      "ImageTruth AI — Detect AI Images",
+      shareText,
+      "ImageTruth AI — See What the Models Find",
       "https://imagetruthai.com"
     );
     if (result === "copied" || result === "shared") {
