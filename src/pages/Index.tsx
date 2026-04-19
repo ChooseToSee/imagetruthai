@@ -178,7 +178,12 @@ const Index = () => {
     });
   };
 
-  const analyzeOneStreaming = async (file: File, preview: string, recaptchaToken?: string | null) => {
+  const analyzeOneStreaming = async (
+    file: File,
+    preview: string,
+    recaptchaToken?: string | null,
+    sessionToken?: string | null
+  ) => {
     const compressed = await compressImage(file);
     if (compressed.size > 2 * 1024 * 1024) throw new Error("Image is too large even after compression.");
     setStreamProgress({ completed: 0, total: 3 });
@@ -198,28 +203,67 @@ const Index = () => {
         toast({ title: "Analysis failed", description: error, variant: "destructive" });
         setStreamProgress(null);
       },
-    }, recaptchaToken);
+    }, recaptchaToken, sessionToken);
   };
 
-  const analyzeOneFallback = async (file: File, recaptchaToken?: string | null): Promise<{ result: AnalysisResult; preview: string }> => {
+  const analyzeOneFallback = async (
+    file: File,
+    recaptchaToken?: string | null,
+    sessionToken?: string | null
+  ): Promise<{ result: AnalysisResult; preview: string }> => {
     const preview = URL.createObjectURL(file);
     const compressed = await compressImage(file);
     const formData = new FormData();
     formData.append("image", compressed);
     if (recaptchaToken) formData.append("recaptcha_token", recaptchaToken);
-    const { data, error } = await supabase.functions.invoke("analyze-image", { body: formData });
-    if (error) throw error;
-    // Edge function returns 200 wrapper but body may contain limitReached on 429 / requiresAuth on 401
-    if (data && (data as any).requiresAuth) {
-      const err = new Error((data as any).error || "Sign in required");
+
+    let data: any;
+    if (sessionToken) {
+      // Use direct fetch with the explicit session token to avoid relying on
+      // supabase.functions.invoke auto-auth (which can race with session restore).
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const resp = await fetch(`${supabaseUrl}/functions/v1/analyze-image`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+          apikey: supabaseAnonKey,
+        },
+        body: formData,
+      });
+      const text = await resp.text();
+      try { data = JSON.parse(text); } catch { data = null; }
+      if (!resp.ok) {
+        if (resp.status === 401 || data?.requiresAuth) {
+          const err = new Error(data?.error || "Sign in required");
+          (err as any).requiresAuth = true;
+          throw err;
+        }
+        if (resp.status === 429 && data?.limitReached) {
+          const err = new Error(data.error || "Daily scan limit reached");
+          (err as any).limitReached = true;
+          (err as any).tier = data.tier;
+          (err as any).limit = data.limit;
+          throw err;
+        }
+        throw new Error(data?.error || `Analysis failed (${resp.status})`);
+      }
+    } else {
+      const { data: invokeData, error } = await supabase.functions.invoke("analyze-image", { body: formData });
+      if (error) throw error;
+      data = invokeData;
+    }
+
+    if (data && data.requiresAuth) {
+      const err = new Error(data.error || "Sign in required");
       (err as any).requiresAuth = true;
       throw err;
     }
-    if (data && (data as any).limitReached) {
-      const err = new Error((data as any).error || "Daily scan limit reached");
+    if (data && data.limitReached) {
+      const err = new Error(data.error || "Daily scan limit reached");
       (err as any).limitReached = true;
-      (err as any).tier = (data as any).tier;
-      (err as any).limit = (data as any).limit;
+      (err as any).tier = data.tier;
+      (err as any).limit = data.limit;
       throw err;
     }
     const result = data as AnalysisResult;
@@ -233,6 +277,24 @@ const Index = () => {
     setSingleResult(null);
     setBatchResults(null);
     setPartialReady(false);
+
+    // Get the session token ONCE upfront, while we know the user's session
+    // is active (they're interacting with the upload UI). Passing it down
+    // explicitly avoids races where getSession() inside helpers returns null
+    // due to in-flight session restoration.
+    let sessionToken: string | null = null;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      sessionToken = session?.access_token ?? null;
+      if (!sessionToken) {
+        const { data: { session: s2 } } = await supabase.auth.refreshSession();
+        sessionToken = s2?.access_token ?? null;
+      }
+      console.log("[Auth] Session token retrieved:", !!sessionToken);
+    } catch (err) {
+      console.error("[Auth] Failed to get session:", err);
+    }
+
     try {
       // Get a reCAPTCHA v3 token for free-tier users to deter automated abuse.
       // Invisible to the user; null is acceptable (server fails open if absent).
@@ -241,13 +303,13 @@ const Index = () => {
 
       if (files.length === 1) {
         const preview = URL.createObjectURL(files[0]);
-        await analyzeOneStreaming(files[0], preview, recaptchaToken);
+        await analyzeOneStreaming(files[0], preview, recaptchaToken, sessionToken);
       } else {
         const settled: PromiseSettledResult<{ result: AnalysisResult; preview: string }>[] = [];
         const concurrency = 2;
         for (let i = 0; i < files.length; i += concurrency) {
           const batch = files.slice(i, i + concurrency);
-          const batchResults = await Promise.allSettled(batch.map((f) => analyzeOneFallback(f, recaptchaToken)));
+          const batchResults = await Promise.allSettled(batch.map((f) => analyzeOneFallback(f, recaptchaToken, sessionToken)));
           settled.push(...batchResults);
           if (i + concurrency < files.length) await new Promise((r) => setTimeout(r, 1000));
         }
