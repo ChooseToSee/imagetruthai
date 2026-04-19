@@ -90,6 +90,29 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
   const { user } = useAuth();
   const { plan } = usePlan();
   const isStreaming = !!streamProgress && !partialReady;
+  const imageBlobRef = useRef<Blob | null>(null);
+
+  useEffect(() => {
+    if (!imagePreview) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch(imagePreview);
+        if (!response.ok) {
+          console.log("[Share] Pre-fetch response not ok:", response.status);
+          return;
+        }
+        const blob = await response.blob();
+        if (!cancelled) {
+          imageBlobRef.current = blob;
+          console.log("[Share] Image pre-fetched and stored, size:", blob.size, "type:", blob.type);
+        }
+      } catch (err) {
+        console.log("[Share] Pre-fetch failed:", err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [imagePreview]);
 
   const manipulation = result.manipulation;
   const isEdited = manipulation?.edited ?? false;
