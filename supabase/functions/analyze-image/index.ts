@@ -80,13 +80,13 @@ async function analyzeWithWinston(
 
   const reasons: string[] = [];
   if (verdict === "ai") {
-    reasons.push(`Winston AI scored ${aiScore}% AI generation probability`);
-    reasons.push("Trained on millions of AI-generated images with 99.98% claimed accuracy");
-    reasons.push("Analyzes pixel patterns and metadata for synthetic generation signatures");
+    reasons.push(`Winston AI detected pixel patterns associated with AI image generation (${aiScore}% probability)`);
+    reasons.push("Winston's classifier is trained to identify patterns from diffusion models, GANs, and other AI generation tools");
+    reasons.push("These patterns differ statistically from those found in photographs and human-made digital art");
   } else {
-    reasons.push(`Winston AI scored ${humanScore}% authentic probability`);
-    reasons.push("Image characteristics consistent with real photographic capture");
-    reasons.push("No AI generation patterns detected by Winston's classifier");
+    reasons.push(`Winston AI found no indicators of AI generation (${humanScore}% authentic probability)`);
+    reasons.push("No pixel patterns associated with known AI generation tools were detected");
+    reasons.push("Winston's classifier found characteristics more consistent with non-AI-generated content");
   }
 
   return { model: "Winston", verdict, confidence, reasons };
@@ -130,13 +130,13 @@ async function analyzeWithSightEngine(
 
   const reasons: string[] = [];
   if (verdict === "ai") {
-    reasons.push(`SightEngine scored ${(aiGenerated * 100).toFixed(1)}% AI generation probability`);
-    reasons.push("Pixel-level analysis detected synthetic generation patterns");
-    reasons.push("Purpose-trained classifier for diffusion and GAN detection");
+    reasons.push(`SightEngine's AI generation classifier scored ${(aiGenerated * 100).toFixed(1)}% probability of AI generation`);
+    reasons.push("SightEngine's genai model is purpose-built to detect diffusion model and GAN outputs");
+    reasons.push("Statistical patterns in this image match those associated with AI generation tools");
   } else {
-    reasons.push(`SightEngine scored ${((1 - aiGenerated) * 100).toFixed(1)}% authentic probability`);
-    reasons.push("Image pixel patterns consistent with optical camera capture");
-    reasons.push("No synthetic generation artifacts detected");
+    reasons.push(`SightEngine's AI generation classifier scored ${((1 - aiGenerated) * 100).toFixed(1)}% probability of authentic origin`);
+    reasons.push("SightEngine found no statistical indicators of AI generation in this image");
+    reasons.push("Pixel-level analysis found no patterns associated with known AI generation tools");
   }
 
   return { model: "SightEngine", verdict, confidence, reasons };
@@ -465,13 +465,13 @@ async function analyzeWithAIorNot(
   }
 
   if (verdict === "ai") {
-    reasons.push(`AI or Not verdict: AI-generated with ${(aiConf * 100).toFixed(1)}% confidence`);
-    if (topGenerator) reasons.push(`Top suspected generator: ${topGenerator.replace(/_/g, " ")}`);
-    reasons.push("Specialized classifier trained to identify AI synthesis patterns");
+    reasons.push(`AI or Not identified AI generation indicators with ${(aiConf * 100).toFixed(1)}% confidence`);
+    reasons.push(topGenerator ? `Most likely generator: ${topGenerator.replace(/_/g, " ")}` : "Specific generator not identified");
+    reasons.push("AI or Not specializes in identifying AI synthesis patterns across major generation platforms");
   } else {
-    reasons.push(`AI or Not verdict: Human-created with ${(humanConf * 100).toFixed(1)}% confidence`);
-    reasons.push("Image characteristics match authentic photographic content");
-    reasons.push("No AI generator signatures detected");
+    reasons.push(`AI or Not found no AI generation indicators (${(humanConf * 100).toFixed(1)}% authentic confidence)`);
+    reasons.push("No signatures matching known AI generation platforms were detected");
+    reasons.push("AI or Not's classifier found this image consistent with non-AI-generated content");
   }
 
   return { model: "AI or Not", verdict, confidence, reasons };
@@ -541,16 +541,16 @@ function computeConsensus(results: ModelResult[], expectedTotal = results.length
 
   const agreementCount = aligned.length;
   if (agreementCount === expectedTotal && expectedTotal > 0) {
-    allReasons.unshift(`All ${expectedTotal} classifiers agree: image is ${verdict === "ai" ? "AI-generated" : "human-created"}`);
+    allReasons.unshift(`All ${expectedTotal} AI models found ${verdict === "ai" ? "indicators of AI generation" : "no indicators of AI generation"} in this image`);
   } else {
-    allReasons.unshift(`${agreementCount}/${expectedTotal} classifiers currently lean ${verdict === "ai" ? "AI-generated" : "human-created"}`);
+    allReasons.unshift(`${agreementCount} of ${expectedTotal} AI models found indicators of ${verdict === "ai" ? "AI generation" : "authentic origin"}. Models may interpret different image characteristics — see per-model breakdown for details`);
   }
 
   const tips = [
-    "These results are from purpose-trained classifiers, not general AI models",
-    "Reverse image search to check for original sources",
-    "Check for metadata like EXIF camera info using an EXIF viewer",
-    "No single detector is 100% accurate — use results as guidance",
+    "These models detect statistical patterns associated with AI generation — results are probabilistic not definitive",
+    "All 5 models report what they find based on their training — see per-model breakdown for individual assessments",
+    "Reverse image search can help identify original sources",
+    "No detector is 100% accurate — use results as one input among several",
   ];
 
   return { verdict, confidence, reasons: allReasons.slice(0, 5), tips };
@@ -559,10 +559,10 @@ function computeConsensus(results: ModelResult[], expectedTotal = results.length
 // ── Compute manipulation consensus (power-scaling with outlier penalization) ──
 function getManipulationTips(): string[] {
   return [
-    "Check EXIF data for editing software markers",
-    "Look for inconsistent lighting, shadows, or perspective",
-    "Zoom in to edges for signs of cloning or splicing",
-    "Compare noise grain patterns across different areas",
+    "Edit detection models look for specific manipulation indicators — absence of findings does not guarantee the image is unmodified",
+    "These models are not programmed to classify image type (photo vs art) — they report manipulation indicators only",
+    "Social media re-encoding and compression can mask or mimic manipulation signals",
+    "For definitive manipulation analysis, consult a qualified forensic image analyst",
   ];
 }
 
