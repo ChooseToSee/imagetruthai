@@ -243,6 +243,12 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
             )}
           </motion.div>
 
+          {!user && (
+            <p className="text-xs text-muted-foreground/70 mt-2">
+              Free account required · No credit card needed · 3 free scans per day
+            </p>
+          )}
+
           {/* Disclaimer */}
           <motion.p
             className="mt-4 text-xs text-muted-foreground/70"
