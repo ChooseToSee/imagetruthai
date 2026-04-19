@@ -209,7 +209,12 @@ const Index = () => {
     if (recaptchaToken) formData.append("recaptcha_token", recaptchaToken);
     const { data, error } = await supabase.functions.invoke("analyze-image", { body: formData });
     if (error) throw error;
-    // Edge function returns 200 wrapper but body may contain limitReached on 429
+    // Edge function returns 200 wrapper but body may contain limitReached on 429 / requiresAuth on 401
+    if (data && (data as any).requiresAuth) {
+      const err = new Error((data as any).error || "Sign in required");
+      (err as any).requiresAuth = true;
+      throw err;
+    }
     if (data && (data as any).limitReached) {
       const err = new Error((data as any).error || "Daily scan limit reached");
       (err as any).limitReached = true;

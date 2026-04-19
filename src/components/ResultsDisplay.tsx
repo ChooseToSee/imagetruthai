@@ -516,7 +516,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                       if (activeModels > 0 && activeModels < 5) {
                         return (
                           <p className="text-xs text-muted-foreground/70 mt-1.5 flex items-center gap-1.5">
-                            <Info className="h-3 w-3 shrink-0 text-amber-500" />
+                            <Info className="h-3 w-3 shrink-0 text-warning" />
                             <span>
                               Analysis used{" "}
                               <span className="font-medium">{activeModels} of 5 models</span>
