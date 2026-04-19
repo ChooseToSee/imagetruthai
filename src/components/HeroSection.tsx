@@ -209,10 +209,19 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
               variant="outline"
               size="lg"
               className="gap-2 px-8 text-base border-[1.5px] border-primary text-foreground bg-transparent hover:bg-primary/10"
-              onClick={onScrollToUpload}
+              onClick={user ? onScrollToUpload : () => navigate("/auth")}
             >
-              <Upload className="h-4 w-4 text-primary" />
-              Upload Image
+              {user ? (
+                <>
+                  <Upload className="h-4 w-4 text-primary" />
+                  Upload Image
+                </>
+              ) : (
+                <>
+                  <LogIn className="h-4 w-4 text-primary" />
+                  Start Free — Sign In to Analyze
+                </>
+              )}
             </Button>
             {subscription.tier !== "pro" && (
               <Button
