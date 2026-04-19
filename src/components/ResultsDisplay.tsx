@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { AlertTriangle, CheckCircle, Info, RotateCcw, ChevronDown, ChevronUp, Brain, Share2, Check, Pencil, ShieldCheck, Shield, Download, FileText, Eye, Link as LinkIcon, Lock, Globe, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -90,6 +90,29 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
   const { user } = useAuth();
   const { plan } = usePlan();
   const isStreaming = !!streamProgress && !partialReady;
+  const imageBlobRef = useRef<Blob | null>(null);
+
+  useEffect(() => {
+    if (!imagePreview) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch(imagePreview);
+        if (!response.ok) {
+          console.log("[Share] Pre-fetch response not ok:", response.status);
+          return;
+        }
+        const blob = await response.blob();
+        if (!cancelled) {
+          imageBlobRef.current = blob;
+          console.log("[Share] Image pre-fetched and stored, size:", blob.size, "type:", blob.type);
+        }
+      } catch (err) {
+        console.log("[Share] Pre-fetch failed:", err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [imagePreview]);
 
   const manipulation = result.manipulation;
   const isEdited = manipulation?.edited ?? false;
@@ -242,83 +265,88 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
       ? `${summary}\n\nView full report: ${shareLink}\n\nTry it free at ${appUrl}`
       : `${summary}\n\nTry it free at ${appUrl}`;
 
+    console.log(
+      "[Share] imagePreview type:",
+      imagePreview?.startsWith("blob:")
+        ? "blob"
+        : imagePreview?.startsWith("https:")
+        ? "https"
+        : "other",
+      "length:", imagePreview?.length
+    );
+
     // Try to share with the actual analyzed image attached
     if (navigator.share) {
       try {
-        // If imagePreview is a blob URL, fetch and convert to file
-        if (imagePreview.startsWith("blob:")) {
+        let imageFile: File | null = null;
+
+        // Prefer pre-fetched blob (avoids expired blob: URLs)
+        if (imageBlobRef.current) {
+          console.log("[Share] Using pre-fetched blob, size:", imageBlobRef.current.size);
+          const t = imageBlobRef.current.type;
+          const ext = t.includes("png") ? "png" : t.includes("webp") ? "webp" : "jpg";
+          imageFile = new File(
+            [imageBlobRef.current],
+            `imagetruth-analysis.${ext}`,
+            { type: t || "image/jpeg" }
+          );
+        } else if (imagePreview?.startsWith("blob:")) {
+          console.log("[Share] Attempting fresh blob fetch...");
           try {
             const response = await fetch(imagePreview);
             const blob = await response.blob();
-            const ext = blob.type.includes("png")
-              ? "png"
-              : blob.type.includes("webp")
-              ? "webp"
-              : "jpg";
-            const file = new File(
+            console.log("[Share] Blob fetched, size:", blob.size, "type:", blob.type);
+            const ext = blob.type.includes("png") ? "png" : blob.type.includes("webp") ? "webp" : "jpg";
+            imageFile = new File(
               [blob],
               `imagetruth-analysis.${ext}`,
-              { type: blob.type }
+              { type: blob.type || "image/jpeg" }
             );
-
-            if (
-              navigator.canShare &&
-              navigator.canShare({ files: [file] })
-            ) {
-              await navigator.share({
-                title: "ImageTruth AI Analysis",
-                text: fullText,
-                url: reportUrl,
-                files: [file],
-              });
-              setCopied(true);
-              toast({
-                title: "Shared successfully!",
-                description: "Your analysis has been shared.",
-              });
-              setTimeout(() => setCopied(false), 2000);
-              return;
-            }
-          } catch (fileErr) {
-            console.log(
-              "[Share] File share failed, trying without image:",
-              fileErr
-            );
+          } catch (e) {
+            console.log("[Share] Fresh blob fetch failed:", e);
           }
-        }
-
-        // If imagePreview is a public URL (from Supabase storage), fetch it
-        if (imagePreview.startsWith("https:")) {
+        } else if (imagePreview?.startsWith("https:")) {
+          console.log("[Share] Attempting HTTPS fetch...");
           try {
             const response = await fetch(imagePreview);
             const blob = await response.blob();
-            const file = new File(
+            console.log("[Share] HTTPS blob fetched, size:", blob.size, "type:", blob.type);
+            imageFile = new File(
               [blob],
               "imagetruth-analysis.jpg",
-              { type: blob.type }
+              { type: blob.type || "image/jpeg" }
             );
-
-            if (
-              navigator.canShare &&
-              navigator.canShare({ files: [file] })
-            ) {
-              await navigator.share({
-                title: "ImageTruth AI Analysis",
-                text: fullText,
-                url: reportUrl,
-                files: [file],
-              });
-              setCopied(true);
-              toast({ title: "Shared successfully!" });
-              setTimeout(() => setCopied(false), 2000);
-              return;
-            }
-          } catch (fileErr) {
-            console.log("[Share] URL file share failed:", fileErr);
+          } catch (e) {
+            console.log("[Share] HTTPS fetch failed:", e);
           }
         }
 
-        // Fallback: share without image file
+        if (imageFile) {
+          const canShareFile = navigator.canShare?.({ files: [imageFile] }) ?? false;
+          console.log("[Share] canShare with file:", canShareFile);
+          if (canShareFile) {
+            console.log("[Share] Sharing with image file attached");
+            await navigator.share({
+              title: "ImageTruth AI Analysis",
+              text: fullText,
+              url: reportUrl,
+              files: [imageFile],
+            });
+            setCopied(true);
+            toast({
+              title: "Shared successfully!",
+              description: "Your analysis has been shared.",
+            });
+            setTimeout(() => setCopied(false), 2000);
+            return;
+          } else {
+            console.log("[Share] canShare returned false, falling through to URL share");
+          }
+        } else {
+          console.log("[Share] No image file available, sharing URL only");
+        }
+
+        // URL-only fallback
         await navigator.share({
           title: "ImageTruth AI Analysis",
           text: fullText,
@@ -332,6 +360,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
         if ((e as Error).name === "AbortError") {
           return;
         }
+        console.log("[Share] navigator.share threw, falling back to clipboard:", e);
         // Fall through to clipboard
       }
     }
