@@ -115,9 +115,27 @@ const SharedReport = () => {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl">
             {/* About these results disclaimer */}
-            <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 mb-6 text-xs text-muted-foreground">
+            <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 mb-4 text-xs text-muted-foreground">
               <span className="font-medium text-foreground">About these results:</span>{" "}
               These results show what 5 AI models found when analyzing this image. AI Detection models look for patterns associated with AI generation tools. Edit Detection models look for post-processing manipulation indicators. Results are probabilistic — not definitive.
+            </div>
+
+            {/* Share on X */}
+            <div className="flex justify-end mb-6">
+              <button
+                onClick={() => {
+                  const xText = encodeURIComponent(
+                    `🔍 Check out this image analysis from @ImageTruthAI\n\n${window.location.href}`
+                  );
+                  window.open(`https://twitter.com/intent/tweet?text=${xText}`, "_blank");
+                }}
+                className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+              >
+                <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+                Share on X
+              </button>
             </div>
 
             <div className="rounded-xl border border-border bg-card shadow-card overflow-hidden">

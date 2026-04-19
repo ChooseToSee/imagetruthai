@@ -167,10 +167,10 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
     }
   }, [result, imagePreview, toast]);
 
-  const handleGenerateShareLink = useCallback(async () => {
+  const handleGenerateShareLink = useCallback(async (): Promise<string | null> => {
     if (!user) {
       toast({ title: "Sign in required", description: "You need to be signed in to share reports.", variant: "destructive" });
-      return;
+      return null;
     }
     setIsSharing(true);
     try {
@@ -234,13 +234,35 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
       setShareReportId(data.id);
       setIsPublic(true);
       toast({ title: "Share link ready!", description: "Copy the link below to share your report." });
+      return link;
     } catch (err: any) {
       console.error("Full share error:", err);
       toast({ title: "Failed to generate link", description: err?.message || JSON.stringify(err) || "Unknown error", variant: "destructive" });
+      return null;
     } finally {
       setIsSharing(false);
     }
   }, [user, result, imagePreview, toast]);
+
+  const handleXShare = useCallback(async () => {
+    let linkToShare = shareLink;
+    if (!linkToShare) {
+      try {
+        linkToShare = await handleGenerateShareLink();
+      } catch {
+        linkToShare = null;
+      }
+    }
+    const finalLink = linkToShare || "https://imagetruthai.com";
+    const xText = encodeURIComponent(
+      `🔍 ${result.confidence}% — ${
+        isAI
+          ? "AI generation indicators detected 🤖"
+          : "No AI generation indicators detected ✅"
+      }\n\nAnalyzed by 5 independent AI models.\nSee what the models found 👇\n\n${finalLink}\n\nvia @ImageTruthAI`
+    );
+    window.open(`https://twitter.com/intent/tweet?text=${xText}`, "_blank");
+  }, [shareLink, handleGenerateShareLink, result.confidence, isAI]);
 
   const handleTogglePrivacy = useCallback(async () => {
     if (!shareReportId) return;
@@ -992,6 +1014,12 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                   <Button variant="ghost" size="sm" onClick={handleShare} className="gap-2 text-xs">
                     {copied ? <Check className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
                     Share
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={handleXShare} className="gap-2 text-xs">
+                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-current" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                    Share on X
                   </Button>
                 </div>
               </div>
