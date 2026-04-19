@@ -1,5 +1,4 @@
 import type { AnalysisResult, ModelBreakdown } from "@/components/ResultsDisplay";
-import { supabase } from "@/integrations/supabase/client";
 
 export interface StreamConsensus extends AnalysisResult {
   modelsCompleted: number;
@@ -17,7 +16,8 @@ export interface StreamCallbacks {
 export async function analyzeImageStream(
   file: File,
   callbacks: StreamCallbacks,
-  recaptchaToken?: string | null
+  recaptchaToken?: string | null,
+  sessionToken?: string | null
 ): Promise<void> {
   const formData = new FormData();
   formData.append("image", file);
@@ -26,34 +26,18 @@ export async function analyzeImageStream(
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-  // Robustly retrieve the user's access token. getSession() can transiently
-  // return null during session restoration (e.g. right after page load), so
-  // fall back to refreshSession() before giving up.
-  let token: string | null = null;
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    token = session?.access_token ?? null;
-
-    if (!token) {
-      console.log("[Auth] No session found, attempting refresh...");
-      const { data: { session: refreshed } } = await supabase.auth.refreshSession();
-      token = refreshed?.access_token ?? null;
-    }
-  } catch (err) {
-    console.error("[Auth] Session retrieval failed:", err);
+  if (!sessionToken) {
+    const err: any = new Error("Session expired. Please sign in again to continue.");
+    err.requiresAuth = true;
+    throw err;
   }
-
-  // If still no token, send the anon key so the edge function can return a
-  // proper requiresAuth response rather than the client crashing here.
-  const authValue = token ? `Bearer ${token}` : `Bearer ${supabaseAnonKey}`;
-  console.log("[Auth] Using token type:", token ? "user JWT" : "anon fallback");
 
   let resp: Response;
   try {
     resp = await fetch(`${supabaseUrl}/functions/v1/analyze-image`, {
       method: "POST",
       headers: {
-        Authorization: authValue,
+        Authorization: `Bearer ${sessionToken}`,
         apikey: supabaseAnonKey,
         "x-stream": "true",
       },
