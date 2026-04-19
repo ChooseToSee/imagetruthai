@@ -1,4 +1,5 @@
 import type { AnalysisResult, ModelBreakdown } from "@/components/ResultsDisplay";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface StreamConsensus extends AnalysisResult {
   modelsCompleted: number;
@@ -25,12 +26,29 @@ export async function analyzeImageStream(
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+  // Use the authenticated user's JWT, not the anon publishable key.
+  // The edge function rejects anon-key-only requests (role !== "authenticated").
+  const { data: { session } } = await supabase.auth.getSession();
+  const accessToken = session?.access_token;
+  console.log(
+    "[Auth] Session token present:",
+    !!accessToken,
+    "Token prefix:",
+    accessToken?.slice(0, 20)
+  );
+  if (!accessToken) {
+    const err: any = new Error("Sign in required to analyze images.");
+    err.requiresAuth = true;
+    throw err;
+  }
+
   let resp: Response;
   try {
     resp = await fetch(`${supabaseUrl}/functions/v1/analyze-image`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${supabaseKey}`,
+        Authorization: `Bearer ${accessToken}`,
+        apikey: supabaseKey,
         "x-stream": "true",
       },
       body: formData,
