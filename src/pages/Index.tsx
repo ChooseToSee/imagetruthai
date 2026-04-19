@@ -390,16 +390,20 @@ const Index = () => {
       <HeroSection onScrollToUpload={scrollToUpload} onStartFree={handleStartFree} />
 
       {singleResult ? (
-        <ResultsDisplay
-          result={singleResult.result}
-          imagePreview={singleResult.preview}
-          onReset={handleReset}
-          streamProgress={streamProgress ?? undefined}
-          partialReady={partialReady}
-          onKeepWaiting={handleKeepWaiting}
-        />
+        <div id="results">
+          <ResultsDisplay
+            result={singleResult.result}
+            imagePreview={singleResult.preview}
+            onReset={handleReset}
+            streamProgress={streamProgress ?? undefined}
+            partialReady={partialReady}
+            onKeepWaiting={handleKeepWaiting}
+          />
+        </div>
       ) : batchResults ? (
-        <BatchResultsDisplay items={batchResults} onReset={handleReset} />
+        <div id="results">
+          <BatchResultsDisplay items={batchResults} onReset={handleReset} />
+        </div>
       ) : (
         <UploadSection ref={uploadRef} onAnalyze={handleAnalyze} isAnalyzing={isAnalyzing} />
       )}
