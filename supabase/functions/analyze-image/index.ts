@@ -714,17 +714,29 @@ serve(async (req) => {
     );
   }
 
-  // Verify the Authorization header carries a real user JWT (not just the anon key)
+  // Reject anon-key-only requests by inspecting the JWT payload.
+  // Both Supabase anon keys and user JWTs are 3-section JWTs, so we must
+  // decode the payload and check the `role` claim. Real signed-in users
+  // have role === "authenticated"; the publishable anon key has role === "anon".
+  // The full signature/expiry validation still happens later via getUser()
+  // inside the scan-limit block — this is just a fast pre-check.
   {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { persistSession: false },
-    });
-    const { data: { user: earlyUser } } = await userClient.auth.getUser();
-    if (!earlyUser) {
-      console.log("[Auth] Rejected request — no valid user JWT (anon key or invalid token)");
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    const parts = token.split(".");
+    let role: string | null = null;
+    if (parts.length === 3) {
+      try {
+        // base64url → base64
+        const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+        const padded = b64 + "===".slice((b64.length + 3) % 4);
+        const payload = JSON.parse(atob(padded));
+        role = typeof payload?.role === "string" ? payload.role : null;
+      } catch {
+        role = null;
+      }
+    }
+    if (role !== "authenticated") {
+      console.log(`[Auth] Rejected request — token role="${role}" (need "authenticated")`);
       return new Response(
         JSON.stringify({
           error: "Sign in required to analyze images. Create a free account — it only takes a minute.",
