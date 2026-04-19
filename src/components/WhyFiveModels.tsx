@@ -161,14 +161,21 @@ const WhyFiveModels = () => {
                 <span className="w-24 shrink-0 text-right text-sm font-medium text-muted-foreground">
                   {item.model}
                 </span>
-                <div className="h-3 flex-1 overflow-hidden rounded-full bg-muted">
-                  <motion.div
-                    className={`h-full rounded-full ${item.ai ? "bg-primary" : "bg-green-500"}`}
-                    initial={{ width: 0 }}
-                    whileInView={{ width: `${item.confidence}%` }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.5 + i * 0.1, duration: 0.6 }}
-                  />
+                <div className="flex-1">
+                  <div className="h-3 overflow-hidden rounded-full bg-muted">
+                    <motion.div
+                      className={`h-full rounded-full ${item.ai ? "bg-primary" : "bg-green-500"}`}
+                      initial={{ width: 0 }}
+                      whileInView={{ width: `${item.confidence}%` }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.5 + i * 0.1, duration: 0.6 }}
+                      style={{ float: item.ai ? "right" : "left" }}
+                    />
+                  </div>
+                  <div className="flex justify-between mt-0.5">
+                    <span className="text-[10px] text-muted-foreground">{item.ai ? "100%" : "1%"}</span>
+                    <span className="text-[10px] text-muted-foreground">{item.ai ? "1%" : "100%"}</span>
+                  </div>
                 </div>
                 <span className={`w-28 text-sm font-medium ${item.ai ? "text-primary" : "text-green-500"}`}>
                   {item.confidence}% {item.verdict}

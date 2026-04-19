@@ -35,11 +35,15 @@ const ModelCard = ({ m }: { m: ModelBreakdown }) => {
           {m.confidence}% — {isAI ? "indicators found" : "no indicators found"}
         </span>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted mb-2">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
         <div
           className={`h-full rounded-full ${isAI ? "bg-destructive" : "bg-success"}`}
           style={{ width: `${m.confidence}%`, float: isAI ? "right" : "left" }}
         />
+      </div>
+      <div className="flex justify-between mt-0.5 mb-2">
+        <span className="text-[10px] text-muted-foreground">{isAI ? "100%" : "1%"}</span>
+        <span className="text-[10px] text-muted-foreground">{isAI ? "1%" : "100%"}</span>
       </div>
       <ul className="space-y-1">
         {m.reasons.slice(0, 3).map((r, i) => (
@@ -146,6 +150,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
 
   const aiCount = items.filter((i) => i.result.verdict === "ai").length;
   const humanCount = items.length - aiCount;
+  const editedCount = items.filter((i) => i.result.manipulation?.edited).length;
   const avgConfidence = Math.round(
     items.reduce((sum, i) => sum + i.result.confidence, 0) / items.length
   );
@@ -161,7 +166,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
               Batch Summary — {items.length} image{items.length !== 1 ? "s" : ""} analyzed
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="rounded-lg bg-muted/50 p-4 text-center">
                 <p className="text-2xl font-bold text-destructive">{aiCount}</p>
                 <p className="text-xs text-muted-foreground">AI indicators found</p>
@@ -169,6 +174,14 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
               <div className="rounded-lg bg-muted/50 p-4 text-center">
                 <p className="text-2xl font-bold text-success">{humanCount}</p>
                 <p className="text-xs text-muted-foreground">No AI indicators</p>
+              </div>
+              <div className="rounded-lg bg-muted/50 p-4 text-center">
+                <div className="flex items-center justify-center gap-1.5 mb-1">
+                  <Pencil className="h-3.5 w-3.5 text-warning" />
+                  <span className="text-xs text-muted-foreground">Edit Indicators</span>
+                </div>
+                <p className="text-2xl font-bold text-warning">{editedCount}</p>
+                <p className="text-xs text-muted-foreground">of {items.length} images</p>
               </div>
               <div className="rounded-lg bg-muted/50 p-4 text-center">
                 <p className="text-2xl font-bold text-primary">{avgConfidence}%</p>
@@ -193,6 +206,26 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
               <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
                 <span>Human</span>
                 <span>AI</span>
+              </div>
+            </div>
+
+            {/* Edit detection stacked bar */}
+            <div className="mt-3">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div className="flex h-full">
+                  <div
+                    className="bg-success transition-all"
+                    style={{ width: `${((items.length - editedCount) / items.length) * 100}%` }}
+                  />
+                  <div
+                    className="bg-warning transition-all"
+                    style={{ width: `${(editedCount / items.length) * 100}%` }}
+                  />
+                </div>
+              </div>
+              <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+                <span>Original</span>
+                <span>Edited</span>
               </div>
             </div>
           </div>
@@ -442,11 +475,15 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                                                 {manip.confidence}% — {manip.edited ? "indicators found" : "no indicators found"}
                                               </span>
                                             </div>
-                                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted mb-2">
+                                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                                               <div
                                                 className={`h-full rounded-full ${manip.edited ? "bg-warning" : "bg-success"}`}
                                                 style={{ width: `${manip.confidence}%`, float: manip.edited ? "right" : "left" }}
                                               />
+                                            </div>
+                                            <div className="flex justify-between mt-0.5 mb-2">
+                                              <span className="text-[10px] text-muted-foreground">{manip.edited ? "100%" : "1%"}</span>
+                                              <span className="text-[10px] text-muted-foreground">{manip.edited ? "1%" : "100%"}</span>
                                             </div>
                                             <ul className="space-y-1">
                                               {manip.reasons.slice(0, 3).map((r, j) => (
