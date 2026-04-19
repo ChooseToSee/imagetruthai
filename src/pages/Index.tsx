@@ -207,6 +207,14 @@ const Index = () => {
     formData.append("image", compressed);
     const { data, error } = await supabase.functions.invoke("analyze-image", { body: formData });
     if (error) throw error;
+    // Edge function returns 200 wrapper but body may contain limitReached on 429
+    if (data && (data as any).limitReached) {
+      const err = new Error((data as any).error || "Daily scan limit reached");
+      (err as any).limitReached = true;
+      (err as any).tier = (data as any).tier;
+      (err as any).limit = (data as any).limit;
+      throw err;
+    }
     const result = data as AnalysisResult;
     await saveToHistory(file, result);
     saveResultToSession(result, preview);
