@@ -111,6 +111,12 @@ async function analyzeWithSightEngine(
     body: formData,
   });
 
+  if (res.status === 429 || res.status === 402 || res.status === 403) {
+    const t = await res.text();
+    console.error(`[SightEngine] Quota exceeded [${res.status}]:`, sanitizeErrorText(t));
+    throw new Error(`SightEngine quota exceeded (${res.status})`);
+  }
+
   if (!res.ok) {
     const t = await res.text();
     console.error(`[SightEngine] API error [${res.status}]:`, sanitizeErrorText(t));
