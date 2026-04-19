@@ -489,7 +489,7 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
               <a href="/ai-disclaimer" className="text-primary hover:underline">Learn more</a>
             </p>
             <p className="mt-2 text-[11px] font-medium text-destructive/80">
-              ⚠ Do not upload illegal, abusive, or sensitive images. Uploading such content may result in account suspension.
+              ⚠ Do not upload illegal or abusive images.
             </p>
               </>
             )}
