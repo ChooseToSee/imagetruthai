@@ -24,31 +24,37 @@ export async function analyzeImageStream(
   if (recaptchaToken) formData.append("recaptcha_token", recaptchaToken);
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-  // Use the authenticated user's JWT, not the anon publishable key.
-  // The edge function rejects anon-key-only requests (role !== "authenticated").
-  const { data: { session } } = await supabase.auth.getSession();
-  const accessToken = session?.access_token;
-  console.log(
-    "[Auth] Session token present:",
-    !!accessToken,
-    "Token prefix:",
-    accessToken?.slice(0, 20)
-  );
-  if (!accessToken) {
-    const err: any = new Error("Sign in required to analyze images.");
-    err.requiresAuth = true;
-    throw err;
+  // Robustly retrieve the user's access token. getSession() can transiently
+  // return null during session restoration (e.g. right after page load), so
+  // fall back to refreshSession() before giving up.
+  let token: string | null = null;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    token = session?.access_token ?? null;
+
+    if (!token) {
+      console.log("[Auth] No session found, attempting refresh...");
+      const { data: { session: refreshed } } = await supabase.auth.refreshSession();
+      token = refreshed?.access_token ?? null;
+    }
+  } catch (err) {
+    console.error("[Auth] Session retrieval failed:", err);
   }
+
+  // If still no token, send the anon key so the edge function can return a
+  // proper requiresAuth response rather than the client crashing here.
+  const authValue = token ? `Bearer ${token}` : `Bearer ${supabaseAnonKey}`;
+  console.log("[Auth] Using token type:", token ? "user JWT" : "anon fallback");
 
   let resp: Response;
   try {
     resp = await fetch(`${supabaseUrl}/functions/v1/analyze-image`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${accessToken}`,
-        apikey: supabaseKey,
+        Authorization: authValue,
+        apikey: supabaseAnonKey,
         "x-stream": "true",
       },
       body: formData,

@@ -268,10 +268,13 @@ const Index = () => {
     } catch (err: any) {
       if (err?.requiresAuth) {
         toast({
-          title: "Sign in required",
-          description: "Create a free account to analyze images — it only takes a minute.",
+          title: user ? "Session expired" : "Sign in required",
+          description: user
+            ? "Please sign in again to continue analyzing images."
+            : "Create a free account to analyze images — it only takes a minute.",
+          variant: "destructive",
         });
-        setTimeout(() => navigate("/auth"), 1500);
+        // Don't auto-redirect — let the user choose to sign in.
       } else if (err?.limitReached) {
         toast({
           title: "Daily scan limit reached",
