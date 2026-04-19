@@ -30,6 +30,28 @@ function sanitizeErrorText(text: string): string {
     .slice(0, 200);
 }
 
+// ── reCAPTCHA v3 verification ───────────────────────────────────────
+async function verifyRecaptcha(token: string): Promise<boolean> {
+  const secret = Deno.env.get("RECAPTCHA_SECRET_KEY");
+  if (!secret) {
+    console.warn("[reCAPTCHA] RECAPTCHA_SECRET_KEY not set, skipping verification");
+    return true;
+  }
+  try {
+    const res = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `secret=${encodeURIComponent(secret)}&response=${encodeURIComponent(token)}`,
+    });
+    const data = await res.json();
+    console.log("[reCAPTCHA] Score:", data.score, "Success:", data.success, "Action:", data.action);
+    return data.success === true && typeof data.score === "number" && data.score > 0.3;
+  } catch (err) {
+    console.error("[reCAPTCHA] Verify failed, failing open:", (err as Error).message);
+    return true;
+  }
+}
+
 // ── Winston AI ──────────────────────────────────────────────────────
 async function analyzeWithWinston(
   imageUrlOrNull: string | null,
@@ -724,6 +746,7 @@ serve(async (req) => {
     const supabaseServiceKeyForLimit = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const authHeader = req.headers.get("Authorization");
+    let userTier: string = "free"; // anonymous treated as free for downstream checks (e.g. reCAPTCHA)
     if (authHeader) {
       try {
         const userClient = createClient(supabaseUrlForLimit, supabaseAnonKey, {
@@ -741,6 +764,7 @@ serve(async (req) => {
 
           const SERVER_LIMITS: Record<string, number> = { free: 3, plus: 50, pro: 500 };
           const tier = profile?.subscription_tier ?? "free";
+          userTier = tier;
           const limit = SERVER_LIMITS[tier] ?? 3;
 
           const now = new Date();
@@ -783,6 +807,21 @@ serve(async (req) => {
       } catch (limitErr) {
         // Fail-open on transient errors so legitimate users aren't blocked
         console.error("[ScanLimit] Check failed, allowing request:", (limitErr as Error).message);
+      }
+    }
+
+    // ── reCAPTCHA v3 check (free tier + anonymous only) ─────────────
+    if (userTier === "free") {
+      const recaptchaToken = formData.get("recaptcha_token") as string | null;
+      if (recaptchaToken) {
+        const isHuman = await verifyRecaptcha(recaptchaToken);
+        if (!isHuman) {
+          console.warn("[reCAPTCHA] Bot signal detected, blocking request");
+          return new Response(
+            JSON.stringify({ error: "Request blocked. Please try again.", recaptchaFailed: true }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
       }
     }
 

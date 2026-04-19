@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/lib/compress-image";
 import { analyzeImageStream, type StreamConsensus } from "@/lib/analyze-stream";
+import { getRecaptchaToken } from "@/lib/recaptcha";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import UploadSection from "@/components/UploadSection";
@@ -177,7 +178,7 @@ const Index = () => {
     });
   };
 
-  const analyzeOneStreaming = async (file: File, preview: string) => {
+  const analyzeOneStreaming = async (file: File, preview: string, recaptchaToken?: string | null) => {
     const compressed = await compressImage(file);
     if (compressed.size > 2 * 1024 * 1024) throw new Error("Image is too large even after compression.");
     setStreamProgress({ completed: 0, total: 3 });
@@ -197,14 +198,15 @@ const Index = () => {
         toast({ title: "Analysis failed", description: error, variant: "destructive" });
         setStreamProgress(null);
       },
-    });
+    }, recaptchaToken);
   };
 
-  const analyzeOneFallback = async (file: File): Promise<{ result: AnalysisResult; preview: string }> => {
+  const analyzeOneFallback = async (file: File, recaptchaToken?: string | null): Promise<{ result: AnalysisResult; preview: string }> => {
     const preview = URL.createObjectURL(file);
     const compressed = await compressImage(file);
     const formData = new FormData();
     formData.append("image", compressed);
+    if (recaptchaToken) formData.append("recaptcha_token", recaptchaToken);
     const { data, error } = await supabase.functions.invoke("analyze-image", { body: formData });
     if (error) throw error;
     // Edge function returns 200 wrapper but body may contain limitReached on 429
@@ -227,15 +229,20 @@ const Index = () => {
     setBatchResults(null);
     setPartialReady(false);
     try {
+      // Get a reCAPTCHA v3 token for free-tier users to deter automated abuse.
+      // Invisible to the user; null is acceptable (server fails open if absent).
+      const isFreeTier = subscription.tier === "free";
+      const recaptchaToken = isFreeTier ? await getRecaptchaToken("analyze") : null;
+
       if (files.length === 1) {
         const preview = URL.createObjectURL(files[0]);
-        await analyzeOneStreaming(files[0], preview);
+        await analyzeOneStreaming(files[0], preview, recaptchaToken);
       } else {
         const settled: PromiseSettledResult<{ result: AnalysisResult; preview: string }>[] = [];
         const concurrency = 2;
         for (let i = 0; i < files.length; i += concurrency) {
           const batch = files.slice(i, i + concurrency);
-          const batchResults = await Promise.allSettled(batch.map((f) => analyzeOneFallback(f)));
+          const batchResults = await Promise.allSettled(batch.map((f) => analyzeOneFallback(f, recaptchaToken)));
           settled.push(...batchResults);
           if (i + concurrency < files.length) await new Promise((r) => setTimeout(r, 1000));
         }

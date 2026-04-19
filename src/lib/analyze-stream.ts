@@ -15,10 +15,12 @@ export interface StreamCallbacks {
 
 export async function analyzeImageStream(
   file: File,
-  callbacks: StreamCallbacks
+  callbacks: StreamCallbacks,
+  recaptchaToken?: string | null
 ): Promise<void> {
   const formData = new FormData();
   formData.append("image", file);
+  if (recaptchaToken) formData.append("recaptcha_token", recaptchaToken);
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
