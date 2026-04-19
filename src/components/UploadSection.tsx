@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect, forwardRef } from "react";
-import { Upload, Image as ImageIcon, X, Loader2, Plus, Link as LinkIcon, ZoomIn } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Upload, Image as ImageIcon, X, Loader2, Plus, Link as LinkIcon, ZoomIn, LogIn } from "lucide-react";
 import ImageLightbox from "@/components/ImageLightbox";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
     const inputRef = useRef<HTMLInputElement>(null);
     const { plan, limits } = usePlan();
     const { user } = useAuth();
+    const navigate = useNavigate();
 
     const maxSlots = limits.batchLimit;
     const allConsentsChecked = consent1 && consent2 && consent3;
@@ -448,19 +450,30 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
                       Clear
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    onClick={() => onAnalyze(selectedFiles.map((f) => f.file))}
-                    disabled={isAnalyzing || selectedFiles.length === 0}
-                    className="shadow-glow"
-                  >
-                    {isAnalyzing ? (
-                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Upload className="mr-1 h-4 w-4" />
-                    )}
-                    Analyze {selectedFiles.length > 1 ? `All ${selectedFiles.length}` : ""}
-                  </Button>
+                  {!user ? (
+                    <Button
+                      size="sm"
+                      onClick={() => navigate("/auth")}
+                      className="shadow-glow gap-2"
+                    >
+                      <LogIn className="h-4 w-4" />
+                      Sign In to Analyze
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={() => onAnalyze(selectedFiles.map((f) => f.file))}
+                      disabled={isAnalyzing || selectedFiles.length === 0}
+                      className="shadow-glow"
+                    >
+                      {isAnalyzing ? (
+                        <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Upload className="mr-1 h-4 w-4" />
+                      )}
+                      Analyze {selectedFiles.length > 1 ? `All ${selectedFiles.length}` : ""}
+                    </Button>
+                  )}
                 </div>
               </div>
             </motion.div>
