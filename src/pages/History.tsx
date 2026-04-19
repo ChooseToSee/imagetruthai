@@ -281,14 +281,14 @@ const History = () => {
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-medium text-foreground truncate">{scan.file_name}</p>
                           {scan.verdict === "ai" ? (
-                            <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive shrink-0">AI</span>
+                            <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive shrink-0">AI indicators</span>
                           ) : (
-                            <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success shrink-0">Human</span>
+                            <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success shrink-0">No AI indicators</span>
                           )}
                         </div>
                         {showFullResults ? (
                           <p className="text-xs text-muted-foreground">
-                            {scan.confidence}% confidence · {new Date(scan.created_at).toLocaleDateString()}
+                            {scan.confidence}% — {scan.verdict === "ai" ? "AI indicators detected" : "No AI indicators detected"} · {new Date(scan.created_at).toLocaleDateString()}
                           </p>
                         ) : (
                           <p className="text-xs text-muted-foreground">
@@ -330,7 +330,7 @@ const History = () => {
                   </div>
                   {showFullResults && isExpanded && scan.reasons.length > 0 && (
                     <div className="border-t border-border px-4 py-3 bg-muted/30">
-                      <p className="text-xs font-medium text-foreground mb-2">Analysis Details</p>
+                      <p className="text-xs font-medium text-foreground mb-2">What the Models Found</p>
                       <ul className="space-y-1">
                         {scan.reasons.map((reason, i) => (
                           <li key={i} className="text-xs text-muted-foreground">• {reason}</li>
@@ -338,9 +338,9 @@ const History = () => {
                       </ul>
                       {scan.manipulation && (
                         <div className="mt-3">
-                          <p className="text-xs font-medium text-foreground mb-1">Edit Detection</p>
+                          <p className="text-xs font-medium text-foreground mb-1">Edit Detection — What Models Found</p>
                           <p className="text-xs text-muted-foreground">
-                            {scan.manipulation.confidence}% likely{scan.manipulation.edited ? " edited" : " unmodified"}
+                            {scan.manipulation.confidence}% — manipulation indicators {scan.manipulation.edited ? "detected" : "not detected"}
                           </p>
                           <ul className="space-y-1 mt-1">
                             {(scan.manipulation.reasons || []).slice(0, 3).map((reason: string, i: number) => (
@@ -349,6 +349,9 @@ const History = () => {
                           </ul>
                         </div>
                       )}
+                      <p className="text-[10px] text-muted-foreground/60 mt-3 italic">
+                        Results show what AI models found — not a definitive determination. See full analysis for details.
+                      </p>
                     </div>
                   )}
                 </div>

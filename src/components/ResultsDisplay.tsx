@@ -229,11 +229,11 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
 
   const handleShare = async () => {
     const editInfo = manipulation
-      ? `\nEdit detection: ${manipulation.confidence}% likely ${isEdited ? "edited" : "unmodified"}.`
+      ? `\nEdit detection: ${manipulation.confidence}% — manipulation indicators ${isEdited ? "detected" : "not detected"}.`
       : "";
     const modelCount = result.modelBreakdown?.length ?? 1;
 
-    const summary = `🔍 ImageTruth AI Analysis Result\nVerdict: ${result.confidence}% likely ${isAI ? "AI-Generated 🤖" : "Human-Created ✅"}\n${result.reasons[0]}${editInfo}\nAnalyzed using ${modelCount} AI model${modelCount !== 1 ? "s" : ""} for consensus accuracy.`;
+    const summary = `🔍 ImageTruth AI Analysis\n${result.confidence}% — ${isAI ? "AI generation indicators detected 🤖" : "No AI generation indicators detected ✅"}\n${result.reasons[0] || ""}${editInfo}\nAnalyzed by ${modelCount} independent AI model${modelCount !== 1 ? "s" : ""} for consensus accuracy.\nNote: Results show what models found — not a definitive determination.`;
 
     const appUrl = "https://imagetruthai.com";
     const reportUrl = shareLink || appUrl;
