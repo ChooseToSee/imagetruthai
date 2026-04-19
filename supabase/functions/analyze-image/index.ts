@@ -211,12 +211,20 @@ async function analyzeEditWithAI(
         const parsed = parseEditAnalysisFromText(rawText);
         if (parsed) {
           console.log("[EditDetection] Success with model:", model, "edited:", parsed.edited);
+          parsed.reasons = parsed.edited
+            ? [`Gemini detected visual indicators of post-processing in this image`, ...parsed.reasons]
+            : [`Gemini found no visual indicators of post-processing, compositing, or manipulation that it is programmed to detect`, ...parsed.reasons];
           return parsed;
         }
         // Parsed failed but response was ok — try fallback without schema
         console.warn("[EditDetection] Parse failed for", model, "- trying fallback without schema...");
         const fallback = await analyzeEditWithAIFallback(imageBytes, mimeType, normalizedApiKey, model);
-        if (fallback) return fallback;
+        if (fallback) {
+          fallback.reasons = fallback.edited
+            ? [`Gemini detected visual indicators of post-processing in this image`, ...fallback.reasons]
+            : [`Gemini found no visual indicators of post-processing, compositing, or manipulation that it is programmed to detect`, ...fallback.reasons];
+          return fallback;
+        }
       } else {
         const errorBody = await res.text();
         lastError = `${model}: ${res.status}`;
@@ -226,7 +234,12 @@ async function analyzeEditWithAI(
         if (res.status === 400) {
           console.log("[EditDetection] Trying", model, "without responseSchema...");
           const fallback = await analyzeEditWithAIFallback(imageBytes, mimeType, normalizedApiKey, model);
-          if (fallback) return fallback;
+          if (fallback) {
+            fallback.reasons = fallback.edited
+              ? [`Gemini detected visual indicators of post-processing in this image`, ...fallback.reasons]
+              : [`Gemini found no visual indicators of post-processing, compositing, or manipulation that it is programmed to detect`, ...fallback.reasons];
+            return fallback;
+          }
         }
       }
     } catch (err: any) {
@@ -406,6 +419,9 @@ async function analyzeEditWithHive(
   const parsed = parseEditAnalysisFromText(rawText);
   if (parsed) {
     console.log("[HiveVLM] Parsed successfully, edited:", parsed.edited, "confidence:", parsed.confidence);
+    parsed.reasons = parsed.edited
+      ? [`Hive VLM detected visual indicators of post-processing in this image`, ...parsed.reasons]
+      : [`Hive VLM found no visual indicators of post-processing, compositing, or manipulation that it is programmed to detect`, ...parsed.reasons];
     return parsed;
   }
 
