@@ -254,8 +254,23 @@ const Index = () => {
         } else { setBatchResults(successes); }
       }
     } catch (err: any) {
-      const msg = err.message || "Please try again later";
-      toast({ title: msg.includes("temporarily unavailable") ? "Service unavailable" : msg.includes("Too many requests") ? "Slow down" : "Analysis failed", description: msg, variant: "destructive" });
+      if (err?.limitReached) {
+        toast({
+          title: "Daily scan limit reached",
+          description: err.message,
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+        }, 1500);
+      } else {
+        const msg = err.message || "Please try again later";
+        toast({
+          title: msg.includes("temporarily unavailable") ? "Service unavailable" : msg.includes("Too many requests") ? "Slow down" : "Analysis failed",
+          description: msg,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsAnalyzing(false);
       setStreamProgress(null);
