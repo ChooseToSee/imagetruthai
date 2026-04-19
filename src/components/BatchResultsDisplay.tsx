@@ -28,8 +28,11 @@ const ModelCard = ({ m }: { m: ModelBreakdown }) => {
     <div className="rounded-lg border border-border bg-muted/30 p-3">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-semibold text-foreground">{m.model}</span>
-        <span className={`text-xs font-bold ${isAI ? "text-destructive" : "text-success"}`}>
-          {m.confidence}% {isAI ? "AI" : "Human"}
+        <span
+          className={`text-xs font-bold ${isAI ? "text-destructive" : "text-success"}`}
+          title={isAI ? "AI generation indicators detected" : "No AI generation indicators detected"}
+        >
+          {m.confidence}% — {isAI ? "indicators found" : "no indicators found"}
         </span>
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted mb-2">
@@ -65,9 +68,9 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
   const handleShareItem = async (item: BatchItem, index: number) => {
     const isAI = item.result.verdict === "ai";
     const editInfo = item.result.manipulation
-      ? ` | Edit: ${item.result.manipulation.confidence}% ${item.result.manipulation.edited ? "edited" : "unmodified"}`
+      ? ` | Edit: ${item.result.manipulation.confidence}% — manipulation indicators ${item.result.manipulation.edited ? "detected" : "not detected"}`
       : "";
-    const text = `ImageTruth AI: "${item.fileName}" is ${item.result.confidence}% likely ${isAI ? "AI-generated" : "human-created"}. ${item.result.reasons[0]}${editInfo}`;
+    const text = `ImageTruth AI: "${item.fileName}" — ${item.result.confidence}% ${isAI ? "AI generation indicators detected" : "no AI generation indicators detected"}. ${item.result.reasons[0]}${editInfo}`;
     const url = shareLinks[index]?.link || "";
     const res = await shareContent(text, "ImageTruth AI Result", url, item.preview);
     if (res === "copied") {
@@ -161,11 +164,11 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
             <div className="grid grid-cols-3 gap-4">
               <div className="rounded-lg bg-muted/50 p-4 text-center">
                 <p className="text-2xl font-bold text-destructive">{aiCount}</p>
-                <p className="text-xs text-muted-foreground">AI-Generated</p>
+                <p className="text-xs text-muted-foreground">AI indicators found</p>
               </div>
               <div className="rounded-lg bg-muted/50 p-4 text-center">
                 <p className="text-2xl font-bold text-success">{humanCount}</p>
-                <p className="text-xs text-muted-foreground">Human-Created</p>
+                <p className="text-xs text-muted-foreground">No AI indicators</p>
               </div>
               <div className="rounded-lg bg-muted/50 p-4 text-center">
                 <p className="text-2xl font-bold text-primary">{avgConfidence}%</p>
@@ -235,8 +238,9 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                           className={`text-sm font-semibold ${
                             isAI ? "text-destructive" : "text-success"
                           }`}
+                          title={isAI ? "AI generation indicators detected" : "No AI generation indicators detected"}
                         >
-                          {item.result.confidence}% {isAI ? "AI" : "Human"}
+                          {item.result.confidence}% — {isAI ? "AI indicators" : "no AI indicators"}
                         </span>
                         {manipulation && (
                           <>
@@ -247,7 +251,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                               <ShieldCheck className="h-3.5 w-3.5 text-success" />
                             )}
                             <span className={`text-xs font-medium ${isEdited ? "text-warning" : "text-success"}`}>
-                              {isEdited ? "Edited" : "Original"}
+                              {isEdited ? "Edit indicators" : "No edit indicators"}
                             </span>
                           </>
                         )}
@@ -310,8 +314,11 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                         <TabsContent value="ai-detection" className="space-y-3">
                           <div>
                             <h4 className="mb-2 text-xs font-semibold text-foreground">
-                              Analysis Details
+                              What the Models Found
                             </h4>
+                            <p className="mb-2 text-[10px] text-muted-foreground/80 leading-relaxed">
+                              Models may interpret results differently — see individual breakdown.
+                            </p>
                             <ul className="space-y-1.5">
                               {item.result.reasons.map((reason, ri) => (
                                 <li
@@ -387,8 +394,8 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                                 <div>
                                   <p className="text-sm font-bold text-foreground">
                                     {isEdited
-                                      ? `${manipulation.confidence}% Likely Edited`
-                                      : `${manipulation.confidence}% Likely Unmodified`}
+                                      ? `${manipulation.confidence}% — Manipulation Indicators Detected`
+                                      : `${manipulation.confidence}% — Manipulation Indicators Not Detected`}
                                   </p>
                                 </div>
                               </div>
@@ -428,8 +435,11 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                                           <div key={mi} className="rounded-lg border border-border bg-muted/30 p-3">
                                             <div className="flex items-center justify-between mb-2">
                                               <span className="text-xs font-semibold text-foreground">{m.model}</span>
-                                              <span className={`text-xs font-bold ${manip.edited ? "text-warning" : "text-success"}`}>
-                                                {manip.confidence}% {manip.edited ? "Edited" : "Original"}
+                                              <span
+                                                className={`text-xs font-bold ${manip.edited ? "text-warning" : "text-success"}`}
+                                                title={manip.edited ? "Manipulation indicators detected" : "No manipulation indicators detected"}
+                                              >
+                                                {manip.confidence}% — {manip.edited ? "indicators found" : "no indicators found"}
                                               </span>
                                             </div>
                                             <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted mb-2">
