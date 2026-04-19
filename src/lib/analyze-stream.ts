@@ -39,19 +39,25 @@ export async function analyzeImageStream(
   }
 
   if (!resp.ok) {
+    const text = await resp.text();
+    let parsed: any = null;
+    try { parsed = JSON.parse(text); } catch {}
+
+    if (resp.status === 429 && parsed?.limitReached) {
+      const err = new Error(parsed.error || "Daily scan limit reached");
+      (err as any).limitReached = true;
+      (err as any).tier = parsed.tier;
+      (err as any).limit = parsed.limit;
+      (err as any).current = parsed.current;
+      throw err;
+    }
     if (resp.status === 402) {
       throw new Error("Service temporarily unavailable — please try again later.");
     }
     if (resp.status === 429) {
       throw new Error("Too many requests — please wait a moment and try again.");
     }
-    const text = await resp.text();
-    let msg = "Analysis failed";
-    try {
-      const j = JSON.parse(text);
-      msg = j.error || msg;
-    } catch {}
-    throw new Error(msg);
+    throw new Error(parsed?.error || "Analysis failed");
   }
 
   if (!resp.body) throw new Error("No response stream");

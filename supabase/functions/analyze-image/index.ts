@@ -717,6 +717,75 @@ serve(async (req) => {
 
     const wantsStream = req.headers.get("x-stream") === "true";
 
+    // ── Server-side scan limit enforcement ──────────────────────────
+    // Authenticated users get plan-based daily limits enforced here
+    // so technical users can't bypass UI checks.
+    const supabaseUrlForLimit = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKeyForLimit = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader) {
+      try {
+        const userClient = createClient(supabaseUrlForLimit, supabaseAnonKey, {
+          global: { headers: { Authorization: authHeader } },
+        });
+        const { data: { user } } = await userClient.auth.getUser();
+
+        if (user) {
+          const adminClient = createClient(supabaseUrlForLimit, supabaseServiceKeyForLimit);
+          const { data: profile } = await adminClient
+            .from("profiles")
+            .select("subscription_tier, scans_today, scans_today_reset_at")
+            .eq("user_id", user.id)
+            .single();
+
+          const SERVER_LIMITS: Record<string, number> = { free: 3, plus: 50, pro: 500 };
+          const tier = profile?.subscription_tier ?? "free";
+          const limit = SERVER_LIMITS[tier] ?? 3;
+
+          const now = new Date();
+          const resetAt = profile?.scans_today_reset_at ? new Date(profile.scans_today_reset_at) : null;
+          const needsReset =
+            !resetAt ||
+            now.getUTCDate() !== resetAt.getUTCDate() ||
+            now.getUTCMonth() !== resetAt.getUTCMonth() ||
+            now.getUTCFullYear() !== resetAt.getUTCFullYear();
+
+          let currentCount = profile?.scans_today ?? 0;
+          if (needsReset) {
+            await adminClient
+              .from("profiles")
+              .update({ scans_today: 0, scans_today_reset_at: now.toISOString().slice(0, 10) })
+              .eq("user_id", user.id);
+            currentCount = 0;
+          }
+
+          if (currentCount >= limit) {
+            const message =
+              tier === "free"
+                ? `Daily scan limit reached. Free plan includes ${limit} scans per day. Upgrade to Plus for 50 scans/day.`
+                : tier === "plus"
+                ? `Daily scan limit reached. Plus plan includes ${limit} scans per day. Upgrade to Pro for higher limits.`
+                : `Daily scan limit of ${limit} reached. Please contact support@imagetruthai.com if you need more.`;
+            console.log(`[ScanLimit] User ${user.id} blocked at ${currentCount}/${limit} (${tier})`);
+            return new Response(
+              JSON.stringify({ error: message, limitReached: true, tier, limit, current: currentCount }),
+              { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+
+          // Increment before processing so concurrent requests are counted
+          await adminClient
+            .from("profiles")
+            .update({ scans_today: currentCount + 1 })
+            .eq("user_id", user.id);
+        }
+      } catch (limitErr) {
+        // Fail-open on transient errors so legitimate users aren't blocked
+        console.error("[ScanLimit] Check failed, allowing request:", (limitErr as Error).message);
+      }
+    }
+
     // Upload image to temp storage for Winston (needs a public URL)
     let tempImageUrl: string | null = null;
     let tempImagePath: string | null = null;

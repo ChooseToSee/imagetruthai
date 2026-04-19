@@ -207,6 +207,14 @@ const Index = () => {
     formData.append("image", compressed);
     const { data, error } = await supabase.functions.invoke("analyze-image", { body: formData });
     if (error) throw error;
+    // Edge function returns 200 wrapper but body may contain limitReached on 429
+    if (data && (data as any).limitReached) {
+      const err = new Error((data as any).error || "Daily scan limit reached");
+      (err as any).limitReached = true;
+      (err as any).tier = (data as any).tier;
+      (err as any).limit = (data as any).limit;
+      throw err;
+    }
     const result = data as AnalysisResult;
     await saveToHistory(file, result);
     saveResultToSession(result, preview);
@@ -246,8 +254,23 @@ const Index = () => {
         } else { setBatchResults(successes); }
       }
     } catch (err: any) {
-      const msg = err.message || "Please try again later";
-      toast({ title: msg.includes("temporarily unavailable") ? "Service unavailable" : msg.includes("Too many requests") ? "Slow down" : "Analysis failed", description: msg, variant: "destructive" });
+      if (err?.limitReached) {
+        toast({
+          title: "Daily scan limit reached",
+          description: err.message,
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
+        }, 1500);
+      } else {
+        const msg = err.message || "Please try again later";
+        toast({
+          title: msg.includes("temporarily unavailable") ? "Service unavailable" : msg.includes("Too many requests") ? "Slow down" : "Analysis failed",
+          description: msg,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsAnalyzing(false);
       setStreamProgress(null);
