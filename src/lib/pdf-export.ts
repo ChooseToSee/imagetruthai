@@ -66,7 +66,7 @@ export async function exportReportPdf(
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(isAI ? 200 : 50, isAI ? 50 : 160, isAI ? 50 : 80);
   pdf.text(
-    `${result.confidence}% Likely ${isAI ? "AI-Generated" : "Human-Created"}`,
+    `${result.confidence}% — ${isAI ? "AI Generation Indicators Detected" : "No AI Generation Indicators Detected"}`,
     pageW / 2,
     y,
     { align: "center" }
@@ -81,7 +81,7 @@ export async function exportReportPdf(
   pdf.setTextColor(40, 40, 40);
   pdf.setFontSize(12);
   pdf.setFont("helvetica", "bold");
-  pdf.text("Analysis Details", 15, y);
+  pdf.text("What the Models Found", 15, y);
   y += 6;
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
@@ -112,7 +112,7 @@ export async function exportReportPdf(
           model.verdict === "ai" ? 50 : 160,
           model.verdict === "ai" ? 50 : 80
         );
-        pdf.text(`${model.model}: ${model.confidence}% ${model.verdict === "ai" ? "AI-Generated" : "Human-Created"}`, 18, y);
+        pdf.text(`${model.model}: ${model.confidence}% — ${model.verdict === "ai" ? "AI indicators found" : "no AI indicators found"}`, 18, y);
         y += 5;
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(9);
@@ -140,7 +140,7 @@ export async function exportReportPdf(
     pdf.setFontSize(10);
     pdf.setFont("helvetica", "bold");
     pdf.setTextColor(m.edited ? 200 : 50, m.edited ? 130 : 160, m.edited ? 0 : 80);
-    pdf.text(`${m.confidence}% Likely ${m.edited ? "Edited" : "Unmodified"}`, 18, y);
+    pdf.text(`${m.confidence}% — Manipulation Indicators ${m.edited ? "Detected" : "Not Detected"}`, 18, y);
     y += 6;
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(9);
@@ -169,7 +169,7 @@ export async function exportReportPdf(
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "bold");
       pdf.setTextColor(manip.edited ? 200 : 50, manip.edited ? 130 : 160, manip.edited ? 0 : 80);
-      pdf.text(`${model.model}: ${manip.confidence}% ${manip.edited ? "Likely Edited" : "Likely Original"}`, 18, y);
+      pdf.text(`${model.model}: ${manip.confidence}% — ${manip.edited ? "manipulation indicators found" : "no manipulation indicators found"}`, 18, y);
       y += 5;
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(9);
@@ -185,13 +185,28 @@ export async function exportReportPdf(
     y += 4;
   }
 
+  // About these results
+  if (y > 230) { pdf.addPage(); y = 15; }
+  pdf.setFontSize(11);
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(40, 40, 40);
+  pdf.text("About These Results", 15, y);
+  y += 5;
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(9);
+  pdf.setTextColor(80, 80, 80);
+  const aboutText = "These results represent what each AI model found based on its training. AI Detection models (Winston AI, SightEngine, AI or Not) look for patterns associated with AI generation tools. Edit Detection models (Gemini, Hive) look for post-processing manipulation indicators. Results are probabilistic and should not be used as sole evidence of any determination.";
+  const aboutLines = pdf.splitTextToSize(aboutText, pageW - 30);
+  pdf.text(aboutLines, 15, y);
+  y += aboutLines.length * 4.5 + 4;
+
   // Tips & Recommendations
   if (result.tips && result.tips.length > 0) {
     if (y > 240) { pdf.addPage(); y = 15; }
     pdf.setFontSize(12);
     pdf.setFont("helvetica", "bold");
     pdf.setTextColor(40, 40, 40);
-    pdf.text("Tips & Recommendations", 15, y);
+    pdf.text("How to Interpret These Results", 15, y);
     y += 6;
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(9);

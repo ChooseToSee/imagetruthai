@@ -102,7 +102,7 @@ const SharedReport = () => {
       <Helmet>
         <title>Analysis Report — ImageTruth AI</title>
         <meta name="description" content="View the AI image analysis report from ImageTruth AI." />
-        <meta property="og:title" content={`ImageTruth AI — ${confidence}% Likely ${isAI ? "AI-Generated" : "Human-Created"}`} />
+        <meta property="og:title" content={`ImageTruth AI — ${confidence}% ${isAI ? "AI Generation Indicators Detected" : "No AI Generation Indicators Detected"}`} />
         <meta property="og:description" content={report.reasons[0] || "View the full AI image analysis report."} />
         <meta property="og:image" content={report.image_url || "https://imagetruthai.com/share-image.png"} />
         <meta property="og:type" content="article" />
@@ -114,6 +114,12 @@ const SharedReport = () => {
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl">
+            {/* About these results disclaimer */}
+            <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 mb-6 text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">About these results:</span>{" "}
+              These results show what 5 AI models found when analyzing this image. AI Detection models look for patterns associated with AI generation tools. Edit Detection models look for post-processing manipulation indicators. Results are probabilistic — not definitive.
+            </div>
+
             <div className="rounded-xl border border-border bg-card shadow-card overflow-hidden">
               {/* Header */}
               <div className="px-6 pt-6 pb-2">
@@ -152,7 +158,7 @@ const SharedReport = () => {
                   )}
                   <div>
                     <p className="font-display text-lg font-bold text-foreground">
-                      {confidence}% Likely {isAI ? "AI-Generated" : "Human-Created"}
+                      {confidence}% — {isAI ? "AI Generation Indicators Detected" : "No AI Generation Indicators Detected"}
                     </p>
                     <p className="text-xs text-muted-foreground">Confidence: {confidenceLabel}</p>
                   </div>
@@ -168,6 +174,34 @@ const SharedReport = () => {
                   ))}
                 </ul>
 
+                {/* Per-model breakdown */}
+                {modelBreakdown.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="mb-2 text-sm font-semibold text-foreground">Per-Model Breakdown</h3>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {modelBreakdown.filter(m => m.confidence > 0 || m.reasons.length > 0).map((m, i) => {
+                        const mIsAI = m.verdict === "ai";
+                        return (
+                          <div key={i} className="rounded-lg border border-border bg-muted/30 p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-semibold text-foreground">{m.model}</span>
+                              <span className={`text-xs font-bold ${mIsAI ? "text-destructive" : "text-success"}`}>
+                                {m.confidence}% — {mIsAI ? "indicators found" : "no indicators found"}
+                              </span>
+                            </div>
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted mb-2">
+                              <div
+                                className={`h-full rounded-full ${mIsAI ? "bg-destructive" : "bg-success"}`}
+                                style={{ width: `${m.confidence}%`, float: mIsAI ? "right" : "left" }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Edit detection */}
                 {manipulation && (
                   <div className={`flex items-center gap-3 rounded-lg px-4 py-3 mb-4 ${
@@ -180,7 +214,7 @@ const SharedReport = () => {
                     )}
                     <div>
                       <p className="font-display text-base font-bold text-foreground">
-                        {manipulation.confidence}% Likely {isEdited ? "Edited" : "Unmodified"}
+                        {manipulation.confidence}% — Manipulation Indicators {isEdited ? "Detected" : "Not Detected"}
                       </p>
                     </div>
                   </div>
