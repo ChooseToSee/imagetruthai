@@ -41,7 +41,7 @@ const plans = [
     name: "Pro",
     tier: "pro" as const,
     features: [
-      "Unlimited scans",
+      "500 scans per day",
       "Batch upload up to 20 images",
       "Unlimited scan history with full analysis results",
       "Exportable PDF reports",
