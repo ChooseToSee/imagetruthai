@@ -727,6 +727,20 @@ serve(async (req) => {
       );
     }
 
+    // Reject suspiciously tiny payloads (bots probing the endpoint)
+    if (imageFile.size < 5000) {
+      return new Response(
+        JSON.stringify({ error: "Image is too small to analyze. Please upload a real image." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Capture client IP for abuse-pattern visibility (no blocking — backend lacks rate-limit primitives)
+    const clientIP =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
+      "unknown";
+
     const WINSTON_API_KEY = Deno.env.get("WINSTON_API_KEY");
     const SIGHTENGINE_API_USER = Deno.env.get("SIGHTENGINE_API_USER");
     const SIGHTENGINE_API_SECRET = Deno.env.get("SIGHTENGINE_API_SECRET");
@@ -747,6 +761,7 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const authHeader = req.headers.get("Authorization");
     let userTier: string = "free"; // anonymous treated as free for downstream checks (e.g. reCAPTCHA)
+    let userIdForLog: string | null = null;
     if (authHeader) {
       try {
         const userClient = createClient(supabaseUrlForLimit, supabaseAnonKey, {
@@ -755,6 +770,7 @@ serve(async (req) => {
         const { data: { user } } = await userClient.auth.getUser();
 
         if (user) {
+          userIdForLog = user.id;
           const adminClient = createClient(supabaseUrlForLimit, supabaseServiceKeyForLimit);
           const { data: profile } = await adminClient
             .from("profiles")
@@ -808,6 +824,20 @@ serve(async (req) => {
         // Fail-open on transient errors so legitimate users aren't blocked
         console.error("[ScanLimit] Check failed, allowing request:", (limitErr as Error).message);
       }
+    } else {
+      // Visibility into unauthenticated traffic (no blocking primitives available yet)
+      console.log("[RateLimit] Unauthenticated request from IP:", clientIP);
+    }
+
+    // Free-tier usage visibility (helps spot abuse patterns)
+    if (userTier === "free") {
+      console.log(
+        "[Scan] Free tier scan:",
+        userIdForLog?.slice(0, 8) ?? "anon",
+        "IP:", clientIP,
+        "Size:", imageFile.size,
+        "Type:", mimeType,
+      );
     }
 
     // ── reCAPTCHA v3 check (free tier + anonymous only) ─────────────
@@ -816,7 +846,7 @@ serve(async (req) => {
       if (recaptchaToken) {
         const isHuman = await verifyRecaptcha(recaptchaToken);
         if (!isHuman) {
-          console.warn("[reCAPTCHA] Bot signal detected, blocking request");
+          console.warn("[reCAPTCHA] Bot signal detected, blocking request from IP:", clientIP);
           return new Response(
             JSON.stringify({ error: "Request blocked. Please try again.", recaptchaFailed: true }),
             { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
