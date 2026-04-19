@@ -714,6 +714,27 @@ serve(async (req) => {
     );
   }
 
+  // Verify the Authorization header carries a real user JWT (not just the anon key)
+  {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false },
+    });
+    const { data: { user: earlyUser } } = await userClient.auth.getUser();
+    if (!earlyUser) {
+      console.log("[Auth] Rejected request — no valid user JWT (anon key or invalid token)");
+      return new Response(
+        JSON.stringify({
+          error: "Sign in required to analyze images. Create a free account — it only takes a minute.",
+          requiresAuth: true,
+        }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+  }
+
   try {
     // Early Content-Length check before reading body
     const contentLength = req.headers.get("content-length");
