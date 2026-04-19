@@ -178,7 +178,7 @@ const Index = () => {
     });
   };
 
-  const analyzeOneStreaming = async (file: File, preview: string) => {
+  const analyzeOneStreaming = async (file: File, preview: string, recaptchaToken?: string | null) => {
     const compressed = await compressImage(file);
     if (compressed.size > 2 * 1024 * 1024) throw new Error("Image is too large even after compression.");
     setStreamProgress({ completed: 0, total: 3 });
@@ -198,14 +198,15 @@ const Index = () => {
         toast({ title: "Analysis failed", description: error, variant: "destructive" });
         setStreamProgress(null);
       },
-    });
+    }, recaptchaToken);
   };
 
-  const analyzeOneFallback = async (file: File): Promise<{ result: AnalysisResult; preview: string }> => {
+  const analyzeOneFallback = async (file: File, recaptchaToken?: string | null): Promise<{ result: AnalysisResult; preview: string }> => {
     const preview = URL.createObjectURL(file);
     const compressed = await compressImage(file);
     const formData = new FormData();
     formData.append("image", compressed);
+    if (recaptchaToken) formData.append("recaptcha_token", recaptchaToken);
     const { data, error } = await supabase.functions.invoke("analyze-image", { body: formData });
     if (error) throw error;
     // Edge function returns 200 wrapper but body may contain limitReached on 429
