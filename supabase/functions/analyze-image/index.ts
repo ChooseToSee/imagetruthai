@@ -811,69 +811,107 @@ serve(async (req) => {
     let userIdForLog: string | null = null;
     {
       try {
-        const userClient = createClient(supabaseUrlForLimit, supabaseAnonKey, {
-          global: { headers: { Authorization: authHeader } },
-        });
-        const { data: { user } } = await userClient.auth.getUser();
+        const adminClient = createClient(supabaseUrlForLimit, supabaseServiceKeyForLimit);
+        const bearerToken = authHeader.replace(/^Bearer\s+/i, "").trim();
 
-        if (user) {
-          userIdForLog = user.id;
-          const adminClient = createClient(supabaseUrlForLimit, supabaseServiceKeyForLimit);
-          const { data: profile } = await adminClient
-            .from("profiles")
-            .select("subscription_tier, scans_today, scans_today_reset_at")
-            .eq("user_id", user.id)
-            .single();
+        // Validate JWT via admin client passing the token explicitly.
+        // Using the admin client with an explicit token avoids issues with
+        // userClient auto-header extraction returning null in some runtimes.
+        const { data: userData, error: userErr } = await adminClient.auth.getUser(bearerToken);
+        const user = userData?.user ?? null;
 
-          const SERVER_LIMITS: Record<string, number> = { free: 3, plus: 50, pro: 500 };
-          const tier = profile?.subscription_tier ?? "free";
-          userTier = tier;
-          const limit = SERVER_LIMITS[tier] ?? 3;
+        console.log(
+          `[ScanLimit] getUser result — userId=${user?.id?.slice(0, 8) ?? "null"} email=${user?.email ?? "null"} error=${userErr?.message ?? "none"}`
+        );
 
-          const now = new Date();
-          const resetAt = profile?.scans_today_reset_at ? new Date(profile.scans_today_reset_at) : null;
-          const needsReset =
-            !resetAt ||
-            now.getUTCDate() !== resetAt.getUTCDate() ||
-            now.getUTCMonth() !== resetAt.getUTCMonth() ||
-            now.getUTCFullYear() !== resetAt.getUTCFullYear();
+        if (!user) {
+          // JWT was structurally valid (role=authenticated passed earlier) but
+          // failed signature/expiry validation. Block the request rather than
+          // silently allowing an unauthenticated scan through.
+          console.log(`[ScanLimit] Rejecting — getUser returned null user`);
+          return new Response(
+            JSON.stringify({
+              error: "Session expired. Please sign in again to continue analyzing images.",
+              requiresAuth: true,
+            }),
+            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
 
-          let currentCount = profile?.scans_today ?? 0;
-          if (needsReset) {
-            await adminClient
-              .from("profiles")
-              .update({ scans_today: 0, scans_today_reset_at: now.toISOString().slice(0, 10) })
-              .eq("user_id", user.id);
-            currentCount = 0;
-          }
+        userIdForLog = user.id;
+        const { data: profile, error: profileErr } = await adminClient
+          .from("profiles")
+          .select("subscription_tier, scans_today, scans_today_reset_at")
+          .eq("user_id", user.id)
+          .single();
 
-          if (currentCount >= limit) {
-            const message =
-              tier === "free"
-                ? `Daily scan limit reached. Free plan includes ${limit} scans per day. Upgrade to Plus for 50 scans/day.`
-                : tier === "plus"
-                ? `Daily scan limit reached. Plus plan includes ${limit} scans per day. Upgrade to Pro for higher limits.`
-                : `Daily scan limit of ${limit} reached. Please contact support@imagetruthai.com if you need more.`;
-            console.log(`[ScanLimit] User ${user.id} blocked at ${currentCount}/${limit} (${tier})`);
-            return new Response(
-              JSON.stringify({ error: message, limitReached: true, tier, limit, current: currentCount }),
-              { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-          }
+        if (profileErr) {
+          console.error(`[ScanLimit] Profile fetch error: ${profileErr.message}`);
+        }
 
-          console.log(`[ScanLimit] Scan allowed for user ${user.id.slice(0, 8)}: ${currentCount}/${limit} (${tier})`);
+        const SERVER_LIMITS: Record<string, number> = { free: 3, plus: 50, pro: 500 };
+        const tier = profile?.subscription_tier ?? "free";
+        userTier = tier;
+        const limit = SERVER_LIMITS[tier] ?? 3;
 
-          // Increment before processing so concurrent requests are counted
+        const now = new Date();
+        const resetAt = profile?.scans_today_reset_at ? new Date(profile.scans_today_reset_at) : null;
+        const needsReset =
+          !resetAt ||
+          now.getUTCDate() !== resetAt.getUTCDate() ||
+          now.getUTCMonth() !== resetAt.getUTCMonth() ||
+          now.getUTCFullYear() !== resetAt.getUTCFullYear();
+
+        let currentCount = profile?.scans_today ?? 0;
+        if (needsReset) {
           await adminClient
             .from("profiles")
-            .update({ scans_today: currentCount + 1 })
+            .update({ scans_today: 0, scans_today_reset_at: now.toISOString().slice(0, 10) })
             .eq("user_id", user.id);
+          currentCount = 0;
+        }
 
+        console.log(
+          `[ScanLimit] Checking: ${JSON.stringify({
+            userId: user.id.slice(0, 8),
+            tier,
+            currentCount,
+            limit,
+            resetAt: profile?.scans_today_reset_at,
+            needsReset,
+          })}`
+        );
+
+        if (currentCount >= limit) {
+          const message =
+            tier === "free"
+              ? `Daily scan limit reached. Free plan includes ${limit} scans per day. Upgrade to Plus for 50 scans/day.`
+              : tier === "plus"
+              ? `Daily scan limit reached. Plus plan includes ${limit} scans per day. Upgrade to Pro for higher limits.`
+              : `Daily scan limit of ${limit} reached. Please contact support@imagetruthai.com if you need more.`;
+          console.log(`[ScanLimit] User ${user.id.slice(0, 8)} BLOCKED at ${currentCount}/${limit} (${tier})`);
+          return new Response(
+            JSON.stringify({ error: message, limitReached: true, tier, limit, current: currentCount }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        console.log(`[ScanLimit] Scan allowed for user ${user.id.slice(0, 8)}: ${currentCount}/${limit} (${tier})`);
+
+        // Increment before processing so concurrent requests are counted
+        const { error: updErr } = await adminClient
+          .from("profiles")
+          .update({ scans_today: currentCount + 1 })
+          .eq("user_id", user.id);
+
+        if (updErr) {
+          console.error(`[ScanLimit] Increment failed: ${updErr.message}`);
+        } else {
           console.log(`[ScanLimit] Incremented scan count for user ${user.id.slice(0, 8)} to ${currentCount + 1}/${limit} (${tier})`);
         }
       } catch (limitErr) {
-        // Fail-open on transient errors so legitimate users aren't blocked
-        console.error("[ScanLimit] Check failed, allowing request:", (limitErr as Error).message);
+        // Log loudly but fail-open so legitimate users aren't blocked by transient errors
+        console.error("[ScanLimit] Check threw exception, allowing request:", (limitErr as Error).message, (limitErr as Error).stack);
       }
     }
 
