@@ -185,7 +185,7 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            Upload a photo and receive AI-generated insights that may help reveal signs of AI creation, manipulation, editing, or 'Photoshopped' images.
+            Upload any image to see what 5 independent AI models find. We detect indicators of AI generation AND post-processing manipulation — and show you exactly what each model reports.
           </motion.p>
 
           <motion.p
@@ -194,7 +194,7 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.25 }}
           >
-            Our system analyzes visual patterns, metadata signals, and image characteristics using 5 AI models to help you evaluate digital images.
+            Our models don't tell you what an image is — they report what they find. You decide what it means.
           </motion.p>
 
           <motion.div

@@ -119,13 +119,13 @@ const WhyFiveModels = () => {
             </div>
 
             <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
-              Like a jury of peers, our 5 AI models each deliver an independent verdict.
-              The consensus result is far more reliable than any single opinion.
+              Like expert witnesses, our 5 AI models each report their independent findings.
+              Winston AI, SightEngine, and AI or Not look for AI generation indicators.
+              Gemini and Hive look for manipulation indicators.
             </p>
 
             <p className="text-sm leading-relaxed text-muted-foreground">
-              And unlike black-box detectors, we show you exactly how each model voted
-              — so you can make your own informed judgment.
+              The consensus reflects what the majority found — and you see every individual report.
             </p>
           </motion.div>
         </div>
