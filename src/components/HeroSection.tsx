@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Upload, Zap, Shield, Search, Fingerprint, FileWarning, ScanEye, ChevronDown } from "lucide-react";
+import { Upload, Zap, Shield, Search, Fingerprint, FileWarning, ScanEye, ChevronDown, LogIn } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import montage1 from "@/assets/montage-1.jpg";
@@ -34,7 +35,8 @@ interface HeroSectionProps {
 const cycleWords = ["Real", "Fake", "AI-Generated", "Photoshopped", "Edited"];
 
 const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
-  const { subscription } = useAuth();
+  const { subscription, user } = useAuth();
+  const navigate = useNavigate();
   const [wordIndex, setWordIndex] = useState(0);
   const [showModels, setShowModels] = useState(false);
 
@@ -207,10 +209,19 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
               variant="outline"
               size="lg"
               className="gap-2 px-8 text-base border-[1.5px] border-primary text-foreground bg-transparent hover:bg-primary/10"
-              onClick={onScrollToUpload}
+              onClick={user ? onScrollToUpload : () => navigate("/auth")}
             >
-              <Upload className="h-4 w-4 text-primary" />
-              Upload Image
+              {user ? (
+                <>
+                  <Upload className="h-4 w-4 text-primary" />
+                  Upload Image
+                </>
+              ) : (
+                <>
+                  <LogIn className="h-4 w-4 text-primary" />
+                  Start Free — Sign In to Analyze
+                </>
+              )}
             </Button>
             {subscription.tier !== "pro" && (
               <Button
@@ -231,6 +242,12 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
               </Button>
             )}
           </motion.div>
+
+          {!user && (
+            <p className="text-xs text-muted-foreground/70 mt-2">
+              Free account required · No credit card needed · 3 free scans per day
+            </p>
+          )}
 
           {/* Disclaimer */}
           <motion.p
