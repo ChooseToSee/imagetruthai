@@ -167,10 +167,10 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
     }
   }, [result, imagePreview, toast]);
 
-  const handleGenerateShareLink = useCallback(async () => {
+  const handleGenerateShareLink = useCallback(async (): Promise<string | null> => {
     if (!user) {
       toast({ title: "Sign in required", description: "You need to be signed in to share reports.", variant: "destructive" });
-      return;
+      return null;
     }
     setIsSharing(true);
     try {
