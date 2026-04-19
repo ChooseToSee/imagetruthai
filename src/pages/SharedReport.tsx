@@ -189,11 +189,15 @@ const SharedReport = () => {
                                 {m.confidence}% — {mIsAI ? "indicators found" : "no indicators found"}
                               </span>
                             </div>
-                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted mb-2">
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                               <div
                                 className={`h-full rounded-full ${mIsAI ? "bg-destructive" : "bg-success"}`}
                                 style={{ width: `${m.confidence}%`, float: mIsAI ? "right" : "left" }}
                               />
+                            </div>
+                            <div className="flex justify-between mt-0.5 mb-2">
+                              <span className="text-[10px] text-muted-foreground">{mIsAI ? "100%" : "1%"}</span>
+                              <span className="text-[10px] text-muted-foreground">{mIsAI ? "1%" : "100%"}</span>
                             </div>
                           </div>
                         );
