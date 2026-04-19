@@ -700,6 +700,20 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // ── Require authentication for ALL scans ────────────────────────────
+  // Anonymous traffic has no enforceable per-user quota, so block it
+  // entirely and route users to the auth flow on the client.
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response(
+      JSON.stringify({
+        error: "Sign in required to analyze images. Create a free account — it only takes a minute.",
+        requiresAuth: true,
+      }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
   try {
     // Early Content-Length check before reading body
     const contentLength = req.headers.get("content-length");
@@ -754,15 +768,15 @@ serve(async (req) => {
     const wantsStream = req.headers.get("x-stream") === "true";
 
     // ── Server-side scan limit enforcement ──────────────────────────
-    // Authenticated users get plan-based daily limits enforced here
-    // so technical users can't bypass UI checks.
+    // All callers are authenticated (gated at top of handler).
+    // Plan-based daily limits are enforced here so technical users
+    // can't bypass UI checks.
     const supabaseUrlForLimit = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKeyForLimit = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const authHeader = req.headers.get("Authorization");
-    let userTier: string = "free"; // anonymous treated as free for downstream checks (e.g. reCAPTCHA)
+    let userTier: string = "free";
     let userIdForLog: string | null = null;
-    if (authHeader) {
+    {
       try {
         const userClient = createClient(supabaseUrlForLimit, supabaseAnonKey, {
           global: { headers: { Authorization: authHeader } },
@@ -824,9 +838,6 @@ serve(async (req) => {
         // Fail-open on transient errors so legitimate users aren't blocked
         console.error("[ScanLimit] Check failed, allowing request:", (limitErr as Error).message);
       }
-    } else {
-      // Visibility into unauthenticated traffic (no blocking primitives available yet)
-      console.log("[RateLimit] Unauthenticated request from IP:", clientIP);
     }
 
     // Free-tier usage visibility (helps spot abuse patterns)

@@ -261,7 +261,13 @@ const Index = () => {
         } else { setBatchResults(successes); }
       }
     } catch (err: any) {
-      if (err?.limitReached) {
+      if (err?.requiresAuth) {
+        toast({
+          title: "Sign in required",
+          description: "Create a free account to analyze images — it only takes a minute.",
+        });
+        setTimeout(() => navigate("/auth"), 1500);
+      } else if (err?.limitReached) {
         toast({
           title: "Daily scan limit reached",
           description: err.message,

@@ -45,6 +45,11 @@ export async function analyzeImageStream(
     let parsed: any = null;
     try { parsed = JSON.parse(text); } catch {}
 
+    if (resp.status === 401 || parsed?.requiresAuth) {
+      const err = new Error(parsed?.error || "Sign in required to analyze images.");
+      (err as any).requiresAuth = true;
+      throw err;
+    }
     if (resp.status === 429 && parsed?.limitReached) {
       const err = new Error(parsed.error || "Daily scan limit reached");
       (err as any).limitReached = true;

@@ -509,6 +509,24 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                         ? "Indicators of AI generation were detected."
                         : "No indicators of AI generation were detected."}
                     </p>
+                    {(() => {
+                      const activeModels = result.modelBreakdown?.filter(
+                        (m) => m.confidence > 0 && m.reasons.length > 0
+                      ).length ?? 0;
+                      if (activeModels > 0 && activeModels < 5) {
+                        return (
+                          <p className="text-xs text-muted-foreground/70 mt-1.5 flex items-center gap-1.5">
+                            <Info className="h-3 w-3 shrink-0 text-amber-500" />
+                            <span>
+                              Analysis used{" "}
+                              <span className="font-medium">{activeModels} of 5 models</span>
+                              {" "}— one or more models were temporarily unavailable
+                            </span>
+                          </p>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                 </motion.div>
 
