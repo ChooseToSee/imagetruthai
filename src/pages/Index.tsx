@@ -131,6 +131,18 @@ const Index = () => {
   }, []);
 
   useEffect(() => {
+    if (!singleResult && !batchResults) return;
+    const timer = setTimeout(() => {
+      const el = document.getElementById("results");
+      if (el) {
+        const top = el.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top, behavior: "smooth" });
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [singleResult, batchResults]);
+
+  useEffect(() => {
     if (isAnalyzing && streamProgress && streamProgress.completed > 0 && streamProgress.completed < streamProgress.total) {
       timeoutRef.current = setTimeout(() => setPartialReady(true), 15000);
       return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
