@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Upload, Zap, Shield, Search, Fingerprint, FileWarning, ScanEye, ChevronDown } from "lucide-react";
+import { Upload, Zap, Shield, Search, Fingerprint, FileWarning, ScanEye, ChevronDown, LogIn } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import montage1 from "@/assets/montage-1.jpg";
