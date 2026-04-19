@@ -27,6 +27,27 @@ const Footer = () => {
           <p className="text-[11px] text-muted-foreground/50">
             © 2026 Choose To See, LLC. All rights reserved.
           </p>
+          <p className="text-[11px] text-muted-foreground/50">
+            Protected by reCAPTCHA —{" "}
+            <a
+              href="https://policies.google.com/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
+              Privacy Policy
+            </a>
+            {" "}and{" "}
+            <a
+              href="https://policies.google.com/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
+              Terms of Service
+            </a>
+            {" "}apply.
+          </p>
         </div>
       </div>
     </footer>

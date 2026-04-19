@@ -127,3 +127,8 @@
     pointer-events: none;
   }
 }
+
+/* Hide reCAPTCHA v3 floating badge — required legal text shown in Footer instead */
+.grecaptcha-badge {
+  visibility: hidden !important;
+}
