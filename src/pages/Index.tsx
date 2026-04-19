@@ -229,15 +229,20 @@ const Index = () => {
     setBatchResults(null);
     setPartialReady(false);
     try {
+      // Get a reCAPTCHA v3 token for free-tier users to deter automated abuse.
+      // Invisible to the user; null is acceptable (server fails open if absent).
+      const isFreeTier = subscription.tier === "free";
+      const recaptchaToken = isFreeTier ? await getRecaptchaToken("analyze") : null;
+
       if (files.length === 1) {
         const preview = URL.createObjectURL(files[0]);
-        await analyzeOneStreaming(files[0], preview);
+        await analyzeOneStreaming(files[0], preview, recaptchaToken);
       } else {
         const settled: PromiseSettledResult<{ result: AnalysisResult; preview: string }>[] = [];
         const concurrency = 2;
         for (let i = 0; i < files.length; i += concurrency) {
           const batch = files.slice(i, i + concurrency);
-          const batchResults = await Promise.allSettled(batch.map((f) => analyzeOneFallback(f)));
+          const batchResults = await Promise.allSettled(batch.map((f) => analyzeOneFallback(f, recaptchaToken)));
           settled.push(...batchResults);
           if (i + concurrency < files.length) await new Promise((r) => setTimeout(r, 1000));
         }
