@@ -828,11 +828,15 @@ serve(async (req) => {
             );
           }
 
+          console.log(`[ScanLimit] Scan allowed for user ${user.id.slice(0, 8)}: ${currentCount}/${limit} (${tier})`);
+
           // Increment before processing so concurrent requests are counted
           await adminClient
             .from("profiles")
             .update({ scans_today: currentCount + 1 })
             .eq("user_id", user.id);
+
+          console.log(`[ScanLimit] Incremented scan count for user ${user.id.slice(0, 8)} to ${currentCount + 1}/${limit} (${tier})`);
         }
       } catch (limitErr) {
         // Fail-open on transient errors so legitimate users aren't blocked
