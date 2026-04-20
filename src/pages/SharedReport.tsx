@@ -127,7 +127,7 @@ const SharedReport = () => {
                   const xText = encodeURIComponent(
                     `🔍 Check out this image analysis from @ImageTruthAI\n\n${window.location.href}`
                   );
-                  window.open(`https://twitter.com/intent/tweet?text=${xText}`, "_blank");
+                  window.open(`https://x.com/intent/post?text=${xText}`, "_blank");
                 }}
                 className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
               >
