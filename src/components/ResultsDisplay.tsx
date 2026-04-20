@@ -254,17 +254,19 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
         linkToShare = null;
       }
     }
-    const displayUrl = linkToShare || "https://imagetruthai.com";
+    const displayUrl =
+      linkToShare && linkToShare.length < 100 ? linkToShare : "https://imagetruthai.com";
     const xText = encodeURIComponent(
       `🔍 ${result.confidence}% — ${
-        isAI
-          ? "AI generation indicators detected 🤖"
-          : "No AI generation indicators detected ✅"
-      }\n\nAnalyzed by 5 independent AI models.\nSee what the models found 👇\n\n${displayUrl}\n\nvia @ImageTruthAI`
+        isAI ? "AI indicators detected 🤖" : "No AI indicators detected ✅"
+      }\n\nSee what 5 AI models found:\n${displayUrl}\n\nvia @ImageTruthAI`
     );
     const tweetUrl = `https://twitter.com/intent/tweet?text=${xText}`;
-    console.log("[XShare] Tweet URL:", tweetUrl.slice(0, 200));
-    window.open(tweetUrl, "_blank", "noopener,noreferrer");
+    console.log("[XShare] Tweet URL:", tweetUrl.slice(0, 300));
+    console.log("[XShare] URL length:", tweetUrl.length);
+    setTimeout(() => {
+      window.open(tweetUrl, "_blank", "noopener,noreferrer");
+    }, 100);
   }, [shareLink, handleGenerateShareLink, result.confidence, isAI]);
 
   const handleFacebookShare = useCallback(async () => {
