@@ -136,7 +136,8 @@ Deno.serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "public, max-age=300",
+        "Cache-Control": "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400",
+        "ETag": `"${token}"`,
       },
     });
   } catch (err) {
