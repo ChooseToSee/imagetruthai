@@ -12,7 +12,8 @@ const SIGNAL_KEYWORDS = [
 
 export async function exportReportPdf(
   result: AnalysisResult,
-  imageUrl: string
+  imageUrl: string,
+  shareUrl?: string
 ): Promise<void> {
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = pdf.internal.pageSize.getWidth();
@@ -218,6 +219,58 @@ export async function exportReportPdf(
       y += lines.length * 4.5;
     });
     y += 4;
+  }
+
+  // Share section
+  if (y > 240) { pdf.addPage(); y = 15; }
+  y += 4;
+  pdf.setFontSize(11);
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(40, 40, 40);
+  pdf.text("Share This Report", 15, y);
+  y += 6;
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(9);
+  pdf.setTextColor(80, 80, 80);
+
+  if (shareUrl) {
+    pdf.text("View this report online:", 15, y);
+    y += 5;
+    pdf.setTextColor(77, 124, 255);
+    pdf.text(shareUrl, 15, y);
+    pdf.link(15, y - 4, pageW - 30, 6, { url: shareUrl });
+    y += 8;
+    pdf.setTextColor(80, 80, 80);
+
+    pdf.text("Share on social media:", 15, y);
+    y += 5;
+    const tweetText = `🔍 ImageTruth AI Analysis\n\n${shareUrl}\n\nvia @ImageTruthAI`;
+    const xLink = `https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+    const fbLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+    const liLink = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+    const socialLinks: Array<{ label: string; url: string }> = [
+      { label: "Share on X", url: xLink },
+      { label: "Share on Facebook", url: fbLink },
+      { label: "Share on LinkedIn", url: liLink },
+    ];
+    socialLinks.forEach(({ label, url }) => {
+      if (y > 270) { pdf.addPage(); y = 15; }
+      pdf.setTextColor(77, 124, 255);
+      pdf.text(`• ${label}`, 18, y);
+      pdf.link(18, y - 4, pageW - 36, 6, { url });
+      y += 5;
+    });
+    pdf.setTextColor(80, 80, 80);
+    y += 2;
+    const note = "Visit the URL above to view the full interactive report online.";
+    const noteLines = pdf.splitTextToSize(note, pageW - 30);
+    pdf.text(noteLines, 15, y);
+    y += noteLines.length * 4.5 + 4;
+  } else {
+    const noLinkNote = "Generate a public share link from the report page to include shareable URLs in this PDF.";
+    const noLines = pdf.splitTextToSize(noLinkNote, pageW - 30);
+    pdf.text(noLines, 15, y);
+    y += noLines.length * 4.5 + 4;
   }
 
   // Signals table

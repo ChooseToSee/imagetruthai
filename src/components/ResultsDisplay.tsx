@@ -159,7 +159,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
   const handleDownloadPdf = useCallback(async () => {
     setIsExportingPdf(true);
     try {
-      await exportReportPdf(result, imagePreview);
+      await exportReportPdf(result, imagePreview, shareLink || undefined);
       toast({ title: "PDF downloaded", description: "Your analysis report has been saved as PDF." });
     } catch (err) {
       console.error("PDF export error:", err);
@@ -167,7 +167,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
     } finally {
       setIsExportingPdf(false);
     }
-  }, [result, imagePreview, toast]);
+  }, [result, imagePreview, shareLink, toast]);
 
   const handleGenerateShareLink = useCallback(async (): Promise<string | null> => {
     if (!user) {

@@ -19,6 +19,7 @@ import { Trash2, Clock, AlertTriangle, CheckCircle, Lock, FileDown, ChevronDown,
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ImageLightbox from "@/components/ImageLightbox";
+import HistoryShareButtons from "@/components/HistoryShareButtons";
 import { useToast } from "@/hooks/use-toast";
 import { exportReportPdf } from "@/lib/pdf-export";
 import type { AnalysisResult } from "@/components/ResultsDisplay";
@@ -352,6 +353,7 @@ const History = () => {
                       <p className="text-[10px] text-muted-foreground/60 mt-3 italic">
                         Results show what AI models found — not a definitive determination. See full analysis for details.
                       </p>
+                      <HistoryShareButtons scan={scan} />
                     </div>
                   )}
                 </div>
