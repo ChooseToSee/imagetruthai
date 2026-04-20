@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import ImageHeatmap from "@/components/ImageHeatmap";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SocialShareButtons from "@/components/SocialShareButtons";
 import type { AnalysisResult, ModelBreakdown, ManipulationResult } from "@/components/ResultsDisplay";
 
 interface SharedReportData {
