@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import ImageHeatmap from "@/components/ImageHeatmap";
-import { buildOgShareUrl } from "@/lib/share-url";
+
 
 export interface ModelBreakdown {
   model: string;
@@ -296,10 +296,9 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
       }
     }
 
-    // Desktop / fallback: route through OG edge function so Facebook crawler picks up the analyzed image
-    const ogUrl = linkToShare ? buildOgShareUrl(urlToShare) : urlToShare;
+    // Desktop / fallback: open Facebook web sharer with the clean report URL
     window.open(
-      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(ogUrl)}`,
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`,
       "_blank",
       "width=600,height=400,noopener,noreferrer"
     );
@@ -315,10 +314,8 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
       }
     }
     const urlToShare = linkToShare || "https://imagetruthai.com";
-    // Route through OG edge function for richer LinkedIn previews
-    const ogUrl = linkToShare ? buildOgShareUrl(urlToShare) : urlToShare;
     window.open(
-      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(ogUrl)}`,
+      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(urlToShare)}`,
       "_blank",
       "width=600,height=400,noopener,noreferrer"
     );
