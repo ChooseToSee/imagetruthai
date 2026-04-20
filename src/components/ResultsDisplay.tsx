@@ -261,10 +261,15 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
         isAI ? "AI indicators detected 🤖" : "No AI indicators detected ✅"
       }\n\nSee what 5 AI models found:\n${displayUrl}\n\nvia @ImageTruthAI`
     );
-    const tweetUrl = `https://twitter.com/intent/tweet?text=${xText}`;
+    const tweetUrl = `https://x.com/intent/tweet?text=${xText}`;
+    const isMobile = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     console.log("[XShare] Tweet URL:", tweetUrl.slice(0, 300));
     console.log("[XShare] URL length:", tweetUrl.length);
     setTimeout(() => {
+      if (isMobile) {
+        window.location.href = tweetUrl;
+        return;
+      }
       window.open(tweetUrl, "_blank", "noopener,noreferrer");
     }, 100);
   }, [shareLink, handleGenerateShareLink, result.confidence, isAI]);

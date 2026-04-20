@@ -162,7 +162,13 @@ const SharedReport = () => {
                   const xText = encodeURIComponent(
                     `🔍 Check out this image analysis from @ImageTruthAI\n\n${window.location.href}`
                   );
-                  window.open(`https://twitter.com/intent/tweet?text=${xText}`, "_blank", "noopener,noreferrer");
+                  const tweetUrl = `https://x.com/intent/tweet?text=${xText}`;
+                  const isMobile = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+                  if (isMobile) {
+                    window.location.href = tweetUrl;
+                    return;
+                  }
+                  window.open(tweetUrl, "_blank", "noopener,noreferrer");
                 }}
                 className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
               >
