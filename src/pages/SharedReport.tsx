@@ -8,6 +8,7 @@ import ImageHeatmap from "@/components/ImageHeatmap";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SocialShareButtons from "@/components/SocialShareButtons";
+import { buildOgShareUrl } from "@/lib/share-url";
 import type { AnalysisResult, ModelBreakdown, ManipulationResult } from "@/components/ResultsDisplay";
 
 interface SharedReportData {
@@ -125,8 +126,9 @@ const SharedReport = () => {
             <div className="flex flex-wrap justify-end gap-2 mb-6">
               <button
                 onClick={() => {
+                  const ogUrl = buildOgShareUrl(window.location.href);
                   const xText = encodeURIComponent(
-                    `🔍 Check out this image analysis from @ImageTruthAI\n\n${window.location.href}`
+                    `🔍 Check out this image analysis from @ImageTruthAI\n\n${ogUrl}`
                   );
                   window.open(`https://x.com/intent/post?text=${xText}`, "_blank");
                 }}
@@ -138,7 +140,7 @@ const SharedReport = () => {
                 Share on X
               </button>
               <SocialShareButtons
-                getShareUrl={() => window.location.href}
+                getShareUrl={() => buildOgShareUrl(window.location.href)}
                 shareText={`🔍 Check out this image analysis from ImageTruth AI — ${confidence}% ${isAI ? "AI generation indicators detected" : "no AI generation indicators detected"}.`}
               />
             </div>
