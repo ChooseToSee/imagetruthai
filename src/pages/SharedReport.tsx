@@ -122,7 +122,7 @@ const SharedReport = () => {
             </div>
 
             {/* Share on X */}
-            <div className="flex justify-end mb-6">
+            <div className="flex flex-wrap justify-end gap-2 mb-6">
               <button
                 onClick={() => {
                   const xText = encodeURIComponent(
@@ -137,6 +137,10 @@ const SharedReport = () => {
                 </svg>
                 Share on X
               </button>
+              <SocialShareButtons
+                getShareUrl={() => window.location.href}
+                shareText={`🔍 Check out this image analysis from ImageTruth AI — ${confidence}% ${isAI ? "AI generation indicators detected" : "no AI generation indicators detected"}.`}
+              />
             </div>
 
             <div className="rounded-xl border border-border bg-card shadow-card overflow-hidden">
