@@ -8,7 +8,6 @@ import ImageHeatmap from "@/components/ImageHeatmap";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SocialShareButtons from "@/components/SocialShareButtons";
-import { buildOgShareUrl } from "@/lib/share-url";
 import type { AnalysisResult, ModelBreakdown, ManipulationResult } from "@/components/ResultsDisplay";
 
 interface SharedReportData {
@@ -56,6 +55,40 @@ const SharedReport = () => {
       setLoading(false);
     })();
   }, [token]);
+
+  // Dynamically inject OG meta tags so crawlers see the analyzed image.
+  useEffect(() => {
+    if (!report) return;
+    const isAIVerdict = report.verdict === "ai";
+    const title = `ImageTruth AI Analysis: ${
+      isAIVerdict ? "AI Generation Indicators Detected" : "No AI Generation Indicators Detected"
+    } (${report.confidence}%)`;
+    const description = "Analyzed by 5 independent AI models. Results show what models found — not a definitive determination.";
+
+    const setMeta = (property: string, content: string) => {
+      let el = document.querySelector(`meta[property="${property}"]`);
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute("property", property);
+        document.head.appendChild(el);
+      }
+      el.setAttribute("content", content);
+    };
+
+    setMeta("og:title", title);
+    setMeta("og:description", description);
+    setMeta("og:url", window.location.href);
+    setMeta("og:type", "article");
+    if (report.image_url) {
+      setMeta("og:image", report.image_url);
+      setMeta("og:image:secure_url", report.image_url);
+    }
+    document.title = title;
+
+    return () => {
+      document.title = "ImageTruth AI — Detect AI Images";
+    };
+  }, [report]);
 
   if (loading) {
     return (
@@ -126,11 +159,10 @@ const SharedReport = () => {
             <div className="flex flex-wrap justify-end gap-2 mb-6">
               <button
                 onClick={() => {
-                  const ogUrl = buildOgShareUrl(window.location.href);
                   const xText = encodeURIComponent(
-                    `🔍 Check out this image analysis from @ImageTruthAI\n\n${ogUrl}`
+                    `🔍 Check out this image analysis from @ImageTruthAI\n\n${window.location.href}`
                   );
-                  window.open(`https://twitter.com/intent/tweet?text=${xText}`, "_blank");
+                  window.open(`https://twitter.com/intent/tweet?text=${xText}`, "_blank", "noopener,noreferrer");
                 }}
                 className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
               >
@@ -140,7 +172,7 @@ const SharedReport = () => {
                 Share on X
               </button>
               <SocialShareButtons
-                getShareUrl={() => buildOgShareUrl(window.location.href)}
+                getShareUrl={() => window.location.href}
                 shareText={`🔍 Check out this image analysis from ImageTruth AI — ${confidence}% ${isAI ? "AI generation indicators detected" : "no AI generation indicators detected"}.`}
               />
             </div>
