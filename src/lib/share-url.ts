@@ -9,9 +9,11 @@ export function buildOgShareUrl(reportPageUrl: string): string {
     const match = url.pathname.match(/\/report\/([^/?#]+)/);
     if (!match) return reportPageUrl;
     const token = match[1];
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-    if (!projectId) return reportPageUrl;
-    return `https://${projectId}.supabase.co/functions/v1/report-og?token=${encodeURIComponent(token)}`;
+    const base = supabaseUrl || (projectId ? `https://${projectId}.supabase.co` : null);
+    if (!base) return reportPageUrl;
+    return `${base}/functions/v1/report-og?token=${encodeURIComponent(token)}`;
   } catch {
     return reportPageUrl;
   }
