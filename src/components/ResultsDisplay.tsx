@@ -261,7 +261,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
           : "No AI generation indicators detected ✅"
       }\n\nAnalyzed by 5 independent AI models.\nSee what the models found 👇\n\n${finalLink}\n\nvia @ImageTruthAI`
     );
-    window.open(`https://twitter.com/intent/tweet?text=${xText}`, "_blank");
+    window.open(`https://x.com/intent/post?text=${xText}`, "_blank");
   }, [shareLink, handleGenerateShareLink, result.confidence, isAI]);
 
   const handleTogglePrivacy = useCallback(async () => {
