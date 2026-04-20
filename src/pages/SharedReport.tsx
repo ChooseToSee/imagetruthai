@@ -126,8 +126,9 @@ const SharedReport = () => {
             <div className="flex flex-wrap justify-end gap-2 mb-6">
               <button
                 onClick={() => {
+                  const ogUrl = buildOgShareUrl(window.location.href);
                   const xText = encodeURIComponent(
-                    `🔍 Check out this image analysis from @ImageTruthAI\n\n${window.location.href}`
+                    `🔍 Check out this image analysis from @ImageTruthAI\n\n${ogUrl}`
                   );
                   window.open(`https://x.com/intent/post?text=${xText}`, "_blank");
                 }}
