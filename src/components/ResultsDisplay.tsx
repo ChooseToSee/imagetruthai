@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import ImageHeatmap from "@/components/ImageHeatmap";
+import { decideXShareNavigation } from "@/lib/x-share";
 
 
 export interface ModelBreakdown {
@@ -256,21 +257,18 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
     }
     const displayUrl =
       linkToShare && linkToShare.length < 100 ? linkToShare : "https://imagetruthai.com";
-    const xText = encodeURIComponent(
-      `🔍 ${result.confidence}% — ${
-        isAI ? "AI indicators detected 🤖" : "No AI indicators detected ✅"
-      }\n\nSee what 5 AI models found:\n${displayUrl}\n\nvia @ImageTruthAI`
-    );
-    const tweetUrl = `https://x.com/intent/tweet?text=${xText}`;
-    const isMobile = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    console.log("[XShare] Tweet URL:", tweetUrl.slice(0, 300));
-    console.log("[XShare] URL length:", tweetUrl.length);
+    const tweetText = `🔍 ${result.confidence}% — ${
+      isAI ? "AI indicators detected 🤖" : "No AI indicators detected ✅"
+    }\n\nSee what 5 AI models found:\n${displayUrl}\n\nvia @ImageTruthAI`;
+    const decision = decideXShareNavigation(tweetText, navigator.userAgent);
+    console.log("[XShare] Tweet URL:", decision.url.slice(0, 300));
+    console.log("[XShare] URL length:", decision.url.length, "mode:", decision.mode);
     setTimeout(() => {
-      if (isMobile) {
-        window.location.href = tweetUrl;
+      if (decision.mode === "same-tab") {
+        window.location.href = decision.url;
         return;
       }
-      window.open(tweetUrl, "_blank", "noopener,noreferrer");
+      window.open(decision.url, "_blank", "noopener,noreferrer");
     }, 100);
   }, [shareLink, handleGenerateShareLink, result.confidence, isAI]);
 

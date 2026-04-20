@@ -8,6 +8,7 @@ import ImageHeatmap from "@/components/ImageHeatmap";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SocialShareButtons from "@/components/SocialShareButtons";
+import { decideXShareNavigation } from "@/lib/x-share";
 import type { AnalysisResult, ModelBreakdown, ManipulationResult } from "@/components/ResultsDisplay";
 
 interface SharedReportData {
@@ -159,16 +160,13 @@ const SharedReport = () => {
             <div className="flex flex-wrap justify-end gap-2 mb-6">
               <button
                 onClick={() => {
-                  const xText = encodeURIComponent(
-                    `🔍 Check out this image analysis from @ImageTruthAI\n\n${window.location.href}`
-                  );
-                  const tweetUrl = `https://x.com/intent/tweet?text=${xText}`;
-                  const isMobile = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-                  if (isMobile) {
-                    window.location.href = tweetUrl;
+                  const tweetText = `🔍 Check out this image analysis from @ImageTruthAI\n\n${window.location.href}`;
+                  const decision = decideXShareNavigation(tweetText, navigator.userAgent);
+                  if (decision.mode === "same-tab") {
+                    window.location.href = decision.url;
                     return;
                   }
-                  window.open(tweetUrl, "_blank", "noopener,noreferrer");
+                  window.open(decision.url, "_blank", "noopener,noreferrer");
                 }}
                 className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
               >
