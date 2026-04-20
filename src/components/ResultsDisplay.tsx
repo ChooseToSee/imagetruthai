@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import ImageHeatmap from "@/components/ImageHeatmap";
+import SocialShareButtons from "@/components/SocialShareButtons";
 
 export interface ModelBreakdown {
   model: string;
