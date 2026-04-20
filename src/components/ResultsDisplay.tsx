@@ -1022,6 +1022,10 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                     </svg>
                     Share on X
                   </Button>
+                  <SocialShareButtons
+                    getShareUrl={async () => (shareLink ?? (await handleGenerateShareLink()) ?? "https://imagetruthai.com")}
+                    shareText={`🔍 ${result.confidence}% — ${isAI ? "AI generation indicators detected 🤖" : "No AI generation indicators detected ✅"}\n\nAnalyzed by 5 independent AI models. See what the models found.\n\nvia ImageTruth AI`}
+                  />
                 </div>
               </div>
             </div>
