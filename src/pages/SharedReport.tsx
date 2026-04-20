@@ -8,6 +8,7 @@ import ImageHeatmap from "@/components/ImageHeatmap";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SocialShareButtons from "@/components/SocialShareButtons";
+import { buildOgShareUrl } from "@/lib/share-url";
 import type { AnalysisResult, ModelBreakdown, ManipulationResult } from "@/components/ResultsDisplay";
 
 interface SharedReportData {
@@ -138,7 +139,7 @@ const SharedReport = () => {
                 Share on X
               </button>
               <SocialShareButtons
-                getShareUrl={() => window.location.href}
+                getShareUrl={() => buildOgShareUrl(window.location.href)}
                 shareText={`🔍 Check out this image analysis from ImageTruth AI — ${confidence}% ${isAI ? "AI generation indicators detected" : "no AI generation indicators detected"}.`}
               />
             </div>

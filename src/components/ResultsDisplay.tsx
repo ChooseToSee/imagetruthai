@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import ImageHeatmap from "@/components/ImageHeatmap";
 import SocialShareButtons from "@/components/SocialShareButtons";
+import { buildOgShareUrl } from "@/lib/share-url";
 
 export interface ModelBreakdown {
   model: string;
@@ -254,7 +255,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
         linkToShare = null;
       }
     }
-    const finalLink = linkToShare || "https://imagetruthai.com";
+    const finalLink = linkToShare ? buildOgShareUrl(linkToShare) : "https://imagetruthai.com";
     const xText = encodeURIComponent(
       `🔍 ${result.confidence}% — ${
         isAI
@@ -1023,7 +1024,10 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                     Share on X
                   </Button>
                   <SocialShareButtons
-                    getShareUrl={async () => (shareLink ?? (await handleGenerateShareLink()) ?? "https://imagetruthai.com")}
+                    getShareUrl={async () => {
+                      const link = shareLink ?? (await handleGenerateShareLink());
+                      return link ? buildOgShareUrl(link) : "https://imagetruthai.com";
+                    }}
                     shareText={`🔍 ${result.confidence}% — ${isAI ? "AI generation indicators detected 🤖" : "No AI generation indicators detected ✅"}\n\nAnalyzed by 5 independent AI models. See what the models found.\n\nvia ImageTruth AI`}
                   />
                 </div>
