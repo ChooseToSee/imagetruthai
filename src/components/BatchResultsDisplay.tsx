@@ -189,76 +189,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
     <section className="py-12">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-4xl">
-          {/* Summary header */}
-          <div className="mb-8 rounded-xl border border-border bg-card p-6 shadow-card">
-            <div className="mb-4 flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <BarChart3 className="h-4 w-4 text-primary" />
-              Batch Summary — {items.length} image{items.length !== 1 ? "s" : ""} analyzed
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="rounded-lg bg-muted/50 p-4 text-center">
-                <p className="text-2xl font-bold text-destructive">{aiCount}</p>
-                <p className="text-xs text-muted-foreground">AI indicators found</p>
-              </div>
-              <div className="rounded-lg bg-muted/50 p-4 text-center">
-                <p className="text-2xl font-bold text-success">{humanCount}</p>
-                <p className="text-xs text-muted-foreground">No AI indicators</p>
-              </div>
-              <div className="rounded-lg bg-muted/50 p-4 text-center">
-                <div className="flex items-center justify-center gap-1.5 mb-1">
-                  <Pencil className="h-3.5 w-3.5 text-warning" />
-                  <span className="text-xs text-muted-foreground">Edit Indicators</span>
-                </div>
-                <p className="text-2xl font-bold text-warning">{editedCount}</p>
-                <p className="text-xs text-muted-foreground">of {items.length} images</p>
-              </div>
-              <div className="rounded-lg bg-muted/50 p-4 text-center">
-                <p className="text-2xl font-bold text-primary">{avgConfidence}%</p>
-                <p className="text-xs text-muted-foreground">Avg Confidence</p>
-              </div>
-            </div>
-
-            {/* Stacked bar */}
-            <div className="mt-4">
-              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                <div className="flex h-full">
-                  <div
-                    className="bg-success transition-all"
-                    style={{ width: `${(humanCount / items.length) * 100}%` }}
-                  />
-                  <div
-                    className="bg-destructive transition-all"
-                    style={{ width: `${(aiCount / items.length) * 100}%` }}
-                  />
-                </div>
-              </div>
-              <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
-                <span>Human</span>
-                <span>AI</span>
-              </div>
-            </div>
-
-            {/* Edit detection stacked bar */}
-            <div className="mt-3">
-              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                <div className="flex h-full">
-                  <div
-                    className="bg-success transition-all"
-                    style={{ width: `${((items.length - editedCount) / items.length) * 100}%` }}
-                  />
-                  <div
-                    className="bg-warning transition-all"
-                    style={{ width: `${(editedCount / items.length) * 100}%` }}
-                  />
-                </div>
-              </div>
-              <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
-                <span>Original</span>
-                <span>Edited</span>
-              </div>
-            </div>
-          </div>
+          {/* Batch Summary card hidden until a later release */}
 
           {/* Individual results */}
           <div className="space-y-3">
