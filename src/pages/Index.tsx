@@ -115,9 +115,13 @@ const Index = () => {
     const shouldScroll = sessionStorage.getItem("scrollToUpload");
     if (shouldScroll) {
       sessionStorage.removeItem("scrollToUpload");
+      // Clear any restored results so the upload cards are rendered
+      sessionStorage.removeItem("lastAnalysisResult");
+      setSingleResult(null);
+      setBatchResults(null);
       setTimeout(() => {
         document.getElementById("upload")?.scrollIntoView({ behavior: "smooth" });
-      }, 500);
+      }, 300);
     }
   }, []);
 

@@ -243,14 +243,13 @@ const Navbar = () => {
                       className={menuItemClass}
                       onClick={() => {
                         setMenuOpen(false);
-                        const uploadSection = document.getElementById("upload");
-                        if (uploadSection) {
-                          uploadSection.scrollIntoView({ behavior: "smooth" });
+                        sessionStorage.setItem("scrollToUpload", "true");
+                        if (window.location.pathname === "/") {
+                          // Clear restored results so upload cards render
+                          sessionStorage.removeItem("lastAnalysisResult");
+                          window.location.reload();
                         } else {
                           navigate("/");
-                          setTimeout(() => {
-                            document.getElementById("upload")?.scrollIntoView({ behavior: "smooth" });
-                          }, 300);
                         }
                       }}
                     >
@@ -420,14 +419,13 @@ const Navbar = () => {
                 <button
                   onClick={() => {
                     setMobileOpen(false);
-                    setTimeout(() => {
-                      const upload = document.getElementById("upload");
-                      if (upload) {
-                        upload.scrollIntoView({ behavior: "smooth" });
-                      } else {
-                        window.location.href = "/#upload";
-                      }
-                    }, 100);
+                    sessionStorage.setItem("scrollToUpload", "true");
+                    if (window.location.pathname === "/") {
+                      sessionStorage.removeItem("lastAnalysisResult");
+                      window.location.reload();
+                    } else {
+                      navigate("/");
+                    }
                   }}
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
                 >
