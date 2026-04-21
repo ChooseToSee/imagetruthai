@@ -22,12 +22,74 @@ export async function exportReportPdf(
   // Title
   pdf.setFontSize(20);
   pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(40, 40, 40);
   pdf.text("ImageTruth AI — Analysis Report", pageW / 2, y, { align: "center" });
-  y += 10;
+  y += 8;
 
   pdf.setDrawColor(100, 100, 100);
   pdf.line(15, y, pageW - 15, y);
-  y += 8;
+  y += 7;
+
+  // ── Share Section (TOP) ──────────────
+  pdf.setFontSize(11);
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(40, 40, 40);
+  pdf.text("Share This Analysis", 15, y);
+  y += 6;
+
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(9);
+
+  if (shareUrl) {
+    // Show the specific report URL
+    pdf.setTextColor(80, 80, 80);
+    pdf.text("View this report online:", 15, y);
+    y += 5;
+    pdf.setTextColor(77, 124, 255);
+    pdf.textWithLink(shareUrl, 15, y, { url: shareUrl });
+    y += 7;
+
+    // Social share links for this specific analysis
+    pdf.setTextColor(80, 80, 80);
+    pdf.text("Share this analysis:", 15, y);
+    y += 5;
+
+    const verdictText = result.verdict === "ai"
+      ? "AI indicators detected"
+      : "No AI indicators detected";
+
+    const shareText = encodeURIComponent(
+      `🔍 ${result.confidence}% — ${verdictText}\n\nSee what 5 AI models found:\n${shareUrl}\n\nvia @ImageTruthAI`
+    );
+
+    const xUrl = `https://x.com/intent/tweet?text=${shareText}`;
+    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+    const liUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+
+    pdf.setTextColor(77, 124, 255);
+    pdf.textWithLink("• Share on X (Twitter)", 18, y, { url: xUrl });
+    y += 5;
+    pdf.textWithLink("• Share on Facebook", 18, y, { url: fbUrl });
+    y += 5;
+    pdf.textWithLink("• Share on LinkedIn", 18, y, { url: liUrl });
+    y += 5;
+
+    pdf.setTextColor(80, 80, 80);
+    pdf.text("• For Instagram/TikTok: copy and paste link above", 18, y);
+    y += 7;
+  } else {
+    pdf.setTextColor(80, 80, 80);
+    pdf.text("To share this analysis, visit:", 15, y);
+    y += 5;
+    pdf.setTextColor(77, 124, 255);
+    pdf.textWithLink("imagetruthai.com", 18, y, { url: "https://imagetruthai.com" });
+    y += 7;
+  }
+
+  pdf.setTextColor(40, 40, 40);
+  pdf.setDrawColor(220, 220, 220);
+  pdf.line(15, y, pageW - 15, y);
+  y += 6;
 
   // Try to add image
   try {
