@@ -529,7 +529,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                   variant="outline"
                   size="sm"
                   onClick={onReset}
-                  className="gap-2 text-xs"
+                  className="gap-2 text-xs border-primary text-primary hover:bg-primary/10 hover:text-primary"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
                   Upload Another Image
