@@ -774,8 +774,11 @@ serve(async (req) => {
       );
     }
 
-    // Reject suspiciously tiny payloads (bots probing the endpoint)
-    if (imageFile.size < 5000) {
+    // Reject suspiciously tiny payloads (bots probing the endpoint).
+    // 800 bytes is below any real JPEG/PNG with meaningful content but still
+    // catches empty/probe payloads. Client compression can produce very small
+    // files for simple images (~2-4KB), so the threshold must stay well below that.
+    if (imageFile.size < 800) {
       return new Response(
         JSON.stringify({ error: "Image is too small to analyze. Please upload a real image." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
