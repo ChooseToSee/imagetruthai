@@ -159,15 +159,30 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
   const handleDownloadPdf = useCallback(async () => {
     setIsExportingPdf(true);
     try {
-      await exportReportPdf(result, imagePreview, shareLink || undefined);
-      toast({ title: "PDF downloaded", description: "Your analysis report has been saved as PDF." });
+      // Auto-generate a share link for the PDF if one doesn't exist yet,
+      // so the report always includes shareable URLs.
+      let pdfShareLink = shareLink;
+      if (!pdfShareLink && user) {
+        try {
+          pdfShareLink = await handleGenerateShareLink();
+        } catch {
+          pdfShareLink = null;
+        }
+      }
+      await exportReportPdf(result, imagePreview, pdfShareLink || undefined);
+      toast({
+        title: "PDF downloaded",
+        description: pdfShareLink
+          ? "Share link included in report."
+          : "Your analysis report has been saved as PDF.",
+      });
     } catch (err) {
       console.error("PDF export error:", err);
       toast({ title: "Export failed", description: "Could not generate PDF.", variant: "destructive" });
     } finally {
       setIsExportingPdf(false);
     }
-  }, [result, imagePreview, shareLink, toast]);
+  }, [result, imagePreview, shareLink, user, handleGenerateShareLink, toast]);
 
   const handleGenerateShareLink = useCallback(async (): Promise<string | null> => {
     if (!user) {
