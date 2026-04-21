@@ -156,19 +156,6 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
     detected: s.keywords.some((kw) => allReasons.some((r) => r.includes(kw))),
   }));
 
-  const handleDownloadPdf = useCallback(async () => {
-    setIsExportingPdf(true);
-    try {
-      await exportReportPdf(result, imagePreview, shareLink || undefined);
-      toast({ title: "PDF downloaded", description: "Your analysis report has been saved as PDF." });
-    } catch (err) {
-      console.error("PDF export error:", err);
-      toast({ title: "Export failed", description: "Could not generate PDF.", variant: "destructive" });
-    } finally {
-      setIsExportingPdf(false);
-    }
-  }, [result, imagePreview, shareLink, toast]);
-
   const handleGenerateShareLink = useCallback(async (): Promise<string | null> => {
     if (!user) {
       toast({ title: "Sign in required", description: "You need to be signed in to share reports.", variant: "destructive" });
@@ -181,7 +168,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
       if (!freshSession) {
         toast({ title: "Session expired", description: "Please sign in again to share reports.", variant: "destructive" });
         setIsSharing(false);
-        return;
+        return null;
       }
 
       // Upload blob image to storage so shared reports have a public URL
@@ -245,6 +232,34 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
       setIsSharing(false);
     }
   }, [user, result, imagePreview, toast]);
+
+  const handleDownloadPdf = useCallback(async () => {
+    setIsExportingPdf(true);
+    try {
+      // Auto-generate a share link for the PDF if one doesn't exist yet,
+      // so the report always includes shareable URLs.
+      let pdfShareLink = shareLink;
+      if (!pdfShareLink && user) {
+        try {
+          pdfShareLink = await handleGenerateShareLink();
+        } catch {
+          pdfShareLink = null;
+        }
+      }
+      await exportReportPdf(result, imagePreview, pdfShareLink || undefined);
+      toast({
+        title: "PDF downloaded",
+        description: pdfShareLink
+          ? "Share link included in report."
+          : "Your analysis report has been saved as PDF.",
+      });
+    } catch (err) {
+      console.error("PDF export error:", err);
+      toast({ title: "Export failed", description: "Could not generate PDF.", variant: "destructive" });
+    } finally {
+      setIsExportingPdf(false);
+    }
+  }, [result, imagePreview, shareLink, user, handleGenerateShareLink, toast]);
 
   const handleXShare = useCallback(async () => {
     let linkToShare = shareLink;
