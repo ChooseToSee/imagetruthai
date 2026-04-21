@@ -31,28 +31,22 @@ export async function exportReportPdf(
   y += 7;
 
   // ── Share Section (TOP) ──────────────
-  pdf.setFontSize(11);
+  pdf.setFontSize(10);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(40, 40, 40);
   pdf.text("Share This Analysis", 15, y);
-  y += 6;
+  y += 4.5;
 
   pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(9);
+  pdf.setFontSize(8);
 
   if (shareUrl) {
-    // Show the specific report URL
+    // Report URL on a single line
     pdf.setTextColor(80, 80, 80);
-    pdf.text("View this report online:", 15, y);
-    y += 5;
+    pdf.text("View online:", 15, y);
     pdf.setTextColor(77, 124, 255);
-    pdf.textWithLink(shareUrl, 15, y, { url: shareUrl });
-    y += 7;
-
-    // Social share links for this specific analysis
-    pdf.setTextColor(80, 80, 80);
-    pdf.text("Share this analysis:", 15, y);
-    y += 5;
+    pdf.textWithLink(shareUrl, 32, y, { url: shareUrl });
+    y += 4.5;
 
     const verdictText = result.verdict === "ai"
       ? "AI indicators detected"
@@ -66,30 +60,28 @@ export async function exportReportPdf(
     const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
     const liUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
 
-    pdf.setTextColor(77, 124, 255);
-    pdf.textWithLink("• Share on X (Twitter)", 18, y, { url: xUrl });
-    y += 5;
-    pdf.textWithLink("• Share on Facebook", 18, y, { url: fbUrl });
-    y += 5;
-    pdf.textWithLink("• Share on LinkedIn", 18, y, { url: liUrl });
-    y += 5;
-
+    // Social links inline on one row
     pdf.setTextColor(80, 80, 80);
-    pdf.text("• For Instagram/TikTok: copy and paste link above", 18, y);
-    y += 7;
+    pdf.text("Share:", 15, y);
+    pdf.setTextColor(77, 124, 255);
+    pdf.textWithLink("X", 27, y, { url: xUrl });
+    pdf.textWithLink("Facebook", 32, y, { url: fbUrl });
+    pdf.textWithLink("LinkedIn", 50, y, { url: liUrl });
+    pdf.setTextColor(80, 80, 80);
+    pdf.text("· Instagram/TikTok: copy link above", 68, y);
+    y += 4.5;
   } else {
     pdf.setTextColor(80, 80, 80);
-    pdf.text("To share this analysis, visit:", 15, y);
-    y += 5;
+    pdf.text("To share, visit:", 15, y);
     pdf.setTextColor(77, 124, 255);
-    pdf.textWithLink("imagetruthai.com", 18, y, { url: "https://imagetruthai.com" });
-    y += 7;
+    pdf.textWithLink("imagetruthai.com", 36, y, { url: "https://imagetruthai.com" });
+    y += 4.5;
   }
 
   pdf.setTextColor(40, 40, 40);
   pdf.setDrawColor(220, 220, 220);
   pdf.line(15, y, pageW - 15, y);
-  y += 6;
+  y += 4;
 
   // Try to add image
   try {
