@@ -780,7 +780,7 @@ serve(async (req) => {
     // files for simple images (~2-4KB), so the threshold must stay well below that.
     if (imageFile.size < 800) {
       return new Response(
-        JSON.stringify({ error: "Image is too small to analyze. Please upload a real image." }),
+        JSON.stringify({ error: "Image is too small to analyze. Please upload a larger image." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
