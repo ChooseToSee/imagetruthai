@@ -228,54 +228,69 @@ export async function exportReportPdf(
   pdf.setFontSize(11);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(40, 40, 40);
-  pdf.text("Share This Report", 15, y);
+  pdf.text("Share This Analysis", 15, y);
   y += 7;
 
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
-  pdf.setTextColor(80, 80, 80);
 
-  // Report share link if available
   if (shareUrl) {
+    // Show the specific report URL
+    pdf.setTextColor(80, 80, 80);
     pdf.text("View this report online:", 15, y);
     y += 5;
     pdf.setTextColor(77, 124, 255);
     pdf.textWithLink(shareUrl, 15, y, { url: shareUrl });
     y += 8;
-    pdf.setTextColor(80, 80, 80);
 
-    // Social links
-    pdf.text("Share on social media:", 15, y);
+    // Social share links for this specific analysis
+    pdf.setTextColor(80, 80, 80);
+    pdf.text("Share this analysis:", 15, y);
     y += 5;
+
+    const verdict = result.verdict === "ai"
+      ? "AI indicators detected 🤖"
+      : "No AI indicators detected ✅";
 
     const shareText = encodeURIComponent(
-      `🔍 ImageTruth AI Analysis\n\n${shareUrl}\n\nvia @ImageTruthAI`
+      `🔍 ${result.confidence}% — ${verdict}\n\nSee what 5 AI models found:\n${shareUrl}\n\nvia @ImageTruthAI`
     );
 
+    const xUrl = `https://x.com/intent/tweet?text=${shareText}`;
+    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+    const liUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+
     pdf.setTextColor(77, 124, 255);
-    pdf.textWithLink("• Share on X", 18, y, {
-      url: `https://x.com/intent/tweet?text=${shareText}`,
-    });
+
+    // X share
+    pdf.textWithLink("• Share on X (Twitter)", 18, y, { url: xUrl });
     y += 5;
 
-    pdf.textWithLink("• Share on Facebook", 18, y, {
-      url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-    });
+    // Facebook share
+    pdf.textWithLink("• Share on Facebook", 18, y, { url: fbUrl });
     y += 5;
 
-    pdf.textWithLink("• Share on LinkedIn", 18, y, {
-      url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
-    });
-    y += 8;
+    // LinkedIn share
+    pdf.textWithLink("• Share on LinkedIn", 18, y, { url: liUrl });
+    y += 5;
+
+    // Copy link instruction
+    pdf.setTextColor(80, 80, 80);
+    pdf.text("• For Instagram/TikTok: copy and paste", 18, y);
+    y += 5;
+    pdf.setTextColor(77, 124, 255);
+    pdf.textWithLink("  " + shareUrl, 18, y, { url: shareUrl });
+    y += 10;
+  } else {
+    // No share link available
+    pdf.setTextColor(80, 80, 80);
+    pdf.text("To share this analysis, visit:", 15, y);
+    y += 5;
+    pdf.setTextColor(77, 124, 255);
+    pdf.textWithLink("imagetruthai.com", 18, y, { url: "https://imagetruthai.com" });
+    y += 10;
   }
 
-  // Always show app URL
-  pdf.setTextColor(80, 80, 80);
-  pdf.text("Try ImageTruth AI free:", 15, y);
-  y += 5;
-  pdf.setTextColor(77, 124, 255);
-  pdf.textWithLink("imagetruthai.com", 18, y, { url: "https://imagetruthai.com" });
-  y += 8;
   pdf.setTextColor(40, 40, 40);
 
   // Signals table
