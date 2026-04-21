@@ -87,15 +87,45 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
   const handleDownloadPdf = useCallback(async (item: BatchItem, index: number) => {
     setExportingPdfIndex(index);
     try {
-      await exportReportPdf(item.result, item.preview);
-      toast({ title: "PDF downloaded", description: `Report for ${item.fileName} saved.` });
+      // Reuse share link if it was already created for this item,
+      // otherwise auto-generate one so the PDF includes share URLs.
+      let shareUrl: string | undefined = shareLinks[index]?.link;
+      if (!shareUrl && user) {
+        try {
+          const { data, error } = await supabase.from("shared_reports").insert({
+            user_id: user.id,
+            is_public: true,
+            image_url: item.preview.startsWith("blob:") ? null : item.preview,
+            verdict: item.result.verdict,
+            confidence: item.result.confidence,
+            reasons: item.result.reasons,
+            tips: item.result.tips,
+            model_breakdown: item.result.modelBreakdown ? JSON.parse(JSON.stringify(item.result.modelBreakdown)) : null,
+            manipulation: item.result.manipulation ? JSON.parse(JSON.stringify(item.result.manipulation)) : null,
+            file_name: item.fileName,
+          }).select("share_token, id").single();
+          if (!error && data) {
+            shareUrl = `${window.location.origin}/report/${data.share_token}`;
+            setShareLinks(prev => ({ ...prev, [index]: { link: shareUrl!, id: data.id, isPublic: true } }));
+          }
+        } catch (err) {
+          console.warn("[Batch PDF] Share link generation failed:", err);
+        }
+      }
+      await exportReportPdf(item.result, item.preview, shareUrl);
+      toast({
+        title: "PDF downloaded",
+        description: shareUrl
+          ? `Report for ${item.fileName} saved with share link.`
+          : `Report for ${item.fileName} saved.`,
+      });
     } catch (err) {
       console.error("PDF export error:", err);
       toast({ title: "Export failed", description: "Could not generate PDF.", variant: "destructive" });
     } finally {
       setExportingPdfIndex(null);
     }
-  }, [toast]);
+  }, [toast, shareLinks, user]);
 
   const handleGenerateShareLink = useCallback(async (item: BatchItem, index: number) => {
     if (!user) {

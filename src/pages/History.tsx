@@ -141,7 +141,7 @@ const History = () => {
   };
 
   const handleDownloadPdf = async (scan: ScanRecord) => {
-    if (!canDownloadPdf) return;
+    if (!canDownloadPdf || !user) return;
     setDownloadingId(scan.id);
     try {
       const result: AnalysisResult = {
@@ -152,8 +152,57 @@ const History = () => {
         modelBreakdown: scan.model_breakdown || undefined,
         manipulation: scan.manipulation || undefined,
       };
-      await exportReportPdf(result, scan.image_url || "");
-      toast({ title: "PDF exported successfully" });
+
+      // Auto-generate a public share link so the PDF can include
+      // shareable URLs at the top of the report.
+      let shareUrl: string | undefined;
+      try {
+        // Reuse an existing public share row for this image if present
+        const { data: existing } = await supabase
+          .from("shared_reports")
+          .select("share_token")
+          .eq("user_id", user.id)
+          .eq("image_url", scan.image_url)
+          .eq("is_public", true)
+          .limit(1)
+          .maybeSingle();
+
+        let token = existing?.share_token as string | undefined;
+        if (!token) {
+          const { data: inserted, error: insertErr } = await supabase
+            .from("shared_reports")
+            .insert({
+              user_id: user.id,
+              is_public: true,
+              image_url: scan.image_url,
+              file_name: scan.file_name,
+              verdict: scan.verdict,
+              confidence: scan.confidence,
+              reasons: scan.reasons,
+              tips: scan.tips || [],
+              model_breakdown: scan.model_breakdown
+                ? JSON.parse(JSON.stringify(scan.model_breakdown))
+                : null,
+              manipulation: scan.manipulation
+                ? JSON.parse(JSON.stringify(scan.manipulation))
+                : null,
+            })
+            .select("share_token")
+            .single();
+          if (!insertErr) token = inserted?.share_token;
+        }
+        if (token) {
+          shareUrl = `${window.location.origin}/report/${token}`;
+        }
+      } catch (err) {
+        console.warn("[History PDF] Share link generation failed:", err);
+      }
+
+      await exportReportPdf(result, scan.image_url || "", shareUrl);
+      toast({
+        title: "PDF exported successfully",
+        description: shareUrl ? "Share link included in report." : undefined,
+      });
     } catch {
       toast({ title: "PDF export failed", variant: "destructive" });
     } finally {
