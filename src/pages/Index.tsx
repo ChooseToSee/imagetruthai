@@ -364,8 +364,8 @@ const Index = () => {
     } catch (err: any) {
       if (err?.requiresAuth) {
         toast({
-          title: user ? "Session expired" : "Sign in required",
-          description: user
+          title: hasUser ? "Session expired" : "Sign in required",
+          description: hasUser
             ? "Please sign in again to continue analyzing images."
             : "Create a free account to analyze images — it only takes a minute.",
           variant: "destructive",
