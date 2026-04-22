@@ -271,11 +271,13 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
         linkToShare = null;
       }
     }
-    const displayUrl =
-      linkToShare && linkToShare.length < 100 ? linkToShare : "https://imagetruthai.com";
+    // Route X (and other crawlers) through the OG edge function so the
+    // tweet preview thumbnail shows the actual analyzed image instead of
+    // the generic brand share-image.png.
+    const crawlerUrl = linkToShare ? buildOgShareUrl(linkToShare) : "https://imagetruthai.com";
     const tweetText = `🔍 ${result.confidence}% — ${
       isAI ? "AI indicators detected 🤖" : "No AI indicators detected ✅"
-    }\n\nSee what 5 AI models found:\n${displayUrl}\n\nvia @ImageTruthAI`;
+    }\n\nSee what 5 AI models found:\n${crawlerUrl}\n\nvia @ImageTruthAI`;
     const decision = decideXShareNavigation(tweetText, navigator.userAgent);
     console.log("[XShare] Tweet URL:", decision.url.slice(0, 300));
     console.log("[XShare] URL length:", decision.url.length, "mode:", decision.mode);
