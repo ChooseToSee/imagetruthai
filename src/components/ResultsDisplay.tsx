@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import ImageHeatmap from "@/components/ImageHeatmap";
 import { decideXShareNavigation } from "@/lib/x-share";
+import { buildOgShareUrl } from "@/lib/share-url";
 
 
 export interface ModelBreakdown {
