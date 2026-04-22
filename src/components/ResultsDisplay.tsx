@@ -299,7 +299,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
         linkToShare = null;
       }
     }
-    const urlToShare = linkToShare || "https://imagetruthai.com";
+    const urlToShare = linkToShare ? buildOgShareUrl(linkToShare) : "https://imagetruthai.com";
 
     // On mobile, prefer the native share sheet (Facebook app integration is unreliable via web sharer)
     const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
@@ -319,7 +319,8 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
       }
     }
 
-    // Desktop / fallback: open Facebook web sharer with the clean report URL
+    // Desktop / fallback: open Facebook web sharer with the OG-routed URL so
+    // the link preview thumbnail uses the analyzed image.
     window.open(
       `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`,
       "_blank",
@@ -336,7 +337,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
         linkToShare = null;
       }
     }
-    const urlToShare = linkToShare || "https://imagetruthai.com";
+    const urlToShare = linkToShare ? buildOgShareUrl(linkToShare) : "https://imagetruthai.com";
     window.open(
       `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(urlToShare)}`,
       "_blank",
