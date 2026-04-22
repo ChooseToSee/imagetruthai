@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import ImageHeatmap from "@/components/ImageHeatmap";
 import { decideXShareNavigation } from "@/lib/x-share";
+import { buildOgShareUrl } from "@/lib/share-url";
 
 
 export interface ModelBreakdown {
@@ -270,11 +271,13 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
         linkToShare = null;
       }
     }
-    const displayUrl =
-      linkToShare && linkToShare.length < 100 ? linkToShare : "https://imagetruthai.com";
+    // Route X (and other crawlers) through the OG edge function so the
+    // tweet preview thumbnail shows the actual analyzed image instead of
+    // the generic brand share-image.png.
+    const crawlerUrl = linkToShare ? buildOgShareUrl(linkToShare) : "https://imagetruthai.com";
     const tweetText = `🔍 ${result.confidence}% — ${
       isAI ? "AI indicators detected 🤖" : "No AI indicators detected ✅"
-    }\n\nSee what 5 AI models found:\n${displayUrl}\n\nvia @ImageTruthAI`;
+    }\n\nSee what 5 AI models found:\n${crawlerUrl}\n\nvia @ImageTruthAI`;
     const decision = decideXShareNavigation(tweetText, navigator.userAgent);
     console.log("[XShare] Tweet URL:", decision.url.slice(0, 300));
     console.log("[XShare] URL length:", decision.url.length, "mode:", decision.mode);
@@ -296,7 +299,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
         linkToShare = null;
       }
     }
-    const urlToShare = linkToShare || "https://imagetruthai.com";
+    const urlToShare = linkToShare ? buildOgShareUrl(linkToShare) : "https://imagetruthai.com";
 
     // On mobile, prefer the native share sheet (Facebook app integration is unreliable via web sharer)
     const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
@@ -316,7 +319,8 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
       }
     }
 
-    // Desktop / fallback: open Facebook web sharer with the clean report URL
+    // Desktop / fallback: open Facebook web sharer with the OG-routed URL so
+    // the link preview thumbnail uses the analyzed image.
     window.open(
       `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`,
       "_blank",
@@ -333,7 +337,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
         linkToShare = null;
       }
     }
-    const urlToShare = linkToShare || "https://imagetruthai.com";
+    const urlToShare = linkToShare ? buildOgShareUrl(linkToShare) : "https://imagetruthai.com";
     window.open(
       `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(urlToShare)}`,
       "_blank",

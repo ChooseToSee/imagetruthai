@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { decideXShareNavigation } from "@/lib/x-share";
+import { buildOgShareUrl } from "@/lib/share-url";
 
 export interface ShareableScan {
   verdict: string;
@@ -113,7 +114,9 @@ const HistoryShareButtons = ({ scan }: HistoryShareButtonsProps) => {
   const handleXShare = async () => {
     const link = await getOrCreateShareLink();
     if (!link) return;
-    const nav = decideXShareNavigation(getShareText(link), navigator.userAgent);
+    // Use OG-routed URL so X shows the analyzed image as the link preview.
+    const crawlerUrl = buildOgShareUrl(link);
+    const nav = decideXShareNavigation(getShareText(crawlerUrl), navigator.userAgent);
     if (nav.mode === "same-tab") {
       window.location.href = nav.url;
     } else {
@@ -124,13 +127,14 @@ const HistoryShareButtons = ({ scan }: HistoryShareButtonsProps) => {
   const handleFacebookShare = async () => {
     const link = await getOrCreateShareLink();
     if (!link) return;
+    const crawlerUrl = buildOgShareUrl(link);
     const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
     if (isMobile && navigator.share) {
       try {
         await navigator.share({
           title: "ImageTruth AI Analysis",
           text: `${scan.confidence}% — ${isAI ? "AI indicators detected" : "No AI indicators detected"}`,
-          url: link,
+          url: crawlerUrl,
         });
         return;
       } catch (e) {
@@ -138,7 +142,7 @@ const HistoryShareButtons = ({ scan }: HistoryShareButtonsProps) => {
       }
     }
     window.open(
-      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`,
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(crawlerUrl)}`,
       "_blank",
       "width=600,height=400,noopener,noreferrer"
     );
@@ -147,8 +151,9 @@ const HistoryShareButtons = ({ scan }: HistoryShareButtonsProps) => {
   const handleLinkedInShare = async () => {
     const link = await getOrCreateShareLink();
     if (!link) return;
+    const crawlerUrl = buildOgShareUrl(link);
     window.open(
-      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(link)}`,
+      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(crawlerUrl)}`,
       "_blank",
       "width=600,height=400,noopener,noreferrer"
     );
