@@ -5,8 +5,10 @@
 export const isMobileUA = (ua: string): boolean =>
   /iPhone|iPad|iPod/i.test(ua);
 
+export const X_HANDLE = "ImageTruthAI";
+
 export const buildTweetUrl = (text: string): string =>
-  `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
+  `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&via=${X_HANDLE}`;
 
 export type XShareNavigation =
   | { mode: "same-tab"; url: string }
