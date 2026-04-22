@@ -17,6 +17,11 @@ describe("buildTweetUrl", () => {
     expect(url).not.toContain("twitter.com");
   });
 
+  it("includes the @ImageTruthAI via attribution", () => {
+    const url = buildTweetUrl("hello");
+    expect(url).toContain("via=ImageTruthAI");
+  });
+
   it("URL-encodes special characters and emojis", () => {
     const url = buildTweetUrl("🔍 95% — AI indicators detected");
     expect(url).toContain("%F0%9F%94%8D");

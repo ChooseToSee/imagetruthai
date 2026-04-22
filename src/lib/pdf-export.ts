@@ -56,7 +56,7 @@ export async function exportReportPdf(
       `🔍 ${result.confidence}% — ${verdictText}\n\nSee what 5 AI models found:\n${shareUrl}\n\nvia @ImageTruthAI`
     );
 
-    const xUrl = `https://x.com/intent/tweet?text=${shareText}`;
+    const xUrl = `https://x.com/intent/tweet?text=${shareText}&via=ImageTruthAI`;
     const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
     const liUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
 
