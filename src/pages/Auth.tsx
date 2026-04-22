@@ -62,9 +62,14 @@ const Auth = () => {
       if (isSignUp) {
         await signUp(email, password, displayName);
         toast({
-          title: "Account created!",
-          description: "Welcome to ImageTruth AI. You're all set.",
+          title: "Check your email to verify",
+          description:
+            "We just sent a verification link to your inbox. Please verify your email before signing in and analyzing your first image.",
+          duration: 10000,
         });
+        setIsSignUp(false);
+        setPassword("");
+        return;
       } else {
         await signIn(email, password);
       }
