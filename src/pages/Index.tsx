@@ -297,19 +297,37 @@ const Index = () => {
     // Get the session token ONCE upfront, while we know the user's session
     // is active (they're interacting with the upload UI). Passing it down
     // explicitly avoids races where getSession() inside helpers returns null
-    // due to in-flight session restoration.
+    // due to in-flight session restoration (common right after email
+    // verification when the session was just written to localStorage by
+    // another tab/event).
     let sessionToken: string | null = null;
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      sessionToken = session?.access_token ?? null;
-      if (!sessionToken) {
-        const { data: { session: s2 } } = await supabase.auth.refreshSession();
-        sessionToken = s2?.access_token ?? null;
+      // Try up to ~3 seconds for the session to become available. This
+      // covers the case where the user just signed in / verified their
+      // email and the auth state hasn't fully propagated yet.
+      for (let attempt = 0; attempt < 6; attempt++) {
+        const { data: { session } } = await supabase.auth.getSession();
+        sessionToken = session?.access_token ?? null;
+        if (sessionToken) break;
+        if (attempt === 2) {
+          // Halfway through, try a refresh in case the stored session is stale
+          try {
+            const { data: { session: s2 } } = await supabase.auth.refreshSession();
+            sessionToken = s2?.access_token ?? null;
+            if (sessionToken) break;
+          } catch {}
+        }
+        await new Promise((r) => setTimeout(r, 500));
       }
       console.log("[Auth] Session token retrieved:", !!sessionToken);
     } catch (err) {
       console.error("[Auth] Failed to get session:", err);
     }
+
+    // If we still have no session token but React state says we have a user,
+    // surface a clearer "session expired" message instead of pretending the
+    // user isn't signed in.
+    const hasUser = !!user || !!sessionToken;
 
     try {
       // Get a reCAPTCHA v3 token for free-tier users to deter automated abuse.
@@ -346,8 +364,8 @@ const Index = () => {
     } catch (err: any) {
       if (err?.requiresAuth) {
         toast({
-          title: user ? "Session expired" : "Sign in required",
-          description: user
+          title: hasUser ? "Session expired" : "Sign in required",
+          description: hasUser
             ? "Please sign in again to continue analyzing images."
             : "Create a free account to analyze images — it only takes a minute.",
           variant: "destructive",
