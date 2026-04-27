@@ -640,16 +640,16 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                         : "No indicators of AI generation were detected."}
                     </p>
                     {(() => {
-                      const activeModels = result.modelBreakdown?.filter(
+                      const activeModels = aiDetectionBreakdown.filter(
                         (m) => m.confidence > 0 && m.reasons.length > 0
-                      ).length ?? 0;
-                      if (activeModels > 0 && activeModels < 5) {
+                      ).length;
+                      if (activeModels > 0 && activeModels < 3) {
                         return (
                           <p className="text-xs text-muted-foreground/70 mt-1.5 flex items-center gap-1.5">
                             <Info className="h-3 w-3 shrink-0 text-warning" />
                             <span>
                               Analysis used{" "}
-                              <span className="font-medium">{activeModels} of 5 models</span>
+                              <span className="font-medium">{activeModels} of 3 AI detection models</span>
                               {" "}— one or more models were temporarily unavailable
                             </span>
                           </p>
