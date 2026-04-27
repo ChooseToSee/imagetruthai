@@ -124,10 +124,14 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
   const manipulation = result.manipulation;
   const isEdited = manipulation?.edited ?? false;
 
-  const modelsAgreed = result.modelBreakdown
-    ? result.modelBreakdown.filter((m) => m.verdict === result.verdict).length
-    : 0;
-  const totalModels = result.modelBreakdown?.length ?? 0;
+  const AI_DETECTION_MODELS = ["Winston AI", "SightEngine", "AI or Not"];
+  const aiDetectionBreakdown = result.modelBreakdown?.filter((m) =>
+    AI_DETECTION_MODELS.includes(m.model)
+  ) ?? [];
+  const modelsAgreed = aiDetectionBreakdown.filter(
+    (m) => m.verdict === result.verdict
+  ).length;
+  const totalModels = aiDetectionBreakdown.length;
 
   const confidenceLabel = result.confidence >= 85 ? "High" : result.confidence >= 60 ? "Moderate" : "Low";
   const confidenceLabelDescription =
