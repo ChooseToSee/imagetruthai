@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { AlertTriangle, CheckCircle, Info, RotateCcw, ChevronDown, ChevronUp, BarChart3, Share2, Check, Brain, Pencil, ShieldCheck, Download, Link as LinkIcon, Lock, Globe, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
