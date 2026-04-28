@@ -430,13 +430,12 @@ const Index = () => {
         <UploadSection ref={uploadRef} onAnalyze={handleAnalyze} isAnalyzing={isAnalyzing} />
       )}
 
-      <PricingSection />
       <HowItWorks />
       <WhyFiveModels />
       <WhoItsFor />
       <FeaturesSection />
-      <DemoSection />
       <TrustSection />
+      <PricingSection />
       {subscription.tier === "free" && <FinalCTA onStartFree={handleStartFree} />}
       <Footer />
     </div>
