@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { AlertTriangle, CheckCircle, Info, RotateCcw, ChevronDown, ChevronUp, BarChart3, Share2, Check, Brain, Pencil, ShieldCheck, Download, Link as LinkIcon, Lock, Globe, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -59,6 +59,25 @@ const ModelCard = ({ m }: { m: ModelBreakdown }) => {
 
 const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+  const handleToggleExpand = (i: number) => {
+    const willExpand = expandedIndex !== i;
+    setExpandedIndex(willExpand ? i : null);
+    if (willExpand) {
+      // Wait for expanded content to render, then scroll the card header into view
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          const el = cardRefs.current[i];
+          if (el) {
+            const rect = el.getBoundingClientRect();
+            const top = window.scrollY + rect.top - 80; // offset for navbar
+            window.scrollTo({ top, behavior: "smooth" });
+          }
+        }, 50);
+      });
+    }
+  };
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [showBreakdown, setShowBreakdown] = useState<number | null>(null);
   const [showEditBreakdown, setShowEditBreakdown] = useState<number | null>(null);
@@ -203,15 +222,16 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
               return (
                 <div
                   key={i}
+                  ref={(el) => { cardRefs.current[i] = el; }}
                   className="overflow-hidden rounded-xl border border-border bg-card shadow-card transition-all"
                 >
                   {/* Row header — use div instead of button to avoid nesting */}
                   <div
-                    onClick={() => setExpandedIndex(isExpanded ? null : i)}
+                    onClick={() => handleToggleExpand(i)}
                     className="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-muted/30 cursor-pointer"
                     role="button"
                     tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpandedIndex(isExpanded ? null : i); } }}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleToggleExpand(i); } }}
                   >
                     <img
                       src={item.preview}
