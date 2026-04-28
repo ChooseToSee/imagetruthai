@@ -178,7 +178,7 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.15 }}
           >
-            Powered by 5 independent AI models for consensus accuracy
+            Powered by 5 independent AI models for consensus comparison
           </motion.p>
 
           <motion.p
@@ -187,7 +187,7 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            Upload any image to see what 5 independent AI models find. We detect indicators of AI generation AND post-processing manipulation — and show you exactly what each model reports.
+            Upload any image to see what 5 independent AI models find. We detect indicators of AI generation AND post-creation manipulation — and show you exactly what each model reports.
           </motion.p>
 
           <motion.p
@@ -261,7 +261,7 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
         </div>
       </div>
 
-      {/* Detect Signs of Image Editing section */}
+      {/* Detect Signs of AI Generation & Image Editing section */}
       <div className="container relative z-10 mx-auto px-4 pb-20">
         <motion.div
           className="mx-auto max-w-4xl"
@@ -271,7 +271,7 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
           transition={{ duration: 0.6 }}
         >
           <h2 className="mb-2 text-center font-display text-2xl font-bold text-foreground sm:text-3xl">
-            Detect Signs of Image Editing
+            Detect Signs of AI Generation &amp; Image Editing
           </h2>
           <p className="mx-auto mb-10 max-w-lg text-center text-sm text-muted-foreground">
             Our AI models look for common signals that an image may have been altered, generated, or manipulated.
