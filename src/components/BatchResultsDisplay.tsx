@@ -59,6 +59,25 @@ const ModelCard = ({ m }: { m: ModelBreakdown }) => {
 
 const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const cardRefs = React.useRef<Record<number, HTMLDivElement | null>>({});
+
+  const handleToggleExpand = (i: number) => {
+    const willExpand = expandedIndex !== i;
+    setExpandedIndex(willExpand ? i : null);
+    if (willExpand) {
+      // Wait for expanded content to render, then scroll the card header into view
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          const el = cardRefs.current[i];
+          if (el) {
+            const rect = el.getBoundingClientRect();
+            const top = window.scrollY + rect.top - 80; // offset for navbar
+            window.scrollTo({ top, behavior: "smooth" });
+          }
+        }, 50);
+      });
+    }
+  };
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [showBreakdown, setShowBreakdown] = useState<number | null>(null);
   const [showEditBreakdown, setShowEditBreakdown] = useState<number | null>(null);
