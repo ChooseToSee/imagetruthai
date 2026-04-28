@@ -21,6 +21,10 @@ const montageImages = [
 ];
 
 const editingSignals = [
+  { icon: ScanEye, title: "Generative Model Fingerprints", description: "Identify subtle pixel-level patterns and noise signatures left by diffusion and GAN-based image generators." },
+  { icon: Fingerprint, title: "Synthetic Texture Analysis", description: "Spot unnaturally smooth skin, hair, and surface textures that commonly appear in AI-generated imagery." },
+  { icon: Search, title: "Anatomical & Structural Anomalies", description: "Detect distorted hands, mismatched eyes, warped backgrounds, and other telltale generative errors." },
+  { icon: Shield, title: "Multi-Model Consensus", description: "Cross-reference findings from 3 independent AI-detection models to reduce false positives and increase confidence." },
   { icon: FileWarning, title: "Editing Artifacts", description: "Detect traces left by image editing tools including cloning, splicing, and retouching." },
   { icon: ScanEye, title: "Compression Inconsistencies", description: "Identify mismatched compression levels that may indicate regions were altered after initial save." },
   { icon: Fingerprint, title: "Photoshop Manipulation", description: "Flag signatures commonly associated with Adobe Photoshop and similar editing software." },
@@ -274,14 +278,14 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
             Detect Signs of AI Generation &amp; Image Editing
           </h2>
           <p className="mx-auto mb-10 max-w-lg text-center text-sm text-muted-foreground">
-            Our AI models look for common signals that an image may have been altered, generated, or manipulated.
+            Our AI models look for common signals that an image may have been AI generated or post-creation manipulated.
           </p>
 
           <div className="grid gap-5 sm:grid-cols-2">
             {editingSignals.map((signal, i) => (
               <motion.div
                 key={signal.title}
-                className="flex gap-4 rounded-xl border border-border bg-card p-5 shadow-card transition-all hover:border-primary/30 hover:shadow-glow"
+                className="flex gap-3 sm:gap-4 rounded-xl border border-border bg-card p-3 sm:p-5 shadow-card transition-all hover:border-primary/30 hover:shadow-glow"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
