@@ -222,15 +222,16 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
               return (
                 <div
                   key={i}
+                  ref={(el) => { cardRefs.current[i] = el; }}
                   className="overflow-hidden rounded-xl border border-border bg-card shadow-card transition-all"
                 >
                   {/* Row header — use div instead of button to avoid nesting */}
                   <div
-                    onClick={() => setExpandedIndex(isExpanded ? null : i)}
+                    onClick={() => handleToggleExpand(i)}
                     className="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-muted/30 cursor-pointer"
                     role="button"
                     tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpandedIndex(isExpanded ? null : i); } }}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleToggleExpand(i); } }}
                   >
                     <img
                       src={item.preview}
