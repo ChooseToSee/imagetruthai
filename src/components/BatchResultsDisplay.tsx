@@ -59,7 +59,7 @@ const ModelCard = ({ m }: { m: ModelBreakdown }) => {
 
 const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
-  const cardRefs = React.useRef<Record<number, HTMLDivElement | null>>({});
+  const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   const handleToggleExpand = (i: number) => {
     const willExpand = expandedIndex !== i;
