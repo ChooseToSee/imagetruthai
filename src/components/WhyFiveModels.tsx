@@ -132,7 +132,7 @@ const WhyFiveModels = () => {
 
         {/* Signal Detection Matrix */}
         <motion.div
-          className="mx-auto mt-12 max-w-2xl rounded-xl border border-border bg-card p-6 pl-4 shadow-card"
+          className="mx-auto mt-12 max-w-2xl rounded-xl border border-border bg-card p-6 pl-4 pr-2 shadow-card"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -208,17 +208,17 @@ const WhyFiveModels = () => {
                     <td key={i} className="py-3 px-1 text-center">
                       {detected ? (
                         <motion.div
-                          className="mx-auto flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 border border-primary/40"
+                          className="mx-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 border border-primary/40"
                           initial={{ scale: 0 }}
                           whileInView={{ scale: 1 }}
                           viewport={{ once: true }}
                           transition={{ delay: 0.4 + rowIndex * 0.1 + i * 0.05, type: "spring" }}
                         >
-                          <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+                          <div className="h-2 w-2 rounded-full bg-primary" />
                         </motion.div>
                       ) : (
-                        <div className="mx-auto flex h-6 w-6 items-center justify-center">
-                          <div className="h-0.5 w-4 rounded-full bg-muted-foreground/20" />
+                        <div className="mx-auto flex h-5 w-5 items-center justify-center">
+                          <div className="h-[3px] w-3 rounded-full bg-muted-foreground/60" />
                         </div>
                       )}
                     </td>
@@ -229,17 +229,17 @@ const WhyFiveModels = () => {
                     <td key={i} className="py-3 px-1 text-center">
                       {detected ? (
                         <motion.div
-                          className="mx-auto flex h-6 w-6 items-center justify-center rounded-full bg-amber-400/15 border border-amber-400/40"
+                          className="mx-auto flex h-5 w-5 items-center justify-center rounded-full bg-amber-400/15 border border-amber-400/40"
                           initial={{ scale: 0 }}
                           whileInView={{ scale: 1 }}
                           viewport={{ once: true }}
                           transition={{ delay: 0.4 + rowIndex * 0.1 + i * 0.05, type: "spring" }}
                         >
-                          <div className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+                          <div className="h-2 w-2 rounded-full bg-amber-400" />
                         </motion.div>
                       ) : (
-                        <div className="mx-auto flex h-6 w-6 items-center justify-center">
-                          <div className="h-0.5 w-4 rounded-full bg-muted-foreground/20" />
+                        <div className="mx-auto flex h-5 w-5 items-center justify-center">
+                          <div className="h-[3px] w-3 rounded-full bg-muted-foreground/60" />
                         </div>
                       )}
                     </td>
@@ -256,7 +256,7 @@ const WhyFiveModels = () => {
               <span>Signal detected</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="h-0.5 w-4 rounded-full bg-muted-foreground/30" />
+              <div className="h-[3px] w-3 rounded-full bg-muted-foreground/60" />
               <span>Not detected</span>
             </div>
           </div>
