@@ -132,7 +132,7 @@ const WhyFiveModels = () => {
 
         {/* Signal Detection Matrix */}
         <motion.div
-          className="mx-auto mt-12 max-w-2xl rounded-xl border border-border bg-card p-8 shadow-card"
+          className="mx-auto mt-12 max-w-2xl rounded-xl border border-border bg-card p-6 pl-4 shadow-card"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -141,6 +141,7 @@ const WhyFiveModels = () => {
           <h4 className="mb-8 text-center font-display text-lg font-semibold text-foreground">
             Example: What Each Model Found
           </h4>
+          <div className="flex justify-center w-full overflow-hidden">
           <table className="w-full text-sm border-separate border-spacing-0">
             <thead>
               {/* Row 1: Group headers */}
@@ -247,6 +248,7 @@ const WhyFiveModels = () => {
               ))}
             </tbody>
           </table>
+          </div>
           {/* Legend */}
           <div className="mt-6 flex items-center justify-center gap-6 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
