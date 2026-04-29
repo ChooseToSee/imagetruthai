@@ -256,7 +256,7 @@ const WhyFiveModels = () => {
               <span>Signal detected</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="h-0.5 w-4 rounded-full bg-muted-foreground/30" />
+              <div className="h-[3px] w-3 rounded-full bg-muted-foreground/60" />
               <span>Not detected</span>
             </div>
           </div>
