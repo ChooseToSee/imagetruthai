@@ -22,7 +22,7 @@ const WhyFiveModels = () => {
           </h2>
 
           <p className="mx-auto max-w-xl text-lg text-muted-foreground">
-            One model can be fooled. Five working together are much harder to trick.
+            Every AI model has blind spots. Five independent models cover each other's gaps — so signals one misses, another catches.
           </p>
         </motion.div>
 
@@ -86,11 +86,11 @@ const WhyFiveModels = () => {
 
             <ul className="space-y-3 text-sm text-muted-foreground">
               {[
-                "5 independent AI systems analyze every image",
-                "Models must agree for high confidence",
-                "Disagreement shown transparently",
-                "Catches what single models miss",
-                "You see exactly how each model voted",
+                "5 independent AI models scan every image",
+                "More models checking = more signals detected",
+                "Blind spots in one model covered by others",
+                "Catches what any single model would miss",
+                "You see exactly what each model found",
               ].map((point, i) => (
                 <li key={i} className="flex items-start gap-2">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
@@ -130,66 +130,161 @@ const WhyFiveModels = () => {
           </motion.div>
         </div>
 
-        {/* The voting visualization */}
+        {/* Signal Detection Matrix */}
         <motion.div
-          className="mx-auto mt-12 max-w-2xl rounded-xl border border-border bg-card p-8 shadow-card"
+          className="mx-auto mt-12 max-w-3xl rounded-xl border border-border bg-card p-8 shadow-card overflow-x-auto"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
         >
-          <h4 className="mb-6 text-center font-display text-lg font-semibold text-foreground">
-            Example: How 5 Models Vote
+          <h4 className="mb-8 text-center font-display text-lg font-semibold text-foreground">
+            Example: What Each Model Found
           </h4>
-
-          <div className="space-y-3">
-            {[
-              { model: "Winston AI", verdict: "AI", confidence: 94, ai: true },
-              { model: "SightEngine", verdict: "AI", confidence: 97, ai: true },
-              { model: "AI or Not", verdict: "Human", confidence: 61, ai: false },
-              { model: "Gemini", verdict: "AI", confidence: 89, ai: true },
-              { model: "Hive", verdict: "AI", confidence: 92, ai: true },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                className="flex items-center gap-3"
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3 + i * 0.1 }}
-              >
-                <span className="w-24 shrink-0 text-right text-sm font-medium text-muted-foreground">
-                  {item.model}
-                </span>
-                <div className="flex-1">
-                  <div className="h-3 overflow-hidden rounded-full bg-muted">
-                    <motion.div
-                      className={`h-full rounded-full ${item.ai ? "bg-primary" : "bg-green-500"}`}
-                      initial={{ width: 0 }}
-                      whileInView={{ width: `${item.confidence}%` }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 0.5 + i * 0.1, duration: 0.6 }}
-                      style={{ float: item.ai ? "right" : "left" }}
-                    />
-                  </div>
-                  <div className="flex justify-between mt-0.5">
-                    <span className="text-[10px] text-muted-foreground">{item.ai ? "100%" : "1%"}</span>
-                    <span className="text-[10px] text-muted-foreground">{item.ai ? "1%" : "100%"}</span>
-                  </div>
-                </div>
-                <span className={`w-28 text-sm font-medium ${item.ai ? "text-primary" : "text-green-500"}`}>
-                  {item.confidence}% {item.verdict}
-                </span>
-              </motion.div>
-            ))}
+          <table className="w-full text-sm border-separate border-spacing-0">
+            <thead>
+              {/* Row 1: Group headers */}
+              <tr>
+                <th className="w-44 pb-1" />
+                <th
+                  colSpan={3}
+                  className="pb-1 text-center text-xs font-bold uppercase tracking-widest text-primary border-b-2 border-primary px-2"
+                >
+                  AI Analysis
+                </th>
+                <th className="w-3" />
+                <th
+                  colSpan={2}
+                  className="pb-1 text-center text-xs font-bold uppercase tracking-widest text-amber-400 border-b-2 border-amber-400 px-2"
+                >
+                  Edit Analysis
+                </th>
+              </tr>
+              {/* Row 2: Model names */}
+              <tr>
+                <th className="w-44 pb-4" />
+                {[
+                  { name: "Winston", color: "text-primary" },
+                  { name: "SightEngine", color: "text-primary" },
+                  { name: "AI or Not", color: "text-primary" },
+                ].map((m) => (
+                  <th
+                    key={m.name}
+                    className={`pb-4 text-center text-xs font-semibold ${m.color} px-2`}
+                  >
+                    {m.name}
+                  </th>
+                ))}
+                <th className="w-3" />
+                {[
+                  { name: "Gemini", color: "text-amber-400" },
+                  { name: "Hive", color: "text-amber-400" },
+                ].map((m) => (
+                  <th
+                    key={m.name}
+                    className={`pb-4 text-center text-xs font-semibold ${m.color} px-2`}
+                  >
+                    {m.name}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                {
+                  signal: "Generative Fingerprint",
+                  cells: [true, true, false, false, true],
+                },
+                {
+                  signal: "Synthetic Texture",
+                  cells: [true, true, true, false, true],
+                },
+                {
+                  signal: "Structural Anomalies",
+                  cells: [true, false, true, true, false],
+                },
+                {
+                  signal: "Metadata Anomalies",
+                  cells: [false, true, false, true, true],
+                },
+                {
+                  signal: "Manipulation Artifacts",
+                  cells: [false, false, false, true, true],
+                },
+              ].map((row, rowIndex) => (
+                <motion.tr
+                  key={row.signal}
+                  className="group"
+                  initial={{ opacity: 0, x: -16 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.3 + rowIndex * 0.1 }}
+                >
+                  <td className="py-3 pr-4 text-xs font-medium text-muted-foreground text-right">
+                    {row.signal}
+                  </td>
+                  {row.cells.slice(0, 3).map((detected, i) => (
+                    <td key={i} className="py-3 px-2 text-center">
+                      {detected ? (
+                        <motion.div
+                          className="mx-auto flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 border border-primary/40"
+                          initial={{ scale: 0 }}
+                          whileInView={{ scale: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: 0.4 + rowIndex * 0.1 + i * 0.05, type: "spring" }}
+                        >
+                          <div className="h-3 w-3 rounded-full bg-primary" />
+                        </motion.div>
+                      ) : (
+                        <div className="mx-auto flex h-7 w-7 items-center justify-center">
+                          <div className="h-0.5 w-4 rounded-full bg-muted-foreground/20" />
+                        </div>
+                      )}
+                    </td>
+                  ))}
+                  {/* Divider column */}
+                  <td className="w-3 border-l border-dashed border-border/50" />
+                  {row.cells.slice(3).map((detected, i) => (
+                    <td key={i} className="py-3 px-2 text-center">
+                      {detected ? (
+                        <motion.div
+                          className="mx-auto flex h-7 w-7 items-center justify-center rounded-full bg-amber-400/15 border border-amber-400/40"
+                          initial={{ scale: 0 }}
+                          whileInView={{ scale: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: 0.4 + rowIndex * 0.1 + i * 0.05, type: "spring" }}
+                        >
+                          <div className="h-3 w-3 rounded-full bg-amber-400" />
+                        </motion.div>
+                      ) : (
+                        <div className="mx-auto flex h-7 w-7 items-center justify-center">
+                          <div className="h-0.5 w-4 rounded-full bg-muted-foreground/20" />
+                        </div>
+                      )}
+                    </td>
+                  ))}
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+          {/* Legend */}
+          <div className="mt-6 flex items-center justify-center gap-6 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-full bg-primary" />
+              <span>Signal detected</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-0.5 w-4 rounded-full bg-muted-foreground/30" />
+              <span>Not detected</span>
+            </div>
           </div>
-
+          {/* Summary */}
           <div className="mt-6 rounded-lg bg-primary/5 p-4 text-center">
             <p className="text-sm font-semibold text-foreground">
-              4/5 models agree: AI-Generated
+              13 of 25 possible signals detected across 5 models
             </p>
-            <p className="text-xs text-muted-foreground">
-              91% Likely AI-Generated
+            <p className="text-xs text-muted-foreground mt-1">
+              4 signals were caught by models that others missed — coverage no single model could provide alone
             </p>
           </div>
         </motion.div>
