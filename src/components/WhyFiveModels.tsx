@@ -132,7 +132,7 @@ const WhyFiveModels = () => {
 
         {/* Signal Detection Matrix */}
         <motion.div
-          className="mx-auto mt-12 max-w-2xl rounded-xl border border-border bg-card p-6 pl-4 shadow-card"
+          className="mx-auto mt-12 max-w-2xl rounded-xl border border-border bg-card p-6 pl-4 pr-2 shadow-card"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
