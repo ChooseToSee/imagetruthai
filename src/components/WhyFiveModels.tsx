@@ -190,7 +190,7 @@ const WhyFiveModels = () => {
               </tr>
             </thead>
             <tbody>
-...
+              [{signal:"Generative Fingerprint",cells:[true,true,false,false,true]},{signal:"Synthetic Texture",cells:[true,true,true,false,true]},{signal:"Structural Anomalies",cells:[true,false,true,true,false]},{signal:"Metadata Anomalies",cells:[false,true,false,true,true]},{signal:"Manipulation Artifacts",cells:[false,false,false,true,true]}
               ].map((row, rowIndex) => (
                 <motion.tr
                   key={row.signal}
