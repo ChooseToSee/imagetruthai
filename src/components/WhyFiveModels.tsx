@@ -132,7 +132,7 @@ const WhyFiveModels = () => {
 
         {/* Signal Detection Matrix */}
         <motion.div
-          className="mx-auto mt-12 max-w-3xl rounded-xl border border-border bg-card p-8 shadow-card overflow-x-auto"
+          className="mx-auto mt-12 max-w-2xl rounded-xl border border-border bg-card p-8 shadow-card"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -145,24 +145,24 @@ const WhyFiveModels = () => {
             <thead>
               {/* Row 1: Group headers */}
               <tr>
-                <th className="w-44 pb-1" />
+                <th className="w-36 pb-1" />
                 <th
                   colSpan={3}
-                  className="pb-1 text-center text-xs font-bold uppercase tracking-widest text-primary border-b-2 border-primary px-2"
+                  className="pb-1 text-center text-xs font-bold uppercase tracking-widest text-primary border-b-2 border-primary px-1"
                 >
                   AI Analysis
                 </th>
-                <th className="w-3" />
+                <td className="w-2 border-l-2 border-border/60" />
                 <th
                   colSpan={2}
-                  className="pb-1 text-center text-xs font-bold uppercase tracking-widest text-amber-400 border-b-2 border-amber-400 px-2"
+                  className="pb-1 text-center text-xs font-bold uppercase tracking-widest text-amber-400 border-b-2 border-amber-400 px-1"
                 >
                   Edit Analysis
                 </th>
               </tr>
               {/* Row 2: Model names */}
               <tr>
-                <th className="w-44 pb-4" />
+                <th className="w-36 pb-4" />
                 {[
                   { name: "Winston", color: "text-primary" },
                   { name: "SightEngine", color: "text-primary" },
@@ -170,19 +170,19 @@ const WhyFiveModels = () => {
                 ].map((m) => (
                   <th
                     key={m.name}
-                    className={`pb-4 text-center text-xs font-semibold ${m.color} px-2`}
+                    className={`pb-4 text-center text-xs font-semibold ${m.color} px-1`}
                   >
                     {m.name}
                   </th>
                 ))}
-                <th className="w-3" />
+                <td className="w-2 border-l-2 border-border/60" />
                 {[
                   { name: "Gemini", color: "text-amber-400" },
                   { name: "Hive", color: "text-amber-400" },
                 ].map((m) => (
                   <th
                     key={m.name}
-                    className={`pb-4 text-center text-xs font-semibold ${m.color} px-2`}
+                    className={`pb-4 text-center text-xs font-semibold ${m.color} px-1`}
                   >
                     {m.name}
                   </th>
@@ -190,27 +190,7 @@ const WhyFiveModels = () => {
               </tr>
             </thead>
             <tbody>
-              {[
-                {
-                  signal: "Generative Fingerprint",
-                  cells: [true, true, false, false, true],
-                },
-                {
-                  signal: "Synthetic Texture",
-                  cells: [true, true, true, false, true],
-                },
-                {
-                  signal: "Structural Anomalies",
-                  cells: [true, false, true, true, false],
-                },
-                {
-                  signal: "Metadata Anomalies",
-                  cells: [false, true, false, true, true],
-                },
-                {
-                  signal: "Manipulation Artifacts",
-                  cells: [false, false, false, true, true],
-                },
+              [{signal:"Generative Fingerprint",cells:[true,true,false,false,true]},{signal:"Synthetic Texture",cells:[true,true,true,false,true]},{signal:"Structural Anomalies",cells:[true,false,true,true,false]},{signal:"Metadata Anomalies",cells:[false,true,false,true,true]},{signal:"Manipulation Artifacts",cells:[false,false,false,true,true]}
               ].map((row, rowIndex) => (
                 <motion.tr
                   key={row.signal}
@@ -220,44 +200,44 @@ const WhyFiveModels = () => {
                   viewport={{ once: true }}
                   transition={{ delay: 0.3 + rowIndex * 0.1 }}
                 >
-                  <td className="py-3 pr-4 text-xs font-medium text-muted-foreground text-right">
+                  <td className="w-36 py-3 pr-4 text-[11px] font-medium text-muted-foreground text-right">
                     {row.signal}
                   </td>
                   {row.cells.slice(0, 3).map((detected, i) => (
-                    <td key={i} className="py-3 px-2 text-center">
+                    <td key={i} className="py-3 px-1 text-center">
                       {detected ? (
                         <motion.div
-                          className="mx-auto flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 border border-primary/40"
+                          className="mx-auto flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 border border-primary/40"
                           initial={{ scale: 0 }}
                           whileInView={{ scale: 1 }}
                           viewport={{ once: true }}
                           transition={{ delay: 0.4 + rowIndex * 0.1 + i * 0.05, type: "spring" }}
                         >
-                          <div className="h-3 w-3 rounded-full bg-primary" />
+                          <div className="h-2.5 w-2.5 rounded-full bg-primary" />
                         </motion.div>
                       ) : (
-                        <div className="mx-auto flex h-7 w-7 items-center justify-center">
+                        <div className="mx-auto flex h-6 w-6 items-center justify-center">
                           <div className="h-0.5 w-4 rounded-full bg-muted-foreground/20" />
                         </div>
                       )}
                     </td>
                   ))}
                   {/* Divider column */}
-                  <td className="w-3 border-l border-dashed border-border/50" />
+                  <td className="w-2 border-l-2 border-border/60" />
                   {row.cells.slice(3).map((detected, i) => (
-                    <td key={i} className="py-3 px-2 text-center">
+                    <td key={i} className="py-3 px-1 text-center">
                       {detected ? (
                         <motion.div
-                          className="mx-auto flex h-7 w-7 items-center justify-center rounded-full bg-amber-400/15 border border-amber-400/40"
+                          className="mx-auto flex h-6 w-6 items-center justify-center rounded-full bg-amber-400/15 border border-amber-400/40"
                           initial={{ scale: 0 }}
                           whileInView={{ scale: 1 }}
                           viewport={{ once: true }}
                           transition={{ delay: 0.4 + rowIndex * 0.1 + i * 0.05, type: "spring" }}
                         >
-                          <div className="h-3 w-3 rounded-full bg-amber-400" />
+                          <div className="h-2.5 w-2.5 rounded-full bg-amber-400" />
                         </motion.div>
                       ) : (
-                        <div className="mx-auto flex h-7 w-7 items-center justify-center">
+                        <div className="mx-auto flex h-6 w-6 items-center justify-center">
                           <div className="h-0.5 w-4 rounded-full bg-muted-foreground/20" />
                         </div>
                       )}
