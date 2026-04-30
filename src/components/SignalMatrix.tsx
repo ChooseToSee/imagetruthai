@@ -159,7 +159,7 @@ const SignalMatrix = ({ modelBreakdown, manipulation }: SignalMatrixProps) => {
         className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full border ${colorClasses.ring}`}
         initial={{ scale: 0 }}
         whileInView={{ scale: 1 }}
-        viewport={{ once: true }}
+        viewport={{ once: false }}
         transition={{ delay, type: "spring" }}
       >
         <div className={`h-2.5 w-2.5 rounded-full ${colorClasses.dot}`} />
@@ -226,7 +226,7 @@ const SignalMatrix = ({ modelBreakdown, manipulation }: SignalMatrixProps) => {
               key={signal.label}
               initial={{ opacity: 0, x: -12 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: false }}
               transition={{ delay: 0.3 + rowIndex * 0.08 }}
             >
               <td className="py-2.5 pr-3 text-[11px] font-medium text-muted-foreground text-right">
@@ -264,7 +264,7 @@ const SignalMatrix = ({ modelBreakdown, manipulation }: SignalMatrixProps) => {
               key={signal.label}
               initial={{ opacity: 0, x: -12 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: false }}
               transition={{ delay: 0.6 + rowIndex * 0.08 }}
             >
               <td className="py-2.5 pr-3 text-[11px] font-medium text-muted-foreground text-right">
