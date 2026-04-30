@@ -652,28 +652,6 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                   </div>
                 </motion.div>
 
-                {/* Confidence bar — center-anchored, grows toward verdict */}
-                <div className="mb-4">
-                  <div className="mb-1 flex justify-between text-xs text-muted-foreground">
-                    <span>Human</span>
-                    <span>AI-Generated</span>
-                  </div>
-                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted">
-                    <div className="absolute left-1/2 top-0 z-10 h-full w-px -translate-x-1/2 bg-border" />
-                    <motion.div
-                      className={`absolute top-0 h-full ${isAI ? "left-1/2 rounded-r-full bg-destructive" : "right-1/2 rounded-l-full bg-success"}`}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${result.confidence / 2}%` }}
-                      transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
-                    />
-                  </div>
-                  <div className="relative mt-0.5 flex justify-between">
-                    <span className="text-[10px] text-muted-foreground">100%</span>
-                    <span className="text-[10px] text-muted-foreground absolute left-1/2 -translate-x-1/2">0%</span>
-                    <span className="text-[10px] text-muted-foreground">100%</span>
-                  </div>
-                </div>
-
                 {/* Reasons */}
                 <div className="mb-4">
                   <h3 className="mb-3 font-display text-sm font-semibold text-foreground">Analysis Details</h3>
