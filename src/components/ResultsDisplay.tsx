@@ -938,7 +938,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
               </TabsContent>
             </Tabs>
 
-            <div className="px-6 pb-2">
+            <div id="signal-matrix" className="px-6 pb-2">
               <SignalMatrix
                 key={JSON.stringify(
                   result.modelBreakdown?.map(m => m.model + m.confidence) ?? []
