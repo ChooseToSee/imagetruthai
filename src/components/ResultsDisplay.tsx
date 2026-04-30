@@ -938,10 +938,17 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
               </TabsContent>
             </Tabs>
 
+            {!isStreaming &&
+             !partialReady &&
+             result.modelBreakdown &&
+             result.modelBreakdown.length > 0 &&
+             result.modelBreakdown.some(m => m.reasons && m.reasons.length > 0) && (
             <div className="px-6 pt-2 pb-4 border-t border-border/50 mt-2">
               <SignalMatrix
                 key={JSON.stringify(
-                  result.modelBreakdown?.map(m => m.model + m.confidence) ?? []
+                  result.modelBreakdown?.map(
+                    m => m.model + m.confidence + (m.reasons?.[0] ?? "")
+                  ) ?? []
                 )}
                 modelBreakdown={result.modelBreakdown?.map(m => ({
                   model: m.model,
@@ -971,6 +978,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                 }
               />
             </div>
+            )}
 
 
             {/* Footer */}
