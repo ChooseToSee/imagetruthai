@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import React from "react";
 
 interface ModelResult {
   model: string;
@@ -72,7 +72,9 @@ function signalDetected(
   keywords: string[]
 ): boolean {
   const text = reasons.join(" ").toLowerCase();
-  return keywords.some((kw) => text.includes(kw.toLowerCase()));
+  return keywords.some((kw) =>
+    text.includes(kw.toLowerCase())
+  );
 }
 
 function modelDetectedSignal(
@@ -80,18 +82,40 @@ function modelDetectedSignal(
   signal: { keywords: string[] }
 ): boolean {
   if (!modelResult) return false;
-  if (modelResult.verdict === "ai" ||
-      modelResult.verdict === "manipulated" ||
-      modelResult.verdict === "edited") {
-    if (signalDetected(modelResult.reasons, signal.keywords))
-      return true;
-    // If model flagged positive but reasons don't keyword-match,
-    // mark first signal as detected by default
-  }
   return signalDetected(modelResult.reasons, signal.keywords);
 }
 
-const SignalMatrix = ({ modelBreakdown, manipulation }: SignalMatrixProps) => {
+const Cell = ({
+  detected,
+  color,
+}: {
+  detected: boolean;
+  color: "primary" | "amber";
+}) => {
+  if (detected) {
+    const ringClass = color === "primary"
+      ? "bg-primary/15 border-primary/40"
+      : "bg-amber-400/15 border-amber-400/40";
+    const dotClass = color === "primary"
+      ? "bg-primary"
+      : "bg-amber-400";
+    return (
+      <div className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full border ${ringClass}`}>
+        <div className={`h-2.5 w-2.5 rounded-full ${dotClass}`} />
+      </div>
+    );
+  }
+  return (
+    <div className="mx-auto flex h-6 w-6 items-center justify-center">
+      <div className="h-0.5 w-3.5 rounded-full bg-muted-foreground/20" />
+    </div>
+  );
+};
+
+const SignalMatrix = ({
+  modelBreakdown,
+  manipulation
+}: SignalMatrixProps) => {
   const getAIModel = (name: string) =>
     modelBreakdown?.find((m) =>
       m.model.toLowerCase().includes(name.toLowerCase())
@@ -103,7 +127,6 @@ const SignalMatrix = ({ modelBreakdown, manipulation }: SignalMatrixProps) => {
 
   const allSignals = [...AI_SIGNALS, ...EDIT_SIGNALS];
 
-  // Count total detections for summary
   let detected = 0;
   const possible =
     AI_SIGNALS.length * AI_MODELS.length +
@@ -123,7 +146,6 @@ const SignalMatrix = ({ modelBreakdown, manipulation }: SignalMatrixProps) => {
     }
   });
 
-  // Count unique signals caught by at least one model but not all
   let uniqueCatches = 0;
   allSignals.forEach((signal, si) => {
     const modelNames = si < AI_SIGNALS.length
@@ -140,163 +162,107 @@ const SignalMatrix = ({ modelBreakdown, manipulation }: SignalMatrixProps) => {
     }
   });
 
-  const Cell = ({
-    detected,
-    color,
-    delay,
-  }: {
-    detected: boolean;
-    color: "primary" | "amber";
-    delay: number;
-  }) => {
-    const colorClasses =
-      color === "primary"
-        ? { ring: "bg-primary/15 border-primary/40", dot: "bg-primary" }
-        : { ring: "bg-amber-400/15 border-amber-400/40", dot: "bg-amber-400" };
-
-    return detected ? (
-      <motion.div
-        className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full border ${colorClasses.ring}`}
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay, type: "spring" }}
-      >
-        <div className={`h-2.5 w-2.5 rounded-full ${colorClasses.dot}`} />
-      </motion.div>
-    ) : (
-      <div className="mx-auto flex h-6 w-6 items-center justify-center">
-        <div className="h-0.5 w-3.5 rounded-full bg-muted-foreground/20" />
-      </div>
-    );
-  };
-
   return (
-    <motion.div
-      className="mx-auto mt-12 max-w-2xl rounded-xl border border-border bg-card p-6 shadow-card"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
-    >
+    <div className="mx-auto mt-6 rounded-xl border border-border bg-card p-6 shadow-card">
       <h4 className="mb-6 text-center font-display text-lg font-semibold text-foreground">
         Signals Detected in This Image
       </h4>
-      <table className="w-full text-sm border-separate border-spacing-0">
-        <thead>
-          <tr>
-            <th className="w-36 pb-1" />
-            <th
-              colSpan={3}
-              className="pb-1 text-center text-[10px] font-bold uppercase tracking-widest text-primary border-b-2 border-primary px-1"
-            >
-              AI Analysis
-            </th>
-            <th className="w-2 border-l-2 border-border/60" />
-            <th
-              colSpan={2}
-              className="pb-1 text-center text-[10px] font-bold uppercase tracking-widest text-amber-400 border-b-2 border-amber-400 px-1"
-            >
-              Edit Analysis
-            </th>
-          </tr>
-          <tr>
-            <th className="w-36 pb-3" />
-            {["Winston", "SightEngine", "AI or Not"].map((name) => (
+      <div className="flex justify-center w-full">
+        <table className="text-sm border-separate border-spacing-0">
+          <thead>
+            <tr>
+              <th className="w-36 pb-1" />
               <th
-                key={name}
-                className="pb-3 text-center text-[10px] font-semibold text-primary px-1"
+                colSpan={3}
+                className="pb-1 text-center text-[10px] font-bold uppercase tracking-widest text-primary border-b-2 border-primary px-1"
               >
-                {name}
+                AI Analysis
               </th>
-            ))}
-            <th className="w-2 border-l-2 border-border/60" />
-            {["Gemini", "Hive"].map((name) => (
+              <th className="w-3 border-l-2 border-border/60" />
               <th
-                key={name}
-                className="pb-3 text-center text-[10px] font-semibold text-amber-400 px-1"
+                colSpan={2}
+                className="pb-1 text-center text-[10px] font-bold uppercase tracking-widest text-amber-400 border-b-2 border-amber-400 px-1"
               >
-                {name}
+                Edit Analysis
               </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {AI_SIGNALS.map((signal, rowIndex) => (
-            <motion.tr
-              key={signal.label}
-              initial={{ opacity: 0, x: -12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 + rowIndex * 0.08 }}
-            >
-              <td className="py-2.5 pr-3 text-[11px] font-medium text-muted-foreground text-right">
-                {signal.label}
-              </td>
-              {AI_MODELS.map((name, i) => {
-                const m = getAIModel(name);
-                const det = m
-                  ? modelDetectedSignal(m, signal)
-                  : false;
-                return (
+            </tr>
+            <tr>
+              <th className="w-36 pb-3" />
+              {["Winston", "SightEngine", "AI or Not"].map((name) => (
+                <th
+                  key={name}
+                  className="pb-3 text-center text-[10px] font-semibold text-primary px-1"
+                >
+                  {name}
+                </th>
+              ))}
+              <th className="w-3 border-l-2 border-border/60" />
+              {["Gemini", "Hive"].map((name) => (
+                <th
+                  key={name}
+                  className="pb-3 text-center text-[10px] font-semibold text-amber-400 px-1"
+                >
+                  {name}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {AI_SIGNALS.map((signal) => (
+              <tr key={signal.label}>
+                <td className="py-2.5 pr-3 text-[11px] font-medium text-muted-foreground text-right">
+                  {signal.label}
+                </td>
+                {AI_MODELS.map((name) => (
                   <td key={name} className="py-2.5 px-1 text-center">
                     <Cell
-                      detected={det}
+                      detected={(() => {
+                        const m = getAIModel(name);
+                        return m
+                          ? modelDetectedSignal(m, signal)
+                          : false;
+                      })()}
                       color="primary"
-                      delay={0.4 + rowIndex * 0.08 + i * 0.04}
                     />
                   </td>
-                );
-              })}
-              <td className="w-2 border-l-2 border-border/60" />
-              {EDIT_MODELS.map((name, i) => (
-                <td key={name} className="py-2.5 px-1 text-center">
-                  <Cell
-                    detected={false}
-                    color="amber"
-                    delay={0.4 + rowIndex * 0.08 + i * 0.04}
-                  />
+                ))}
+                <td className="w-3 border-l-2 border-border/60" />
+                {EDIT_MODELS.map((name) => (
+                  <td key={name} className="py-2.5 px-1 text-center">
+                    <Cell detected={false} color="amber" />
+                  </td>
+                ))}
+              </tr>
+            ))}
+            {EDIT_SIGNALS.map((signal) => (
+              <tr key={signal.label}>
+                <td className="py-2.5 pr-3 text-[11px] font-medium text-muted-foreground text-right">
+                  {signal.label}
                 </td>
-              ))}
-            </motion.tr>
-          ))}
-          {EDIT_SIGNALS.map((signal, rowIndex) => (
-            <motion.tr
-              key={signal.label}
-              initial={{ opacity: 0, x: -12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6 + rowIndex * 0.08 }}
-            >
-              <td className="py-2.5 pr-3 text-[11px] font-medium text-muted-foreground text-right">
-                {signal.label}
-              </td>
-              {AI_MODELS.map((name, i) => (
-                <td key={name} className="py-2.5 px-1 text-center">
-                  <Cell
-                    detected={false}
-                    color="primary"
-                    delay={0.7 + rowIndex * 0.08 + i * 0.04}
-                  />
-                </td>
-              ))}
-              <td className="w-2 border-l-2 border-border/60" />
-              {EDIT_MODELS.map((name, i) => {
-                const m = getEditModel(name);
-                const det = m
-                  ? modelDetectedSignal(m, signal)
-                  : false;
-                return (
+                {AI_MODELS.map((name) => (
+                  <td key={name} className="py-2.5 px-1 text-center">
+                    <Cell detected={false} color="primary" />
+                  </td>
+                ))}
+                <td className="w-3 border-l-2 border-border/60" />
+                {EDIT_MODELS.map((name) => (
                   <td key={name} className="py-2.5 px-1 text-center">
                     <Cell
-                      detected={det}
+                      detected={(() => {
+                        const m = getEditModel(name);
+                        return m
+                          ? modelDetectedSignal(m, signal)
+                          : false;
+                      })()}
                       color="amber"
-                      delay={0.7 + rowIndex * 0.08 + i * 0.04}
                     />
                   </td>
-                );
-              })}
-            </motion.tr>
-          ))}
-        </tbody>
-      </table>
-      {/* Legend */}
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <div className="mt-5 flex items-center justify-center gap-6 text-xs text-muted-foreground">
         <div className="flex items-center gap-2">
           <div className="h-2.5 w-2.5 rounded-full bg-primary" />
@@ -311,20 +277,17 @@ const SignalMatrix = ({ modelBreakdown, manipulation }: SignalMatrixProps) => {
           <span>Not detected</span>
         </div>
       </div>
-      {/* Summary */}
       <div className="mt-5 rounded-lg bg-primary/5 p-4 text-center">
         <p className="text-sm font-semibold text-foreground">
           {detected} of {possible} possible signals detected across 5 models
         </p>
         {uniqueCatches > 0 && (
           <p className="text-xs text-muted-foreground mt-1">
-            {uniqueCatches} signal{uniqueCatches > 1 ? "s" : ""} caught
-            by models that others missed — coverage no single
-            model could provide alone
+            {uniqueCatches} signal{uniqueCatches > 1 ? "s" : ""} caught by models that others missed — coverage no single model could provide alone
           </p>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 };
 
