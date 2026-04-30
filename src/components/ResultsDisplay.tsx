@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import ImageHeatmap from "@/components/ImageHeatmap";
+import SignalMatrix from "@/components/SignalMatrix";
 import { decideXShareNavigation } from "@/lib/x-share";
 import { buildOgShareUrl } from "@/lib/share-url";
 
@@ -729,6 +730,38 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                       </motion.div>
                     )}
                   </div>
+                )}
+
+                {result.modelBreakdown &&
+                 result.modelBreakdown.length > 0 && (
+                  <SignalMatrix
+                    modelBreakdown={result.modelBreakdown.map(m => ({
+                      model: m.model,
+                      verdict: m.verdict,
+                      confidence: m.confidence,
+                      reasons: m.reasons,
+                    }))}
+                    manipulation={
+                      result.manipulation
+                        ? {
+                            verdict: result.manipulation.edited
+                              ? "manipulated"
+                              : "original",
+                            confidence: result.manipulation.confidence,
+                            modelBreakdown: result.modelBreakdown
+                              .filter(m => m.manipulation)
+                              .map(m => ({
+                                model: m.model,
+                                verdict: m.manipulation!.edited
+                                  ? "manipulated"
+                                  : "original",
+                                confidence: m.manipulation!.confidence,
+                                reasons: m.manipulation!.reasons,
+                              })),
+                          }
+                        : null
+                    }
+                  />
                 )}
 
                 {/* Tips */}
