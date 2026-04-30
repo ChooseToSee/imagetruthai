@@ -143,15 +143,8 @@ const Index = () => {
         window.scrollTo({ top, behavior: "smooth" });
       }
     }, 100);
-    const matrixTimer = setTimeout(() => {
-      const matrix = document.getElementById("signal-matrix");
-      if (matrix) {
-        matrix.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }, 1500);
     return () => {
       clearTimeout(timer);
-      clearTimeout(matrixTimer);
     };
   }, [singleResult, batchResults]);
 
