@@ -1,4 +1,31 @@
-import React from "react";
+const AI_SIGNALS = [
+  { label: "Generative Fingerprint", keywords:
+    ["noise pattern","diffusion","gan","generator",
+     "fingerprint","generation","synthetic origin",
+     "ai-generated","generated"] },
+  { label: "Synthetic Texture", keywords:
+    ["texture","skin","smooth","hair","surface",
+     "micro-detail","synthetic texture","unnatural"] },
+  { label: "Structural Anomalies", keywords:
+    ["hand","finger","eye","anatomy","distort",
+     "warp","structural","anomal","face","proportion"] },
+  { label: "Metadata Anomalies", keywords:
+    ["metadata","exif","timestamp","camera",
+     "missing field","no camera","stripped"] },
+];
+
+const EDIT_SIGNALS = [
+  { label: "Manipulation Artifacts", keywords:
+    ["cloning","splicing","retouching","editing",
+     "manipulation","composite","photoshop",
+     "alter","modified"] },
+  { label: "Compression Issues", keywords:
+    ["compression","jpeg artifact","inconsistent",
+     "region","block","quality"] },
+];
+
+const AI_MODELS = ["Winston","SightEngine","AI or Not"];
+const EDIT_MODELS = ["Gemini","Hive"];
 
 interface ModelResult {
   model: string;
@@ -23,247 +50,267 @@ interface SignalMatrixProps {
   } | null;
 }
 
-const AI_SIGNALS = [
-  {
-    label: "Generative Fingerprint",
-    keywords: ["noise pattern", "diffusion", "gan",
-      "generator", "fingerprint", "generation",
-      "synthetic origin", "ai-generated", "generated"],
-  },
-  {
-    label: "Synthetic Texture",
-    keywords: ["texture", "skin", "smooth", "hair",
-      "surface", "micro-detail", "synthetic texture",
-      "unnatural"],
-  },
-  {
-    label: "Structural Anomalies",
-    keywords: ["hand", "finger", "eye", "anatomy",
-      "distort", "warp", "structural", "anomal",
-      "face", "proportion"],
-  },
-  {
-    label: "Metadata Anomalies",
-    keywords: ["metadata", "exif", "timestamp",
-      "camera", "missing field", "no camera",
-      "stripped"],
-  },
-];
-
-const EDIT_SIGNALS = [
-  {
-    label: "Manipulation Artifacts",
-    keywords: ["cloning", "splicing", "retouching",
-      "editing", "manipulation", "composite",
-      "photoshop", "alter", "modified"],
-  },
-  {
-    label: "Compression Inconsistencies",
-    keywords: ["compression", "jpeg artifact",
-      "inconsistent", "region", "block", "quality"],
-  },
-];
-
-const AI_MODELS = ["Winston", "SightEngine", "AI or Not"];
-const EDIT_MODELS = ["Gemini", "Hive"];
-
-function signalDetected(
+function hasSignal(
   reasons: string[],
   keywords: string[]
 ): boolean {
   const text = reasons.join(" ").toLowerCase();
-  return keywords.some((kw) =>
-    text.includes(kw.toLowerCase())
-  );
+  return keywords.some(kw => text.includes(kw));
 }
 
-function modelDetectedSignal(
-  modelResult: ModelResult | ManipulationModel | undefined,
-  signal: { keywords: string[] }
-): boolean {
-  if (!modelResult) return false;
-  return signalDetected(modelResult.reasons, signal.keywords);
-}
-
-const Cell = ({
-  detected,
-  color,
-}: {
-  detected: boolean;
-  color: "primary" | "amber";
-}) => {
-  if (detected) {
-    const ringClass = color === "primary"
-      ? "bg-primary/15 border-primary/40"
-      : "bg-amber-400/15 border-amber-400/40";
-    const dotClass = color === "primary"
-      ? "bg-primary"
-      : "bg-amber-400";
-    return (
-      <div className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full border ${ringClass}`}>
-        <div className={`h-2.5 w-2.5 rounded-full ${dotClass}`} />
-      </div>
-    );
-  }
-  return (
-    <div className="mx-auto flex h-6 w-6 items-center justify-center">
-      <div className="h-0.5 w-3.5 rounded-full bg-muted-foreground/20" />
-    </div>
-  );
-};
-
-const SignalMatrix = ({
+export default function SignalMatrix({
   modelBreakdown,
   manipulation
-}: SignalMatrixProps) => {
-  const getAIModel = (name: string) =>
-    modelBreakdown?.find((m) =>
+}: SignalMatrixProps) {
+  const getAI = (name: string) =>
+    modelBreakdown.find(m =>
       m.model.toLowerCase().includes(name.toLowerCase())
     );
-  const getEditModel = (name: string) =>
-    manipulation?.modelBreakdown?.find((m) =>
+  const getEdit = (name: string) =>
+    manipulation?.modelBreakdown?.find(m =>
       m.model.toLowerCase().includes(name.toLowerCase())
     );
-
-  const allSignals = [...AI_SIGNALS, ...EDIT_SIGNALS];
 
   let detected = 0;
   const possible =
     AI_SIGNALS.length * AI_MODELS.length +
     EDIT_SIGNALS.length * EDIT_MODELS.length;
 
-  allSignals.forEach((signal, si) => {
-    if (si < AI_SIGNALS.length) {
-      AI_MODELS.forEach((name) => {
-        const m = getAIModel(name);
-        if (m && modelDetectedSignal(m, signal)) detected++;
-      });
-    } else {
-      EDIT_MODELS.forEach((name) => {
-        const m = getEditModel(name);
-        if (m && modelDetectedSignal(m, signal)) detected++;
-      });
-    }
-  });
+  AI_SIGNALS.forEach(sig =>
+    AI_MODELS.forEach(name => {
+      const m = getAI(name);
+      if (m && hasSignal(m.reasons, sig.keywords)) detected++;
+    })
+  );
+  EDIT_SIGNALS.forEach(sig =>
+    EDIT_MODELS.forEach(name => {
+      const m = getEdit(name);
+      if (m && hasSignal(m.reasons, sig.keywords)) detected++;
+    })
+  );
 
   let uniqueCatches = 0;
-  allSignals.forEach((signal, si) => {
-    const modelNames = si < AI_SIGNALS.length
-      ? AI_MODELS : EDIT_MODELS;
-    const getModel = si < AI_SIGNALS.length
-      ? getAIModel : getEditModel;
-    const results = modelNames.map((n) => {
-      const m = getModel(n);
-      return m ? modelDetectedSignal(m, signal) : false;
-    });
-    const trueCount = results.filter(Boolean).length;
-    if (trueCount > 0 && trueCount < modelNames.length) {
-      uniqueCatches++;
-    }
+  [...AI_SIGNALS, ...EDIT_SIGNALS].forEach((sig, si) => {
+    const isAI = si < AI_SIGNALS.length;
+    const names = isAI ? AI_MODELS : EDIT_MODELS;
+    const hits = names.filter(name => {
+      const m = isAI ? getAI(name) : getEdit(name);
+      return m && hasSignal(m.reasons, sig.keywords);
+    }).length;
+    if (hits > 0 && hits < names.length) uniqueCatches++;
   });
+
+  const Dot = ({ on, color }: {
+    on: boolean;
+    color: "blue" | "amber"
+  }) => {
+    if (on) {
+      const ringBg = color === "blue"
+        ? "rgba(99,102,241,0.15)"
+        : "rgba(251,191,36,0.15)";
+      const ringBorder = color === "blue"
+        ? "1px solid rgba(99,102,241,0.4)"
+        : "1px solid rgba(251,191,36,0.4)";
+      const dotBg = color === "blue"
+        ? "rgb(99,102,241)"
+        : "rgb(251,191,36)";
+      return (
+        <div style={{
+          margin:"0 auto",
+          width:24,height:24,
+          borderRadius:"50%",
+          display:"flex",
+          alignItems:"center",
+          justifyContent:"center",
+          backgroundColor: ringBg,
+          border: ringBorder,
+        }}>
+          <div style={{
+            width:10,height:10,
+            borderRadius:"50%",
+            backgroundColor: dotBg,
+          }} />
+        </div>
+      );
+    }
+    return (
+      <div style={{
+        margin:"0 auto",width:24,height:24,
+        display:"flex",alignItems:"center",
+        justifyContent:"center"
+      }}>
+        <div style={{
+          width:14,height:2,borderRadius:1,
+          backgroundColor:"rgba(100,116,139,0.2)"
+        }} />
+      </div>
+    );
+  };
 
   return (
     <div className="mx-auto mt-6 rounded-xl border border-border bg-card p-6 shadow-card">
       <h4 className="mb-6 text-center font-display text-lg font-semibold text-foreground">
         Signals Detected in This Image
       </h4>
-      <div className="flex justify-center w-full">
-        <table className="text-sm border-separate border-spacing-0">
+      <div style={{overflowX:"auto"}}>
+        <table style={{
+          width:"100%",
+          borderCollapse:"separate",
+          borderSpacing:0,
+          fontSize:12
+        }}>
           <thead>
             <tr>
-              <th className="w-36 pb-1" />
-              <th
-                colSpan={3}
-                className="pb-1 text-center text-[10px] font-bold uppercase tracking-widest text-primary border-b-2 border-primary px-1"
-              >
+              <th style={{width:130,paddingBottom:4}} />
+              <th colSpan={3} style={{
+                paddingBottom:4,
+                textAlign:"center",
+                fontSize:10,
+                fontWeight:700,
+                textTransform:"uppercase",
+                letterSpacing:"0.1em",
+                color:"rgb(99,102,241)",
+                borderBottom:"2px solid rgb(99,102,241)"
+              }}>
                 AI Analysis
               </th>
-              <th className="w-3 border-l-2 border-border/60" />
-              <th
-                colSpan={2}
-                className="pb-1 text-center text-[10px] font-bold uppercase tracking-widest text-amber-400 border-b-2 border-amber-400 px-1"
-              >
+              <th style={{
+                width:12,
+                borderLeft:"2px solid rgba(100,116,139,0.4)"
+              }} />
+              <th colSpan={2} style={{
+                paddingBottom:4,
+                textAlign:"center",
+                fontSize:10,
+                fontWeight:700,
+                textTransform:"uppercase",
+                letterSpacing:"0.1em",
+                color:"rgb(251,191,36)",
+                borderBottom:"2px solid rgb(251,191,36)"
+              }}>
                 Edit Analysis
               </th>
             </tr>
             <tr>
-              <th className="w-36 pb-3" />
-              {["Winston", "SightEngine", "AI or Not"].map((name) => (
-                <th
-                  key={name}
-                  className="pb-3 text-center text-[10px] font-semibold text-primary px-1"
-                >
-                  {name}
-                </th>
+              <th style={{width:130,paddingBottom:12}} />
+              {["Winston","SightEngine","AI or Not"]
+                .map(n => (
+                <th key={n} style={{
+                  paddingBottom:12,
+                  textAlign:"center",
+                  fontSize:10,
+                  fontWeight:600,
+                  color:"rgb(99,102,241)",
+                  paddingLeft:4,paddingRight:4
+                }}>{n}</th>
               ))}
-              <th className="w-3 border-l-2 border-border/60" />
-              {["Gemini", "Hive"].map((name) => (
-                <th
-                  key={name}
-                  className="pb-3 text-center text-[10px] font-semibold text-amber-400 px-1"
-                >
-                  {name}
-                </th>
+              <th style={{
+                width:12,
+                borderLeft:"2px solid rgba(100,116,139,0.4)"
+              }} />
+              {["Gemini","Hive"].map(n => (
+                <th key={n} style={{
+                  paddingBottom:12,
+                  textAlign:"center",
+                  fontSize:10,
+                  fontWeight:600,
+                  color:"rgb(251,191,36)",
+                  paddingLeft:4,paddingRight:4
+                }}>{n}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {AI_SIGNALS.map((signal) => (
-              <tr key={signal.label}>
-                <td className="py-2.5 pr-3 text-[11px] font-medium text-muted-foreground text-right">
-                  {signal.label}
+            {AI_SIGNALS.map(sig => (
+              <tr key={sig.label}>
+                <td style={{
+                  paddingTop:10,paddingBottom:10,
+                  paddingRight:12,
+                  fontSize:11,fontWeight:500,
+                  color:"rgb(100,116,139)",
+                  textAlign:"right"
+                }}>
+                  {sig.label}
                 </td>
-                {AI_MODELS.map((name) => (
-                  <td key={name} className="py-2.5 px-1 text-center">
-                    <Cell
-                      detected={(() => {
-                        const m = getAIModel(name);
-                        return m
-                          ? modelDetectedSignal(m, signal)
-                          : false;
-                      })()}
-                      color="primary"
-                    />
-                  </td>
-                ))}
-                <td className="w-3 border-l-2 border-border/60" />
-                {EDIT_MODELS.map((name) => (
-                  <td key={name} className="py-2.5 px-1 text-center">
-                    <Cell detected={false} color="amber" />
+                {AI_MODELS.map(name => {
+                  const m = getAI(name);
+                  return (
+                    <td key={name} style={{
+                      paddingTop:10,paddingBottom:10,
+                      paddingLeft:4,paddingRight:4,
+                      textAlign:"center"
+                    }}>
+                      <Dot
+                        on={!!m && hasSignal(
+                          m.reasons, sig.keywords
+                        )}
+                        color="blue"
+                      />
+                    </td>
+                  );
+                })}
+                <td style={{
+                  width:12,
+                  borderLeft:"2px solid rgba(100,116,139,0.4)"
+                }} />
+                {EDIT_MODELS.map(name => (
+                  <td key={name} style={{
+                    paddingTop:10,paddingBottom:10,
+                    paddingLeft:4,paddingRight:4,
+                    textAlign:"center"
+                  }}>
+                    <Dot on={false} color="amber" />
                   </td>
                 ))}
               </tr>
             ))}
-            {EDIT_SIGNALS.map((signal) => (
-              <tr key={signal.label}>
-                <td className="py-2.5 pr-3 text-[11px] font-medium text-muted-foreground text-right">
-                  {signal.label}
+            {EDIT_SIGNALS.map(sig => (
+              <tr key={sig.label}>
+                <td style={{
+                  paddingTop:10,paddingBottom:10,
+                  paddingRight:12,
+                  fontSize:11,fontWeight:500,
+                  color:"rgb(100,116,139)",
+                  textAlign:"right"
+                }}>
+                  {sig.label}
                 </td>
-                {AI_MODELS.map((name) => (
-                  <td key={name} className="py-2.5 px-1 text-center">
-                    <Cell detected={false} color="primary" />
+                {AI_MODELS.map(name => (
+                  <td key={name} style={{
+                    paddingTop:10,paddingBottom:10,
+                    paddingLeft:4,paddingRight:4,
+                    textAlign:"center"
+                  }}>
+                    <Dot on={false} color="blue" />
                   </td>
                 ))}
-                <td className="w-3 border-l-2 border-border/60" />
-                {EDIT_MODELS.map((name) => (
-                  <td key={name} className="py-2.5 px-1 text-center">
-                    <Cell
-                      detected={(() => {
-                        const m = getEditModel(name);
-                        return m
-                          ? modelDetectedSignal(m, signal)
-                          : false;
-                      })()}
-                      color="amber"
-                    />
-                  </td>
-                ))}
+                <td style={{
+                  width:12,
+                  borderLeft:"2px solid rgba(100,116,139,0.4)"
+                }} />
+                {EDIT_MODELS.map(name => {
+                  const m = getEdit(name);
+                  return (
+                    <td key={name} style={{
+                      paddingTop:10,paddingBottom:10,
+                      paddingLeft:4,paddingRight:4,
+                      textAlign:"center"
+                    }}>
+                      <Dot
+                        on={!!m && hasSignal(
+                          m.reasons, sig.keywords
+                        )}
+                        color="amber"
+                      />
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <div className="mt-5 flex items-center justify-center gap-6 text-xs text-muted-foreground">
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-2">
           <div className="h-2.5 w-2.5 rounded-full bg-primary" />
           <span>AI signal detected</span>
@@ -289,6 +336,4 @@ const SignalMatrix = ({
       </div>
     </div>
   );
-};
-
-export default SignalMatrix;
+}
