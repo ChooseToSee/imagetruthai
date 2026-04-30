@@ -938,6 +938,43 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
               </TabsContent>
             </Tabs>
 
+            {result.modelBreakdown &&
+             result.modelBreakdown.length > 0 && (
+              <div className="px-6 pb-2">
+                <SignalMatrix
+                  key={JSON.stringify(
+                    result.modelBreakdown.map(m => m.model + m.confidence)
+                  )}
+                  modelBreakdown={result.modelBreakdown.map(m => ({
+                    model: m.model,
+                    verdict: m.verdict,
+                    confidence: m.confidence,
+                    reasons: m.reasons,
+                  }))}
+                  manipulation={
+                    result.manipulation
+                      ? {
+                          verdict: result.manipulation.edited
+                            ? "manipulated"
+                            : "original",
+                          confidence: result.manipulation.confidence,
+                          modelBreakdown: result.modelBreakdown
+                            .filter(m => m.manipulation)
+                            .map(m => ({
+                              model: m.model,
+                              verdict: m.manipulation!.edited
+                                ? "manipulated"
+                                : "original",
+                              confidence: m.manipulation!.confidence,
+                              reasons: m.manipulation!.reasons,
+                            })),
+                        }
+                      : null
+                  }
+                />
+              </div>
+            )}
+
             {/* Footer */}
             <div className="px-6 pb-6">
               <p className="mb-4 text-center text-[11px] text-muted-foreground/70">
