@@ -175,8 +175,7 @@ const SignalMatrix = ({ modelBreakdown, manipulation }: SignalMatrixProps) => {
     <motion.div
       className="mx-auto mt-12 max-w-2xl rounded-xl border border-border bg-card p-6 shadow-card"
       initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
     >
       <h4 className="mb-6 text-center font-display text-lg font-semibold text-foreground">
