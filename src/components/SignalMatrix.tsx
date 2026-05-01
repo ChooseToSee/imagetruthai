@@ -191,11 +191,11 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
   ALL_SIGNALS.forEach((sig) => {
     AI_MODELS.forEach((name) => {
       const m = getAI(name);
-      if (m && hasSignal(m.reasons, sig.keywords)) detected++;
+      if (m && hasSignal(m.reasons, sig.keywords, m.verdict)) detected++;
     });
     EDIT_MODELS.forEach((name) => {
       const m = getEdit(name);
-      if (m && hasSignal(m.reasons, sig.keywords)) detected++;
+      if (m && hasSignal(m.reasons, sig.keywords, m.verdict)) detected++;
     });
   });
 
@@ -204,11 +204,11 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
     let hits = 0;
     AI_MODELS.forEach((name) => {
       const m = getAI(name);
-      if (m && hasSignal(m.reasons, sig.keywords)) hits++;
+      if (m && hasSignal(m.reasons, sig.keywords, m.verdict)) hits++;
     });
     EDIT_MODELS.forEach((name) => {
       const m = getEdit(name);
-      if (m && hasSignal(m.reasons, sig.keywords)) hits++;
+      if (m && hasSignal(m.reasons, sig.keywords, m.verdict)) hits++;
     });
     if (hits > 0 && hits < ALL_MODELS_COUNT) uniqueCatches++;
   });
@@ -354,7 +354,7 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
                   return (
                     <td key={name} style={cellStyle}>
                       <Dot
-                        on={!!m && hasSignal(m.reasons, sig.keywords)}
+                        on={!!m && hasSignal(m.reasons, sig.keywords, m.verdict)}
                         color="blue"
                       />
                     </td>
@@ -366,7 +366,7 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
                   return (
                     <td key={name} style={cellStyle}>
                       <Dot
-                        on={!!m && hasSignal(m.reasons, sig.keywords)}
+                        on={!!m && hasSignal(m.reasons, sig.keywords, m.verdict)}
                         color="amber"
                       />
                     </td>
@@ -382,7 +382,7 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
                   return (
                     <td key={name} style={cellStyle}>
                       <Dot
-                        on={!!m && hasSignal(m.reasons, sig.keywords)}
+                        on={!!m && hasSignal(m.reasons, sig.keywords, m.verdict)}
                         color="blue"
                       />
                     </td>
@@ -394,7 +394,7 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
                   return (
                     <td key={name} style={cellStyle}>
                       <Dot
-                        on={!!m && hasSignal(m.reasons, sig.keywords)}
+                        on={!!m && hasSignal(m.reasons, sig.keywords, m.verdict)}
                         color="amber"
                       />
                     </td>
