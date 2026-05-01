@@ -262,9 +262,10 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
     letterSpacing: "0.1em",
     color: "rgb(148,163,184)",
     paddingRight: 12,
-    paddingTop: 12,
-    paddingBottom: 6,
-    textAlign: "right",
+    paddingLeft: 12,
+    paddingTop: 10,
+    paddingBottom: 4,
+    textAlign: "center",
   };
 
   const verdictBadge = (verdict: string, confidence: number) => {
