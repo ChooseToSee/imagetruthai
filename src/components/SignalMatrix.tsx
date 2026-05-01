@@ -76,9 +76,49 @@ interface SignalMatrixProps {
   } | null;
 }
 
-function hasSignal(reasons: string[], keywords: string[]): boolean {
-  const text = reasons.join(" ").toLowerCase();
-  return keywords.some((kw) => text.includes(kw.toLowerCase()));
+const NEGATION_TERMS = [
+  "no ", "not ", "non-", "without", "lacks", "lacking", "absence of",
+  "doesn't", "does not", "didn't", "did not", "isn't", "is not",
+  "aren't", "are not", "wasn't", "was not", "weren't", "were not",
+  "unlikely", "no signs", "no evidence", "no indication", "no sign",
+  "free of", "free from", "appears authentic", "appears original",
+  "appears genuine", "appears real", "looks authentic", "looks real",
+  "consistent with", "no obvious", "no apparent",
+];
+
+function isPositiveVerdict(verdict: string): boolean {
+  const v = (verdict || "").toLowerCase();
+  if (!v) return false;
+  if (v.includes("original") || v.includes("authentic") ||
+      v.includes("real") || v.includes("human") ||
+      v.includes("genuine") || v === "no" ||
+      v.includes("not ai") || v.includes("not-ai") ||
+      v.includes("no manipulation") || v.includes("unedited") ||
+      v.includes("clean")) {
+    return false;
+  }
+  return v.includes("ai") || v.includes("generated") || v.includes("synthetic") ||
+         v.includes("manipulat") || v.includes("edit") || v.includes("fake") ||
+         v.includes("altered") || v.includes("modified") || v.includes("suspicious");
+}
+
+function hasSignal(reasons: string[], keywords: string[], verdict: string): boolean {
+  if (!isPositiveVerdict(verdict)) return false;
+  if (!reasons || reasons.length === 0) return false;
+
+  const sentences = reasons
+    .join(". ")
+    .toLowerCase()
+    .split(/[.!?;]\s*|\n+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  return sentences.some((sentence) => {
+    const hasKeyword = keywords.some((kw) => sentence.includes(kw.toLowerCase()));
+    if (!hasKeyword) return false;
+    const isNegated = NEGATION_TERMS.some((neg) => sentence.includes(neg));
+    return !isNegated;
+  });
 }
 
 function Dot({ on, color }: { on: boolean; color: "blue" | "amber" }) {
@@ -151,11 +191,11 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
   ALL_SIGNALS.forEach((sig) => {
     AI_MODELS.forEach((name) => {
       const m = getAI(name);
-      if (m && hasSignal(m.reasons, sig.keywords)) detected++;
+      if (m && hasSignal(m.reasons, sig.keywords, m.verdict)) detected++;
     });
     EDIT_MODELS.forEach((name) => {
       const m = getEdit(name);
-      if (m && hasSignal(m.reasons, sig.keywords)) detected++;
+      if (m && hasSignal(m.reasons, sig.keywords, m.verdict)) detected++;
     });
   });
 
@@ -164,11 +204,11 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
     let hits = 0;
     AI_MODELS.forEach((name) => {
       const m = getAI(name);
-      if (m && hasSignal(m.reasons, sig.keywords)) hits++;
+      if (m && hasSignal(m.reasons, sig.keywords, m.verdict)) hits++;
     });
     EDIT_MODELS.forEach((name) => {
       const m = getEdit(name);
-      if (m && hasSignal(m.reasons, sig.keywords)) hits++;
+      if (m && hasSignal(m.reasons, sig.keywords, m.verdict)) hits++;
     });
     if (hits > 0 && hits < ALL_MODELS_COUNT) uniqueCatches++;
   });
@@ -314,7 +354,7 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
                   return (
                     <td key={name} style={cellStyle}>
                       <Dot
-                        on={!!m && hasSignal(m.reasons, sig.keywords)}
+                        on={!!m && hasSignal(m.reasons, sig.keywords, m.verdict)}
                         color="blue"
                       />
                     </td>
@@ -326,7 +366,7 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
                   return (
                     <td key={name} style={cellStyle}>
                       <Dot
-                        on={!!m && hasSignal(m.reasons, sig.keywords)}
+                        on={!!m && hasSignal(m.reasons, sig.keywords, m.verdict)}
                         color="amber"
                       />
                     </td>
@@ -342,7 +382,7 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
                   return (
                     <td key={name} style={cellStyle}>
                       <Dot
-                        on={!!m && hasSignal(m.reasons, sig.keywords)}
+                        on={!!m && hasSignal(m.reasons, sig.keywords, m.verdict)}
                         color="blue"
                       />
                     </td>
@@ -354,7 +394,7 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
                   return (
                     <td key={name} style={cellStyle}>
                       <Dot
-                        on={!!m && hasSignal(m.reasons, sig.keywords)}
+                        on={!!m && hasSignal(m.reasons, sig.keywords, m.verdict)}
                         color="amber"
                       />
                     </td>
