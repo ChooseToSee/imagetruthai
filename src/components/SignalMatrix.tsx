@@ -1,57 +1,93 @@
 import React from "react";
 
-const AI_SIGNALS = [
+// Detailed signals — only meaningful for reasoning models that emit prose.
+const REASONING_SIGNALS = [
+  // --- AI generation signals ---
   {
-    label: "Generative Fingerprint",
-    keywords: [
-      "noise pattern","diffusion","gan","generator",
-      "fingerprint","generation","synthetic origin",
-      "ai-generated","generated"
-    ],
+    label: "Diffusion Noise Pattern",
+    category: "ai",
+    keywords: ["diffusion", "noise pattern", "denoising", "latent noise"],
   },
   {
-    label: "Synthetic Texture",
-    keywords: [
-      "texture","skin","smooth","hair","surface",
-      "micro-detail","synthetic texture","unnatural"
-    ],
+    label: "GAN Fingerprint",
+    category: "ai",
+    keywords: ["gan", "generator artifact", "checkerboard", "spectral fingerprint"],
   },
   {
-    label: "Structural Anomalies",
-    keywords: [
-      "hand","finger","eye","anatomy","distort",
-      "warp","structural","anomal","face","proportion"
-    ],
+    label: "Synthetic Skin / Texture",
+    category: "ai",
+    keywords: ["skin", "smooth", "plastic", "waxy", "synthetic texture", "micro-detail", "pores"],
   },
   {
-    label: "Metadata Anomalies",
-    keywords: [
-      "metadata","exif","timestamp","camera",
-      "missing field","no camera","stripped"
-    ],
+    label: "Hair / Fine Detail Errors",
+    category: "ai",
+    keywords: ["hair", "strand", "fine detail", "fuzzy", "frizz"],
+  },
+  {
+    label: "Anatomy / Hands / Fingers",
+    category: "ai",
+    keywords: ["hand", "finger", "anatomy", "limb", "extra digit", "missing finger"],
+  },
+  {
+    label: "Eye / Face Asymmetry",
+    category: "ai",
+    keywords: ["eye", "iris", "pupil", "asymmetr", "face", "facial"],
+  },
+  {
+    label: "Lighting / Shadow Inconsistency",
+    category: "ai",
+    keywords: ["lighting", "shadow", "highlight", "illumination", "light source"],
+  },
+  {
+    label: "Background Warping",
+    category: "ai",
+    keywords: ["background", "warp", "distort", "melt", "incoherent background"],
+  },
+  {
+    label: "Text / Symbol Garbling",
+    category: "ai",
+    keywords: ["text", "letter", "garbled", "nonsense", "symbol", "writing"],
+  },
+  {
+    label: "Reflection / Perspective Errors",
+    category: "ai",
+    keywords: ["reflection", "perspective", "vanishing point", "geometry"],
+  },
+  // --- Edit / manipulation signals ---
+  {
+    label: "Cloning / Splicing",
+    category: "edit",
+    keywords: ["clon", "splice", "splicing", "duplicate region", "copy-paste"],
+  },
+  {
+    label: "Retouching / Healing",
+    category: "edit",
+    keywords: ["retouch", "heal", "smoothed", "blurred patch", "softening"],
+  },
+  {
+    label: "Composite / Layer Mismatch",
+    category: "edit",
+    keywords: ["composite", "layer", "blend", "edge artifact", "halo", "fringe"],
+  },
+  {
+    label: "Compression Inconsistency",
+    category: "edit",
+    keywords: ["compression", "jpeg", "block", "quantization", "ela", "ghost"],
+  },
+  {
+    label: "Color / Tone Mismatch",
+    category: "edit",
+    keywords: ["color cast", "tone mismatch", "hue", "white balance"],
+  },
+  {
+    label: "Metadata Stripped / Altered",
+    category: "edit",
+    keywords: ["metadata", "exif", "stripped", "missing field", "no camera"],
   },
 ];
 
-const EDIT_SIGNALS = [
-  {
-    label: "Manipulation Artifacts",
-    keywords: [
-      "cloning","splicing","retouching","editing",
-      "manipulation","composite","photoshop",
-      "alter","modified"
-    ],
-  },
-  {
-    label: "Compression Issues",
-    keywords: [
-      "compression","jpeg artifact","inconsistent",
-      "region","block","quality"
-    ],
-  },
-];
-
-const AI_MODELS = ["Winston", "SightEngine", "AI or Not"];
-const EDIT_MODELS = ["Gemini", "Hive"];
+const REASONING_MODELS = ["Gemini", "Hive"];
+const SCORE_MODELS = ["Winston", "SightEngine", "AI or Not"];
 
 interface ModelResult {
   model: string;
@@ -83,7 +119,7 @@ const NEGATION_TERMS = [
   "unlikely", "no signs", "no evidence", "no indication", "no sign",
   "free of", "free from", "appears authentic", "appears original",
   "appears genuine", "appears real", "looks authentic", "looks real",
-  "consistent with", "no obvious", "no apparent",
+  "no obvious", "no apparent",
 ];
 
 function isPositiveVerdict(verdict: string): boolean {
@@ -127,8 +163,8 @@ function Dot({ on, color }: { on: boolean; color: "blue" | "amber" }) {
       <div
         style={{
           margin: "0 auto",
-          width: 24,
-          height: 24,
+          width: 22,
+          height: 22,
           borderRadius: "50%",
           display: "flex",
           alignItems: "center",
@@ -139,8 +175,8 @@ function Dot({ on, color }: { on: boolean; color: "blue" | "amber" }) {
       >
         <div
           style={{
-            width: 10,
-            height: 10,
+            width: 9,
+            height: 9,
             borderRadius: "50%",
             backgroundColor: color === "blue" ? "rgb(99,102,241)" : "rgb(251,191,36)",
           }}
@@ -152,8 +188,8 @@ function Dot({ on, color }: { on: boolean; color: "blue" | "amber" }) {
     <div
       style={{
         margin: "0 auto",
-        width: 24,
-        height: 24,
+        width: 22,
+        height: 22,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -161,10 +197,10 @@ function Dot({ on, color }: { on: boolean; color: "blue" | "amber" }) {
     >
       <div
         style={{
-          width: 14,
+          width: 12,
           height: 2,
           borderRadius: 1,
-          backgroundColor: "rgba(100,116,139,0.2)",
+          backgroundColor: "rgba(100,116,139,0.25)",
         }}
       />
     </div>
@@ -172,69 +208,99 @@ function Dot({ on, color }: { on: boolean; color: "blue" | "amber" }) {
 }
 
 export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMatrixProps) {
-  const getAI = (name: string) =>
-    modelBreakdown.find((m) =>
-      m.model.toLowerCase().includes(name.toLowerCase())
+  const findModel = (
+    list: { model: string; verdict: string; confidence: number; reasons: string[] }[] | undefined,
+    name: string,
+  ) => list?.find((m) => m.model.toLowerCase().includes(name.toLowerCase()));
+
+  // Reasoning models: Gemini lives in manipulation breakdown; Hive may be in either.
+  const getReasoning = (name: string) => {
+    return (
+      findModel(manipulation?.modelBreakdown, name) ||
+      findModel(modelBreakdown, name)
     );
+  };
 
-  const getEdit = (name: string) =>
-    manipulation?.modelBreakdown?.find((m) =>
-      m.model.toLowerCase().includes(name.toLowerCase())
-    );
+  // Score models: Winston / SightEngine / AI or Not — live in modelBreakdown.
+  const getScore = (name: string) => findModel(modelBreakdown, name);
 
-  const ALL_SIGNALS = [...AI_SIGNALS, ...EDIT_SIGNALS];
-  const ALL_MODELS_COUNT = AI_MODELS.length + EDIT_MODELS.length;
-
+  // Stats for reasoning grid
   let detected = 0;
-  const possible = ALL_SIGNALS.length * ALL_MODELS_COUNT;
-
-  ALL_SIGNALS.forEach((sig) => {
-    AI_MODELS.forEach((name) => {
-      const m = getAI(name);
+  const possible = REASONING_SIGNALS.length * REASONING_MODELS.length;
+  REASONING_SIGNALS.forEach((sig) => {
+    REASONING_MODELS.forEach((name) => {
+      const m = getReasoning(name);
       if (m && hasSignal(m.reasons, sig.keywords, m.verdict)) detected++;
     });
-    EDIT_MODELS.forEach((name) => {
-      const m = getEdit(name);
-      if (m && hasSignal(m.reasons, sig.keywords, m.verdict)) detected++;
-    });
-  });
-
-  let uniqueCatches = 0;
-  ALL_SIGNALS.forEach((sig) => {
-    let hits = 0;
-    AI_MODELS.forEach((name) => {
-      const m = getAI(name);
-      if (m && hasSignal(m.reasons, sig.keywords, m.verdict)) hits++;
-    });
-    EDIT_MODELS.forEach((name) => {
-      const m = getEdit(name);
-      if (m && hasSignal(m.reasons, sig.keywords, m.verdict)) hits++;
-    });
-    if (hits > 0 && hits < ALL_MODELS_COUNT) uniqueCatches++;
   });
 
   const cellStyle: React.CSSProperties = {
-    paddingTop: 10,
-    paddingBottom: 10,
+    paddingTop: 8,
+    paddingBottom: 8,
     paddingLeft: 4,
     paddingRight: 4,
     textAlign: "center",
   };
 
-  const dividerStyle: React.CSSProperties = {
-    width: 12,
-    borderLeft: "2px solid rgba(100,116,139,0.35)",
-  };
-
   const labelStyle: React.CSSProperties = {
-    paddingTop: 10,
-    paddingBottom: 10,
+    paddingTop: 8,
+    paddingBottom: 8,
     paddingRight: 12,
     fontSize: 11,
     fontWeight: 500,
-    color: "rgb(100,116,139)",
+    color: "rgb(148,163,184)",
     textAlign: "right",
-    width: 130,
+    width: 180,
+  };
+
+  const sectionLabel: React.CSSProperties = {
+    fontSize: 10,
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: "0.1em",
+    color: "rgb(148,163,184)",
+    paddingRight: 12,
+    paddingTop: 12,
+    paddingBottom: 6,
+    textAlign: "right",
+  };
+
+  const verdictBadge = (verdict: string, confidence: number) => {
+    const positive = isPositiveVerdict(verdict);
+    const label = (verdict || "—").trim();
+    return (
+      <div
+        style={{
+          display: "inline-flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 2,
+        }}
+      >
+        <div
+          style={{
+            padding: "3px 10px",
+            borderRadius: 999,
+            fontSize: 10,
+            fontWeight: 600,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            backgroundColor: positive
+              ? "rgba(239,68,68,0.12)"
+              : "rgba(34,197,94,0.12)",
+            border: positive
+              ? "1px solid rgba(239,68,68,0.35)"
+              : "1px solid rgba(34,197,94,0.35)",
+            color: positive ? "rgb(248,113,113)" : "rgb(74,222,128)",
+          }}
+        >
+          {label}
+        </div>
+        <div style={{ fontSize: 10, color: "rgb(100,116,139)" }}>
+          {Math.round(confidence ?? 0)}% conf.
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -250,7 +316,7 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
     >
       <h4
         style={{
-          marginBottom: 24,
+          marginBottom: 6,
           textAlign: "center",
           fontSize: 16,
           fontWeight: 600,
@@ -259,7 +325,19 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
       >
         Signals Detected in This Image
       </h4>
+      <p
+        style={{
+          marginTop: 0,
+          marginBottom: 20,
+          textAlign: "center",
+          fontSize: 11,
+          color: "rgb(100,116,139)",
+        }}
+      >
+        Detailed forensic signals from reasoning models, plus overall verdicts from score-based models.
+      </p>
 
+      {/* === REASONING MODELS GRID === */}
       <div style={{ overflowX: "auto" }}>
         <table
           style={{
@@ -271,73 +349,35 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
         >
           <thead>
             <tr>
-              <th style={{ width: 130, paddingBottom: 4 }} />
+              <th style={{ width: 180, paddingBottom: 4 }} />
               <th
-                colSpan={3}
+                colSpan={REASONING_MODELS.length}
                 style={{
-                  paddingBottom: 4,
+                  paddingBottom: 6,
                   textAlign: "center",
                   fontSize: 10,
                   fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.1em",
-                  color: "rgb(99,102,241)",
-                  borderBottom: "2px solid rgb(99,102,241)",
-                  paddingLeft: 4,
-                  paddingRight: 4,
+                  color: "rgb(165,180,252)",
+                  borderBottom: "2px solid rgba(99,102,241,0.5)",
                 }}
               >
-                AI Analysis
-              </th>
-              <th style={dividerStyle} />
-              <th
-                colSpan={2}
-                style={{
-                  paddingBottom: 4,
-                  textAlign: "center",
-                  fontSize: 10,
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  color: "rgb(251,191,36)",
-                  borderBottom: "2px solid rgb(251,191,36)",
-                  paddingLeft: 4,
-                  paddingRight: 4,
-                }}
-              >
-                Edit Analysis
+                Reasoning Models — per-signal detection
               </th>
             </tr>
             <tr>
-              <th style={{ width: 130, paddingBottom: 12 }} />
-              {AI_MODELS.map((name) => (
+              <th style={{ width: 180, paddingBottom: 12 }} />
+              {REASONING_MODELS.map((name) => (
                 <th
                   key={name}
                   style={{
                     paddingBottom: 12,
+                    paddingTop: 6,
                     textAlign: "center",
                     fontSize: 10,
                     fontWeight: 600,
-                    color: "rgb(99,102,241)",
-                    paddingLeft: 4,
-                    paddingRight: 4,
-                  }}
-                >
-                  {name}
-                </th>
-              ))}
-              <th style={dividerStyle} />
-              {EDIT_MODELS.map((name) => (
-                <th
-                  key={name}
-                  style={{
-                    paddingBottom: 12,
-                    textAlign: "center",
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: "rgb(251,191,36)",
-                    paddingLeft: 4,
-                    paddingRight: 4,
+                    color: "rgb(165,180,252)",
                   }}
                 >
                   {name}
@@ -346,51 +386,37 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
             </tr>
           </thead>
           <tbody>
-            {AI_SIGNALS.map((sig) => (
+            <tr>
+              <td colSpan={1 + REASONING_MODELS.length} style={sectionLabel}>
+                AI generation indicators
+              </td>
+            </tr>
+            {REASONING_SIGNALS.filter((s) => s.category === "ai").map((sig) => (
               <tr key={sig.label}>
                 <td style={labelStyle}>{sig.label}</td>
-                {AI_MODELS.map((name) => {
-                  const m = getAI(name);
+                {REASONING_MODELS.map((name) => {
+                  const m = getReasoning(name);
                   return (
                     <td key={name} style={cellStyle}>
                       <Dot
                         on={!!m && hasSignal(m.reasons, sig.keywords, m.verdict)}
                         color="blue"
-                      />
-                    </td>
-                  );
-                })}
-                <td style={dividerStyle} />
-                {EDIT_MODELS.map((name) => {
-                  const m = getEdit(name);
-                  return (
-                    <td key={name} style={cellStyle}>
-                      <Dot
-                        on={!!m && hasSignal(m.reasons, sig.keywords, m.verdict)}
-                        color="amber"
                       />
                     </td>
                   );
                 })}
               </tr>
             ))}
-            {EDIT_SIGNALS.map((sig) => (
+            <tr>
+              <td colSpan={1 + REASONING_MODELS.length} style={sectionLabel}>
+                Edit / manipulation indicators
+              </td>
+            </tr>
+            {REASONING_SIGNALS.filter((s) => s.category === "edit").map((sig) => (
               <tr key={sig.label}>
                 <td style={labelStyle}>{sig.label}</td>
-                {AI_MODELS.map((name) => {
-                  const m = getAI(name);
-                  return (
-                    <td key={name} style={cellStyle}>
-                      <Dot
-                        on={!!m && hasSignal(m.reasons, sig.keywords, m.verdict)}
-                        color="blue"
-                      />
-                    </td>
-                  );
-                })}
-                <td style={dividerStyle} />
-                {EDIT_MODELS.map((name) => {
-                  const m = getEdit(name);
+                {REASONING_MODELS.map((name) => {
+                  const m = getReasoning(name);
                   return (
                     <td key={name} style={cellStyle}>
                       <Dot
@@ -406,6 +432,81 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
         </table>
       </div>
 
+      {/* === SCORE-ONLY MODELS STRIP === */}
+      <div
+        style={{
+          marginTop: 24,
+          paddingTop: 16,
+          borderTop: "1px solid rgba(100,116,139,0.2)",
+        }}
+      >
+        <p
+          style={{
+            margin: "0 0 12px 0",
+            fontSize: 10,
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            color: "rgb(148,163,184)",
+            textAlign: "center",
+          }}
+        >
+          Score-Based Models — overall verdict only
+        </p>
+        <p
+          style={{
+            margin: "0 0 14px 0",
+            fontSize: 11,
+            color: "rgb(100,116,139)",
+            textAlign: "center",
+          }}
+        >
+          These detectors return a single probability score rather than per-signal reasoning.
+        </p>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${SCORE_MODELS.length}, minmax(0,1fr))`,
+            gap: 12,
+          }}
+        >
+          {SCORE_MODELS.map((name) => {
+            const m = getScore(name);
+            return (
+              <div
+                key={name}
+                style={{
+                  padding: 12,
+                  borderRadius: 8,
+                  border: "1px solid rgba(100,116,139,0.2)",
+                  backgroundColor: "rgba(15,23,42,0.4)",
+                  textAlign: "center",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "rgb(165,180,252)",
+                    marginBottom: 8,
+                  }}
+                >
+                  {name}
+                </div>
+                {m
+                  ? verdictBadge(m.verdict, m.confidence)
+                  : (
+                    <div style={{ fontSize: 11, color: "rgb(100,116,139)" }}>
+                      No response
+                    </div>
+                  )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Legend */}
       <div
         style={{
           marginTop: 20,
@@ -419,36 +520,15 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: "50%",
-              backgroundColor: "rgb(99,102,241)",
-            }}
-          />
+          <div style={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: "rgb(99,102,241)" }} />
           <span>AI signal detected</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: "50%",
-              backgroundColor: "rgb(251,191,36)",
-            }}
-          />
+          <div style={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: "rgb(251,191,36)" }} />
           <span>Edit signal detected</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div
-            style={{
-              width: 14,
-              height: 2,
-              borderRadius: 1,
-              backgroundColor: "rgba(100,116,139,0.3)",
-            }}
-          />
+          <div style={{ width: 12, height: 2, borderRadius: 1, backgroundColor: "rgba(100,116,139,0.3)" }} />
           <span>Not detected</span>
         </div>
       </div>
@@ -470,22 +550,18 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
             margin: 0,
           }}
         >
-          {detected} of {possible} possible signals detected across 5 models
+          {detected} of {possible} reasoning-model signals detected
         </p>
-        {uniqueCatches > 0 && (
-          <p
-            style={{
-              fontSize: 12,
-              color: "rgb(100,116,139)",
-              marginTop: 4,
-              marginBottom: 0,
-            }}
-          >
-            {uniqueCatches} signal{uniqueCatches > 1 ? "s" : ""} caught by
-            models that others missed — coverage no single model could
-            provide alone
-          </p>
-        )}
+        <p
+          style={{
+            fontSize: 12,
+            color: "rgb(100,116,139)",
+            marginTop: 4,
+            marginBottom: 0,
+          }}
+        >
+          Combined with verdicts from 3 score-based detectors for full 5-model coverage.
+        </p>
       </div>
     </div>
   );
