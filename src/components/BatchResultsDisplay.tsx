@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import { useToast } from "@/hooks/use-toast";
 import ImageHeatmap from "@/components/ImageHeatmap";
+import SignalMatrix from "@/components/SignalMatrix";
 
 export interface BatchItem {
   fileName: string;
@@ -34,16 +35,6 @@ const ModelCard = ({ m }: { m: ModelBreakdown }) => {
         >
           {m.confidence}% — {isAI ? "indicators found" : "no indicators found"}
         </span>
-      </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-        <div
-          className={`h-full rounded-full ${isAI ? "bg-destructive" : "bg-success"}`}
-          style={{ width: `${m.confidence}%`, float: isAI ? "right" : "left" }}
-        />
-      </div>
-      <div className="flex justify-between mt-0.5 mb-2">
-        <span className="text-[10px] text-muted-foreground">{isAI ? "100%" : "1%"}</span>
-        <span className="text-[10px] text-muted-foreground">{isAI ? "1%" : "100%"}</span>
       </div>
       <ul className="space-y-1">
         {m.reasons.slice(0, 3).map((r, i) => (
@@ -272,18 +263,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                       </div>
                     </div>
 
-                    {/* Mini confidence bar */}
-                    <div className="hidden w-24 sm:block">
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                        <div
-                          className={`h-full rounded-full ${isAI ? "bg-destructive" : "bg-success"}`}
-                          style={{
-                            width: `${item.result.confidence}%`,
-                            float: isAI ? "right" : "left",
-                          }}
-                        />
-                      </div>
-                    </div>
+
 
                     <button
                       onClick={(e) => { e.stopPropagation(); handleShareItem(item, i); }}
@@ -456,16 +436,6 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                                                 {manip.confidence}% — {manip.edited ? "indicators found" : "no indicators found"}
                                               </span>
                                             </div>
-                                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                                              <div
-                                                className={`h-full rounded-full ${manip.edited ? "bg-warning" : "bg-success"}`}
-                                                style={{ width: `${manip.confidence}%`, float: manip.edited ? "right" : "left" }}
-                                              />
-                                            </div>
-                                            <div className="flex justify-between mt-0.5 mb-2">
-                                              <span className="text-[10px] text-muted-foreground">{manip.edited ? "100%" : "1%"}</span>
-                                              <span className="text-[10px] text-muted-foreground">{manip.edited ? "1%" : "100%"}</span>
-                                            </div>
                                             <ul className="space-y-1">
                                               {manip.reasons.slice(0, 3).map((r, j) => (
                                                 <li key={j} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
@@ -503,6 +473,47 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                           )}
                         </TabsContent>
                       </Tabs>
+
+                      {/* Signal Matrix — per-image */}
+                      {item.result.modelBreakdown &&
+                       item.result.modelBreakdown.length > 0 &&
+                       item.result.modelBreakdown.some(m => m.reasons && m.reasons.length > 0) && (
+                        <div className="mt-4 pt-4 border-t border-border/50">
+                          <SignalMatrix
+                            key={JSON.stringify(
+                              item.result.modelBreakdown?.map(
+                                m => m.model + m.confidence + (m.reasons?.[0] ?? "")
+                              ) ?? []
+                            )}
+                            modelBreakdown={item.result.modelBreakdown?.map(m => ({
+                              model: m.model,
+                              verdict: m.verdict,
+                              confidence: m.confidence,
+                              reasons: m.reasons,
+                            })) ?? []}
+                            manipulation={
+                              item.result.manipulation
+                                ? {
+                                    verdict: item.result.manipulation.edited
+                                      ? "manipulated"
+                                      : "original",
+                                    confidence: item.result.manipulation.confidence,
+                                    modelBreakdown: item.result.modelBreakdown
+                                      ?.filter(m => m.manipulation)
+                                      .map(m => ({
+                                        model: m.model,
+                                        verdict: m.manipulation!.edited
+                                          ? "manipulated"
+                                          : "original",
+                                        confidence: m.manipulation!.confidence,
+                                        reasons: m.manipulation!.reasons,
+                                      })),
+                                  }
+                                : null
+                            }
+                          />
+                        </div>
+                      )}
 
                       {/* Share link section */}
                       {itemShareLink && (
