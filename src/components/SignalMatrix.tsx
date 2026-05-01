@@ -235,22 +235,24 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
   });
 
   const cellStyle: React.CSSProperties = {
-    paddingTop: 8,
-    paddingBottom: 8,
+    paddingTop: 3,
+    paddingBottom: 3,
     paddingLeft: 4,
     paddingRight: 4,
     textAlign: "center",
+    lineHeight: 1,
   };
 
   const labelStyle: React.CSSProperties = {
-    paddingTop: 8,
-    paddingBottom: 8,
+    paddingTop: 3,
+    paddingBottom: 3,
     paddingRight: 12,
     fontSize: 11,
     fontWeight: 500,
     color: "rgb(148,163,184)",
     textAlign: "right",
     width: 180,
+    lineHeight: 1.1,
   };
 
   const sectionLabel: React.CSSProperties = {
@@ -260,9 +262,10 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
     letterSpacing: "0.1em",
     color: "rgb(148,163,184)",
     paddingRight: 12,
-    paddingTop: 12,
-    paddingBottom: 6,
-    textAlign: "right",
+    paddingLeft: 12,
+    paddingTop: 10,
+    paddingBottom: 4,
+    textAlign: "center",
   };
 
   const verdictBadge = (verdict: string, confidence: number) => {
@@ -337,109 +340,8 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
         Detailed forensic signals from reasoning models, plus overall verdicts from score-based models.
       </p>
 
-      {/* === REASONING MODELS GRID === */}
-      <div style={{ overflowX: "auto" }}>
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "separate",
-            borderSpacing: 0,
-            fontSize: 12,
-          }}
-        >
-          <thead>
-            <tr>
-              <th style={{ width: 180, paddingBottom: 4 }} />
-              <th
-                colSpan={REASONING_MODELS.length}
-                style={{
-                  paddingBottom: 6,
-                  textAlign: "center",
-                  fontSize: 10,
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  color: "rgb(165,180,252)",
-                  borderBottom: "2px solid rgba(99,102,241,0.5)",
-                }}
-              >
-                Reasoning Models — per-signal detection
-              </th>
-            </tr>
-            <tr>
-              <th style={{ width: 180, paddingBottom: 12 }} />
-              {REASONING_MODELS.map((name) => (
-                <th
-                  key={name}
-                  style={{
-                    paddingBottom: 12,
-                    paddingTop: 6,
-                    textAlign: "center",
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: "rgb(165,180,252)",
-                  }}
-                >
-                  {name}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colSpan={1 + REASONING_MODELS.length} style={sectionLabel}>
-                AI generation indicators
-              </td>
-            </tr>
-            {REASONING_SIGNALS.filter((s) => s.category === "ai").map((sig) => (
-              <tr key={sig.label}>
-                <td style={labelStyle}>{sig.label}</td>
-                {REASONING_MODELS.map((name) => {
-                  const m = getReasoning(name);
-                  return (
-                    <td key={name} style={cellStyle}>
-                      <Dot
-                        on={!!m && hasSignal(m.reasons, sig.keywords, m.verdict)}
-                        color="blue"
-                      />
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-            <tr>
-              <td colSpan={1 + REASONING_MODELS.length} style={sectionLabel}>
-                Edit / manipulation indicators
-              </td>
-            </tr>
-            {REASONING_SIGNALS.filter((s) => s.category === "edit").map((sig) => (
-              <tr key={sig.label}>
-                <td style={labelStyle}>{sig.label}</td>
-                {REASONING_MODELS.map((name) => {
-                  const m = getReasoning(name);
-                  return (
-                    <td key={name} style={cellStyle}>
-                      <Dot
-                        on={!!m && hasSignal(m.reasons, sig.keywords, m.verdict)}
-                        color="amber"
-                      />
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
       {/* === SCORE-ONLY MODELS STRIP === */}
-      <div
-        style={{
-          marginTop: 24,
-          paddingTop: 16,
-          borderTop: "1px solid rgba(100,116,139,0.2)",
-        }}
-      >
+      <div>
         <p
           style={{
             margin: "0 0 12px 0",
@@ -504,6 +406,109 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
             );
           })}
         </div>
+      </div>
+
+      {/* === REASONING MODELS GRID === */}
+      <div style={{ overflowX: "auto", marginTop: 24, paddingTop: 16, borderTop: "1px solid rgba(100,116,139,0.2)" }}>
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "separate",
+            borderSpacing: 0,
+            fontSize: 12,
+          }}
+        >
+          <thead>
+            <tr>
+              <th style={{ width: 180, paddingBottom: 4 }} />
+              <th
+                colSpan={REASONING_MODELS.length}
+                style={{
+                  paddingBottom: 6,
+                  textAlign: "center",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  color: "rgb(165,180,252)",
+                  borderBottom: "2px solid rgba(99,102,241,0.5)",
+                }}
+              >
+                Reasoning Models — per-signal detection
+              </th>
+            </tr>
+            <tr>
+              <th style={{ width: 180, paddingBottom: 8 }} />
+              {REASONING_MODELS.map((name) => (
+                <th
+                  key={name}
+                  style={{
+                    paddingBottom: 8,
+                    paddingTop: 6,
+                    textAlign: "center",
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: "rgb(165,180,252)",
+                  }}
+                >
+                  {name}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colSpan={1 + REASONING_MODELS.length} style={sectionLabel}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center" }}>
+                  <div style={{ flex: 1, height: 1, background: "rgba(100,116,139,0.25)" }} />
+                  <span style={{ whiteSpace: "nowrap" }}>AI generation indicators</span>
+                  <div style={{ flex: 1, height: 1, background: "rgba(100,116,139,0.25)" }} />
+                </div>
+              </td>
+            </tr>
+            {REASONING_SIGNALS.filter((s) => s.category === "ai").map((sig) => (
+              <tr key={sig.label}>
+                <td style={labelStyle}>{sig.label}</td>
+                {REASONING_MODELS.map((name) => {
+                  const m = getReasoning(name);
+                  return (
+                    <td key={name} style={cellStyle}>
+                      <Dot
+                        on={!!m && hasSignal(m.reasons, sig.keywords, m.verdict)}
+                        color="blue"
+                      />
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+            <tr>
+              <td colSpan={1 + REASONING_MODELS.length} style={sectionLabel}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center" }}>
+                  <div style={{ flex: 1, height: 1, background: "rgba(100,116,139,0.25)" }} />
+                  <span style={{ whiteSpace: "nowrap" }}>Edit / manipulation indicators</span>
+                  <div style={{ flex: 1, height: 1, background: "rgba(100,116,139,0.25)" }} />
+                </div>
+              </td>
+            </tr>
+            {REASONING_SIGNALS.filter((s) => s.category === "edit").map((sig) => (
+              <tr key={sig.label}>
+                <td style={labelStyle}>{sig.label}</td>
+                {REASONING_MODELS.map((name) => {
+                  const m = getReasoning(name);
+                  return (
+                    <td key={name} style={cellStyle}>
+                      <Dot
+                        on={!!m && hasSignal(m.reasons, sig.keywords, m.verdict)}
+                        color="amber"
+                      />
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Legend */}
