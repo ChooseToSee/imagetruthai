@@ -263,18 +263,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                       </div>
                     </div>
 
-                    {/* Mini confidence bar */}
-                    <div className="hidden w-24 sm:block">
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                        <div
-                          className={`h-full rounded-full ${isAI ? "bg-destructive" : "bg-success"}`}
-                          style={{
-                            width: `${item.result.confidence}%`,
-                            float: isAI ? "right" : "left",
-                          }}
-                        />
-                      </div>
-                    </div>
+
 
                     <button
                       onClick={(e) => { e.stopPropagation(); handleShareItem(item, i); }}
