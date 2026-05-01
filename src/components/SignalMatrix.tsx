@@ -142,34 +142,35 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
       m.model.toLowerCase().includes(name.toLowerCase())
     );
 
-  let detected = 0;
-  const possible =
-    AI_SIGNALS.length * AI_MODELS.length +
-    EDIT_SIGNALS.length * EDIT_MODELS.length;
+  const ALL_SIGNALS = [...AI_SIGNALS, ...EDIT_SIGNALS];
+  const ALL_MODELS_COUNT = AI_MODELS.length + EDIT_MODELS.length;
 
-  AI_SIGNALS.forEach((sig) =>
+  let detected = 0;
+  const possible = ALL_SIGNALS.length * ALL_MODELS_COUNT;
+
+  ALL_SIGNALS.forEach((sig) => {
     AI_MODELS.forEach((name) => {
       const m = getAI(name);
       if (m && hasSignal(m.reasons, sig.keywords)) detected++;
-    })
-  );
-
-  EDIT_SIGNALS.forEach((sig) =>
+    });
     EDIT_MODELS.forEach((name) => {
       const m = getEdit(name);
       if (m && hasSignal(m.reasons, sig.keywords)) detected++;
-    })
-  );
+    });
+  });
 
   let uniqueCatches = 0;
-  [...AI_SIGNALS, ...EDIT_SIGNALS].forEach((sig, si) => {
-    const isAISig = si < AI_SIGNALS.length;
-    const names = isAISig ? AI_MODELS : EDIT_MODELS;
-    const hits = names.filter((name) => {
-      const m = isAISig ? getAI(name) : getEdit(name);
-      return m && hasSignal(m.reasons, sig.keywords);
-    }).length;
-    if (hits > 0 && hits < names.length) uniqueCatches++;
+  ALL_SIGNALS.forEach((sig) => {
+    let hits = 0;
+    AI_MODELS.forEach((name) => {
+      const m = getAI(name);
+      if (m && hasSignal(m.reasons, sig.keywords)) hits++;
+    });
+    EDIT_MODELS.forEach((name) => {
+      const m = getEdit(name);
+      if (m && hasSignal(m.reasons, sig.keywords)) hits++;
+    });
+    if (hits > 0 && hits < ALL_MODELS_COUNT) uniqueCatches++;
   });
 
   const cellStyle: React.CSSProperties = {
@@ -320,21 +321,33 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
                   );
                 })}
                 <td style={dividerStyle} />
-                {EDIT_MODELS.map((name) => (
-                  <td key={name} style={cellStyle}>
-                    <Dot on={false} color="amber" />
-                  </td>
-                ))}
+                {EDIT_MODELS.map((name) => {
+                  const m = getEdit(name);
+                  return (
+                    <td key={name} style={cellStyle}>
+                      <Dot
+                        on={!!m && hasSignal(m.reasons, sig.keywords)}
+                        color="amber"
+                      />
+                    </td>
+                  );
+                })}
               </tr>
             ))}
             {EDIT_SIGNALS.map((sig) => (
               <tr key={sig.label}>
                 <td style={labelStyle}>{sig.label}</td>
-                {AI_MODELS.map((name) => (
-                  <td key={name} style={cellStyle}>
-                    <Dot on={false} color="blue" />
-                  </td>
-                ))}
+                {AI_MODELS.map((name) => {
+                  const m = getAI(name);
+                  return (
+                    <td key={name} style={cellStyle}>
+                      <Dot
+                        on={!!m && hasSignal(m.reasons, sig.keywords)}
+                        color="blue"
+                      />
+                    </td>
+                  );
+                })}
                 <td style={dividerStyle} />
                 {EDIT_MODELS.map((name) => {
                   const m = getEdit(name);
