@@ -391,7 +391,11 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
           <tbody>
             <tr>
               <td colSpan={1 + REASONING_MODELS.length} style={sectionLabel}>
-                AI generation indicators
+                <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center" }}>
+                  <div style={{ flex: 1, height: 1, background: "rgba(100,116,139,0.25)" }} />
+                  <span style={{ whiteSpace: "nowrap" }}>AI generation indicators</span>
+                  <div style={{ flex: 1, height: 1, background: "rgba(100,116,139,0.25)" }} />
+                </div>
               </td>
             </tr>
             {REASONING_SIGNALS.filter((s) => s.category === "ai").map((sig) => (
