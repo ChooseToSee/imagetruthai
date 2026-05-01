@@ -320,21 +320,33 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
                   );
                 })}
                 <td style={dividerStyle} />
-                {EDIT_MODELS.map((name) => (
-                  <td key={name} style={cellStyle}>
-                    <Dot on={false} color="amber" />
-                  </td>
-                ))}
+                {EDIT_MODELS.map((name) => {
+                  const m = getEdit(name);
+                  return (
+                    <td key={name} style={cellStyle}>
+                      <Dot
+                        on={!!m && hasSignal(m.reasons, sig.keywords)}
+                        color="amber"
+                      />
+                    </td>
+                  );
+                })}
               </tr>
             ))}
             {EDIT_SIGNALS.map((sig) => (
               <tr key={sig.label}>
                 <td style={labelStyle}>{sig.label}</td>
-                {AI_MODELS.map((name) => (
-                  <td key={name} style={cellStyle}>
-                    <Dot on={false} color="blue" />
-                  </td>
-                ))}
+                {AI_MODELS.map((name) => {
+                  const m = getAI(name);
+                  return (
+                    <td key={name} style={cellStyle}>
+                      <Dot
+                        on={!!m && hasSignal(m.reasons, sig.keywords)}
+                        color="blue"
+                      />
+                    </td>
+                  );
+                })}
                 <td style={dividerStyle} />
                 {EDIT_MODELS.map((name) => {
                   const m = getEdit(name);
