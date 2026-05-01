@@ -36,7 +36,6 @@ const ModelCard = ({ m }: { m: ModelBreakdown }) => {
           {m.confidence}% — {isAI ? "indicators found" : "no indicators found"}
         </span>
       </div>
-      </div>
       <ul className="space-y-1">
         {m.reasons.slice(0, 3).map((r, i) => (
           <li key={i} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
