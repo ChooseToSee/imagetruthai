@@ -36,15 +36,6 @@ const ModelCard = ({ m }: { m: ModelBreakdown }) => {
           {m.confidence}% — {isAI ? "indicators found" : "no indicators found"}
         </span>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-        <div
-          className={`h-full rounded-full ${isAI ? "bg-destructive" : "bg-success"}`}
-          style={{ width: `${m.confidence}%`, float: isAI ? "right" : "left" }}
-        />
-      </div>
-      <div className="flex justify-between mt-0.5 mb-2">
-        <span className="text-[10px] text-muted-foreground">{isAI ? "100%" : "1%"}</span>
-        <span className="text-[10px] text-muted-foreground">{isAI ? "1%" : "100%"}</span>
       </div>
       <ul className="space-y-1">
         {m.reasons.slice(0, 3).map((r, i) => (
