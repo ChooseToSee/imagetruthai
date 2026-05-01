@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import { useToast } from "@/hooks/use-toast";
 import ImageHeatmap from "@/components/ImageHeatmap";
+import SignalMatrix from "@/components/SignalMatrix";
 
 export interface BatchItem {
   fileName: string;
