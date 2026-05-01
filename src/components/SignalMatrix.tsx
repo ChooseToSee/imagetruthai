@@ -416,7 +416,11 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
             ))}
             <tr>
               <td colSpan={1 + REASONING_MODELS.length} style={sectionLabel}>
-                Edit / manipulation indicators
+                <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "center" }}>
+                  <div style={{ flex: 1, height: 1, background: "rgba(100,116,139,0.25)" }} />
+                  <span style={{ whiteSpace: "nowrap" }}>Edit / manipulation indicators</span>
+                  <div style={{ flex: 1, height: 1, background: "rgba(100,116,139,0.25)" }} />
+                </div>
               </td>
             </tr>
             {REASONING_SIGNALS.filter((s) => s.category === "edit").map((sig) => (
