@@ -340,8 +340,76 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
         Detailed forensic signals from reasoning models, plus overall verdicts from score-based models.
       </p>
 
+      {/* === SCORE-ONLY MODELS STRIP === */}
+      <div>
+        <p
+          style={{
+            margin: "0 0 12px 0",
+            fontSize: 10,
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            color: "rgb(148,163,184)",
+            textAlign: "center",
+          }}
+        >
+          Score-Based Models — overall verdict only
+        </p>
+        <p
+          style={{
+            margin: "0 0 14px 0",
+            fontSize: 11,
+            color: "rgb(100,116,139)",
+            textAlign: "center",
+          }}
+        >
+          These detectors return a single probability score rather than per-signal reasoning.
+        </p>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${SCORE_MODELS.length}, minmax(0,1fr))`,
+            gap: 12,
+          }}
+        >
+          {SCORE_MODELS.map((name) => {
+            const m = getScore(name);
+            return (
+              <div
+                key={name}
+                style={{
+                  padding: 12,
+                  borderRadius: 8,
+                  border: "1px solid rgba(100,116,139,0.2)",
+                  backgroundColor: "rgba(15,23,42,0.4)",
+                  textAlign: "center",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "rgb(165,180,252)",
+                    marginBottom: 8,
+                  }}
+                >
+                  {name}
+                </div>
+                {m
+                  ? verdictBadge(m.verdict, m.confidence)
+                  : (
+                    <div style={{ fontSize: 11, color: "rgb(100,116,139)" }}>
+                      No response
+                    </div>
+                  )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* === REASONING MODELS GRID === */}
-      <div style={{ overflowX: "auto" }}>
+      <div style={{ overflowX: "auto", marginTop: 24, paddingTop: 16, borderTop: "1px solid rgba(100,116,139,0.2)" }}>
         <table
           style={{
             width: "100%",
@@ -370,12 +438,12 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
               </th>
             </tr>
             <tr>
-              <th style={{ width: 180, paddingBottom: 12 }} />
+              <th style={{ width: 180, paddingBottom: 8 }} />
               {REASONING_MODELS.map((name) => (
                 <th
                   key={name}
                   style={{
-                    paddingBottom: 12,
+                    paddingBottom: 8,
                     paddingTop: 6,
                     textAlign: "center",
                     fontSize: 10,
@@ -441,80 +509,6 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
             ))}
           </tbody>
         </table>
-      </div>
-
-      {/* === SCORE-ONLY MODELS STRIP === */}
-      <div
-        style={{
-          marginTop: 24,
-          paddingTop: 16,
-          borderTop: "1px solid rgba(100,116,139,0.2)",
-        }}
-      >
-        <p
-          style={{
-            margin: "0 0 12px 0",
-            fontSize: 10,
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            color: "rgb(148,163,184)",
-            textAlign: "center",
-          }}
-        >
-          Score-Based Models — overall verdict only
-        </p>
-        <p
-          style={{
-            margin: "0 0 14px 0",
-            fontSize: 11,
-            color: "rgb(100,116,139)",
-            textAlign: "center",
-          }}
-        >
-          These detectors return a single probability score rather than per-signal reasoning.
-        </p>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${SCORE_MODELS.length}, minmax(0,1fr))`,
-            gap: 12,
-          }}
-        >
-          {SCORE_MODELS.map((name) => {
-            const m = getScore(name);
-            return (
-              <div
-                key={name}
-                style={{
-                  padding: 12,
-                  borderRadius: 8,
-                  border: "1px solid rgba(100,116,139,0.2)",
-                  backgroundColor: "rgba(15,23,42,0.4)",
-                  textAlign: "center",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: "rgb(165,180,252)",
-                    marginBottom: 8,
-                  }}
-                >
-                  {name}
-                </div>
-                {m
-                  ? verdictBadge(m.verdict, m.confidence)
-                  : (
-                    <div style={{ fontSize: 11, color: "rgb(100,116,139)" }}>
-                      No response
-                    </div>
-                  )}
-              </div>
-            );
-          })}
-        </div>
       </div>
 
       {/* Legend */}
