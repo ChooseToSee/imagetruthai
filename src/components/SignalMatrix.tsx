@@ -235,22 +235,24 @@ export default function SignalMatrix({ modelBreakdown, manipulation }: SignalMat
   });
 
   const cellStyle: React.CSSProperties = {
-    paddingTop: 8,
-    paddingBottom: 8,
+    paddingTop: 3,
+    paddingBottom: 3,
     paddingLeft: 4,
     paddingRight: 4,
     textAlign: "center",
+    lineHeight: 1,
   };
 
   const labelStyle: React.CSSProperties = {
-    paddingTop: 8,
-    paddingBottom: 8,
+    paddingTop: 3,
+    paddingBottom: 3,
     paddingRight: 12,
     fontSize: 11,
     fontWeight: 500,
     color: "rgb(148,163,184)",
     textAlign: "right",
     width: 180,
+    lineHeight: 1.1,
   };
 
   const sectionLabel: React.CSSProperties = {
