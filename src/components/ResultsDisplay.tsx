@@ -914,7 +914,11 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                     {manipulation && (
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">Edit Detection</span>
-                        <span className="font-medium text-foreground">{manipulation.confidence}% {isEdited ? "likely edited" : "likely original"}</span>
+                        <span className={`font-medium ${isEditInconclusive ? "text-amber-500" : "text-foreground"}`}>
+                          {isEditInconclusive
+                            ? "Inconclusive"
+                            : `${manipulation.confidence}% ${isEdited ? "likely edited" : "likely original"}`}
+                        </span>
                       </div>
                     )}
                   </div>
