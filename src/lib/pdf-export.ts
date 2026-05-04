@@ -194,8 +194,14 @@ export async function exportReportPdf(
     y += 6;
     pdf.setFontSize(10);
     pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(m.edited ? 200 : 50, m.edited ? 130 : 160, m.edited ? 0 : 80);
-    pdf.text(`${m.confidence}% — Manipulation Indicators ${m.edited ? "Detected" : "Not Detected"}`, 18, y);
+    const isEditInconclusive = m.confidence >= 45 && m.confidence <= 55;
+    if (isEditInconclusive) {
+      pdf.setTextColor(217, 119, 6); // amber-600
+      pdf.text("Inconclusive — models disagreed", 18, y);
+    } else {
+      pdf.setTextColor(m.edited ? 200 : 50, m.edited ? 130 : 160, m.edited ? 0 : 80);
+      pdf.text(`${m.confidence}% — Manipulation Indicators ${m.edited ? "Detected" : "Not Detected"}`, 18, y);
+    }
     y += 6;
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(9);
