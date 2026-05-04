@@ -386,11 +386,16 @@ const History = () => {
                           <li key={i} className="text-xs text-muted-foreground">• {reason}</li>
                         ))}
                       </ul>
-                      {scan.manipulation && (
+                      {scan.manipulation && (() => {
+                        const isInconclusive =
+                          scan.manipulation.confidence >= 45 && scan.manipulation.confidence <= 55;
+                        return (
                         <div className="mt-3">
                           <p className="text-xs font-medium text-foreground mb-1">Edit Detection — What Models Found</p>
-                          <p className="text-xs text-muted-foreground">
-                            {scan.manipulation.confidence}% — manipulation indicators {scan.manipulation.edited ? "detected" : "not detected"}
+                          <p className={`text-xs ${isInconclusive ? "text-amber-500 font-semibold" : "text-muted-foreground"}`}>
+                            {isInconclusive
+                              ? "Inconclusive — models disagreed"
+                              : `${scan.manipulation.confidence}% — manipulation indicators ${scan.manipulation.edited ? "detected" : "not detected"}`}
                           </p>
                           <ul className="space-y-1 mt-1">
                             {(scan.manipulation.reasons || []).slice(0, 3).map((reason: string, i: number) => (
@@ -398,7 +403,8 @@ const History = () => {
                             ))}
                           </ul>
                         </div>
-                      )}
+                        );
+                      })()}
                       <p className="text-[10px] text-muted-foreground/60 mt-3 italic">
                         Results show what AI models found — not a definitive determination. See full analysis for details.
                       </p>
