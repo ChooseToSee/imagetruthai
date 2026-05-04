@@ -375,7 +375,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
 
   const handleShare = async () => {
     const editInfo = manipulation
-      ? `\nEdit detection: ${manipulation.confidence}% — manipulation indicators ${isEdited ? "detected" : "not detected"}.`
+      ? `\nEdit detection: ${isEditInconclusive ? "inconclusive — models disagreed" : `${manipulation.confidence}% — manipulation indicators ${isEdited ? "detected" : "not detected"}`}.`
       : "";
     const modelCount = result.modelBreakdown?.length ?? 1;
 
