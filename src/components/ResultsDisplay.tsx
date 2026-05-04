@@ -114,6 +114,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
 
   const manipulation = result.manipulation;
   const isEdited = manipulation?.edited ?? false;
+  const isEditInconclusive = !!manipulation && manipulation.confidence >= 45 && manipulation.confidence <= 55;
 
   const AI_DETECTION_MODELS = ["Winston", "Winston AI", "SightEngine", "AI or Not"];
   const TOTAL_AI_DETECTION_MODELS = 3;
