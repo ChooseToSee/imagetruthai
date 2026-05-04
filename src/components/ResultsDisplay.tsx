@@ -729,7 +729,9 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                   <>
                     <motion.div
                       className={`flex items-center gap-3 rounded-lg px-4 py-3 mb-4 ${
-                        isEdited
+                        isEditInconclusive
+                          ? "bg-amber-500/10 border border-amber-500/20"
+                          : isEdited
                           ? "bg-warning/10 border border-warning/20"
                           : "bg-success/10 border border-success/20"
                       }`}
@@ -737,19 +739,25 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.3, duration: 0.4 }}
                     >
-                      {isEdited ? (
+                      {isEditInconclusive ? (
+                        <Info className="h-5 w-5 text-amber-500 shrink-0" />
+                      ) : isEdited ? (
                         <Pencil className="h-5 w-5 text-warning shrink-0" />
                       ) : (
                         <ShieldCheck className="h-5 w-5 text-success shrink-0" />
                       )}
                       <div className="flex-1">
                         <p className="font-display text-lg font-bold text-foreground">
-                          {isEdited
+                          {isEditInconclusive
+                            ? "Inconclusive — models disagreed"
+                            : isEdited
                             ? `${manipulation.confidence}% Likely Edited`
                             : `${manipulation.confidence}% Likely Unmodified`}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {isEdited
+                          {isEditInconclusive
+                            ? "Edit detection models split evenly — result is not reliable for this image."
+                            : isEdited
                             ? "Signs of image editing or manipulation detected."
                             : "No significant signs of editing or manipulation found."}
                         </p>
