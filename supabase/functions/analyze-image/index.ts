@@ -610,11 +610,41 @@ function getManipulationTips(): string[] {
   ];
 }
 
-function computeManipulation(editResults: { label: string; edited: boolean; confidence: number; reasons: string[] }[]) {
+type EditResult = { label: string; edited: boolean; confidence: number; reasons: string[] };
+
+function computeManipulation(editResults: EditResult[]) {
   if (editResults.length === 0) return undefined;
 
-  if (editResults.length === 1) {
-    const r = editResults[0];
+  // ── Confidence-threshold filter ────────────────────────────────────
+  // Hive VLM has been observed returning low-confidence (≈50–55%)
+  // "Not edited" verdicts on clearly edited images, which drags the
+  // weighted consensus toward 50%. Treat any model returning <70%
+  // confidence as inconclusive and exclude it from consensus.
+  const CONFIDENCE_THRESHOLD = 70;
+  const lowConfidence = editResults.filter((r) => r.confidence < CONFIDENCE_THRESHOLD);
+  if (lowConfidence.length > 0) {
+    console.log(
+      "[computeManipulation] Excluding low-confidence results:",
+      lowConfidence.map((r) => `${r.label}=${r.confidence}% (${r.edited ? "edited" : "not edited"})`).join(", ")
+    );
+  }
+  let confidentResults = editResults.filter((r) => r.confidence >= CONFIDENCE_THRESHOLD);
+
+  if (confidentResults.length === 0) {
+    // All models uncertain — prefer Gemini's verdict if present,
+    // otherwise fall back to the highest-confidence raw result.
+    const gemini = editResults.find((r) => r.label === "Gemini");
+    const fallback = gemini ?? [...editResults].sort((a, b) => b.confidence - a.confidence)[0];
+    return {
+      edited: fallback.edited,
+      confidence: fallback.confidence,
+      reasons: fallback.reasons.slice(0, 5),
+      tips: getManipulationTips(),
+    };
+  }
+
+  if (confidentResults.length === 1) {
+    const r = confidentResults[0];
     return {
       edited: r.edited,
       confidence: r.confidence,
@@ -622,6 +652,8 @@ function computeManipulation(editResults: { label: string; edited: boolean; conf
       tips: getManipulationTips(),
     };
   }
+
+  editResults = confidentResults;
 
   // Convert each result to a -100 to +100 score
   // Positive = not edited, Negative = edited
