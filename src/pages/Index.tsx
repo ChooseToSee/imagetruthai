@@ -409,6 +409,7 @@ const Index = () => {
     setSingleResult(null);
     setBatchResults(null);
     setPartialReady(false);
+    setIsFinalResult(false);
     scrollToUpload();
   }, [scrollToUpload]);
 
