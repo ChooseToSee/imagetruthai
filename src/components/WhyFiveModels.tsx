@@ -22,7 +22,7 @@ const WhyFiveModels = () => {
           </h2>
 
           <p className="mx-auto max-w-xl text-lg text-muted-foreground">
-            4 independent AI detectors cover generation. 1 visual model covers manipulation. Together they give you evidence no single tool can.
+            Each model uses different detection methods and looks for different indicators. What one misses, another may catch.
           </p>
         </motion.div>
 
