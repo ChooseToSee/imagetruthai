@@ -131,7 +131,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
   const isEditInconclusive = !!manipulation && manipulation.confidence >= 45 && manipulation.confidence <= 55;
 
   const AI_DETECTION_MODELS = ["Winston", "Winston AI", "SightEngine", "AI or Not", "Hive"];
-  const TOTAL_AI_DETECTION_MODELS = 3;
+  const TOTAL_AI_DETECTION_MODELS = 4;
   const aiDetectionBreakdown = result.modelBreakdown?.filter((m) =>
     AI_DETECTION_MODELS.includes(m.model)
   ) ?? [];
@@ -644,7 +644,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
             </div>
             {/* Tabbed results */}
             <p className="text-xs text-muted-foreground/70 text-center mb-3 px-2">
-              These results show what each model found — analytical findings to help you evaluate this image, not a final determination.
+              5 independent AI models analyzed this image — 4 looking for AI generation indicators, 1 analyzing for visual manipulation. These are their findings.
             </p>
             <Tabs defaultValue="ai-detection" className="px-6 pb-4">
               <TabsList className="grid w-full grid-cols-3 mb-4 h-11 bg-muted/80 border border-border">
@@ -691,8 +691,8 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                     <p className="text-xs text-muted-foreground">
                       {totalModels > 0
                         ? modelsAgreed === totalModels
-                          ? `All ${totalModels} models found ${isAI ? "AI generation indicators" : "no AI generation indicators"} in this image.`
-                          : "Models disagreed — see individual findings below to evaluate the evidence."
+                          ? `All ${totalModels} AI detection models found ${isAI ? "indicators of AI generation" : "no indicators of AI generation"} in this image.`
+                          : `${modelsAgreed} of ${totalModels} AI detection models found indicators — see individual findings below.`
                         : isAI
                         ? "Indicators of AI generation were detected."
                         : "No indicators of AI generation were detected."}
@@ -701,13 +701,13 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                       const activeModels = aiDetectionBreakdown.filter(
                         (m) => m.confidence > 0 && m.reasons.length > 0
                       ).length;
-                      if (activeModels > 0 && activeModels < 3) {
+                      if (activeModels > 0 && activeModels < TOTAL_AI_DETECTION_MODELS) {
                         return (
                           <p className="text-xs text-muted-foreground/70 mt-1.5 flex items-center gap-1.5">
                             <Info className="h-3 w-3 shrink-0 text-warning" />
                             <span>
                               Analysis used{" "}
-                              <span className="font-medium">{activeModels} of 3 AI detection models</span>
+                              <span className="font-medium">{activeModels} of {TOTAL_AI_DETECTION_MODELS} AI detection models</span>
                               {" "}— one or more models were temporarily unavailable
                             </span>
                           </p>
