@@ -694,7 +694,7 @@ function computeConsensus(results: ModelResult[], expectedTotal = results.length
 
   const tips = [
     "These models detect statistical patterns associated with AI generation — results are probabilistic not definitive",
-    "All 5 models report what they find based on their training — see per-model breakdown for individual assessments",
+    "All AI detection models report what they find based on their training — see per-model breakdown for individual assessments",
     "Reverse image search can help identify original sources",
     "No detector is 100% accurate — use results as one input among several",
   ];
