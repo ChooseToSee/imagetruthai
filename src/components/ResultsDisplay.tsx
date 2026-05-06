@@ -824,8 +824,8 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                           {isEditInconclusive
                             ? "Edit detection models split evenly — result is not reliable for this image."
                             : isEdited
-                            ? "Signs of image editing or manipulation detected."
-                            : "No significant signs of editing or manipulation found."}
+                            ? "Visual analysis found manipulation indicators."
+                            : "Visual analysis found no manipulation indicators."}
                         </p>
                       </div>
                     </motion.div>
