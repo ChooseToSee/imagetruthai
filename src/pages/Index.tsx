@@ -103,6 +103,7 @@ const Index = () => {
         const twoHours = 2 * 60 * 60 * 1000;
         if (Date.now() - timestamp < twoHours) {
           setSingleResult({ result, preview });
+          setIsFinalResult(true);
         } else {
           sessionStorage.removeItem("lastAnalysisResult");
         }
@@ -120,6 +121,7 @@ const Index = () => {
       sessionStorage.removeItem("lastAnalysisResult");
       setSingleResult(null);
       setBatchResults(null);
+      setIsFinalResult(false);
       setTimeout(() => {
         document.getElementById("upload")?.scrollIntoView({ behavior: "smooth" });
       }, 300);
@@ -173,6 +175,7 @@ const Index = () => {
   const handleDemo = useCallback(() => {
     const demo = DEMOS[demoIndex];
     setSingleResult({ result: demo.result, preview: demo.preview });
+    setIsFinalResult(true);
     setDemoIndex((prev) => (prev + 1) % DEMOS.length);
     setTimeout(() => window.scrollTo({ top: 600, behavior: "smooth" }), 100);
   }, [demoIndex]);
