@@ -109,9 +109,9 @@ async function analyzeWithWinston(
     reasons.push("Winston's classifier is trained to identify patterns from diffusion models, GANs, and other AI generation tools");
     reasons.push("These patterns differ statistically from those found in photographs and human-made digital art");
   } else {
-    reasons.push(`Winston AI found no indicators of AI generation (${humanScore}% authentic probability)`);
-    reasons.push("No pixel patterns associated with known AI generation tools were detected");
-    reasons.push("Winston's classifier found characteristics more consistent with non-AI-generated content");
+    reasons.push("Winston AI found no pixel patterns associated with AI generation tools");
+    reasons.push("No synthetic generation signatures detected by Winston's classifier");
+    reasons.push("Image characteristics did not trigger Winston's AI detection thresholds");
   }
 
   return { model: "Winston", verdict, confidence, reasons };
@@ -165,9 +165,9 @@ async function analyzeWithSightEngine(
     reasons.push("SightEngine's genai model is purpose-built to detect diffusion model and GAN outputs");
     reasons.push("Statistical patterns in this image match those associated with AI generation tools");
   } else {
-    reasons.push(`SightEngine's AI generation classifier scored ${((1 - aiGenerated) * 100).toFixed(1)}% probability of authentic origin`);
-    reasons.push("SightEngine found no statistical indicators of AI generation in this image");
-    reasons.push("Pixel-level analysis found no patterns associated with known AI generation tools");
+    reasons.push("SightEngine's AI generation classifier found no indicators in this image");
+    reasons.push("No diffusion model or GAN patterns detected by SightEngine");
+    reasons.push("Image passed SightEngine's synthetic generation checks");
   }
 
   return { model: "SightEngine", verdict, confidence, reasons };
@@ -516,9 +516,9 @@ async function analyzeWithAIorNot(
     reasons.push(topGenerator ? `Most likely generator: ${topGenerator.replace(/_/g, " ")}` : "Specific generator not identified");
     reasons.push("AI or Not specializes in identifying AI synthesis patterns across major generation platforms");
   } else {
-    reasons.push(`AI or Not found no AI generation indicators (${(humanConf * 100).toFixed(1)}% authentic confidence)`);
-    reasons.push("No signatures matching known AI generation platforms were detected");
-    reasons.push("AI or Not's classifier found this image consistent with non-AI-generated content");
+    reasons.push("AI or Not found no AI generation signatures in this image");
+    reasons.push("No matches found against known AI generation platforms");
+    reasons.push("Image did not trigger AI or Not's synthesis detection");
   }
 
   return { model: "AI or Not", verdict, confidence, reasons };
@@ -613,9 +613,9 @@ async function analyzeWithHiveAI(
     }
     reasons.push("Hive analyzed 107 AI generator signatures including Midjourney, DALL-E, Stable Diffusion, Sora and more");
   } else {
-    reasons.push(`Hive found no AI generation indicators (${(notAiScore * 100).toFixed(1)}% authentic probability)`);
-    reasons.push("No signatures matching known AI generators detected");
-    reasons.push("Hive analyzed 107 AI generator signatures and found no matches");
+    reasons.push("Hive found no AI generation indicators across 107 generator signatures");
+    reasons.push("No matches found for known generators including Midjourney, DALL-E, Stable Diffusion, Sora, Flux and others");
+    reasons.push("No deepfake indicators detected");
   }
 
   console.log("[HiveAI] Result:", { verdict, confidence, aiScore, notAiScore, deepfakeScore, topGenerator: topGenerator?.name });
