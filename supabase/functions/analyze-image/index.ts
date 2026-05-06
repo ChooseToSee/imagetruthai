@@ -15,37 +15,72 @@ async function testHiveAIDetection(
 ): Promise<void> {
   const b64 = base64Encode(imageBytes);
   const dataUrl = `data:${mimeType};base64,${b64}`;
-  const res = await fetch("https://api.thehive.ai/api/v3/task/sync", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      input: [{ type: "image_url", image_url: { url: dataUrl } }],
-      model: "hive/ai-generated-and-deepfake-content-detection",
-    }),
-  });
-  console.log("[HiveAIDetect] Status:", res.status);
-  const text = await res.text();
-  console.log("[HiveAIDetect] Response:", text.slice(0, 800));
+  const model = "hive/ai-generated-and-deepfake-content-detection";
 
-  if (!res.ok) {
-    const res2 = await fetch("https://api.thehive.ai/api/v3/task/sync", {
+  // V1 — classic top-level shape
+  try {
+    const r1 = await fetch("https://api.thehive.ai/api/v3/task/sync", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        models: ["hive/ai-generated-and-deepfake-content-detection"],
-        input: [{ type: "image_url", image_url: { url: dataUrl } }],
-      }),
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model, image: { url: dataUrl } }),
     });
-    console.log("[HiveAIDetect Alt] Status:", res2.status);
-    const text2 = await res2.text();
-    console.log("[HiveAIDetect Alt] Response:", text2.slice(0, 800));
-  }
+    console.log("[HiveAIDetect V1] Status:", r1.status);
+    console.log("[HiveAIDetect V1] Body:", (await r1.text()).slice(0, 400));
+  } catch (e: any) { console.error("[HiveAIDetect V1] Error:", e.message); }
+
+  // V2 — multipart form-data v3
+  try {
+    const blob = new Blob([imageBytes], { type: mimeType });
+    const form = new FormData();
+    form.append("image", blob, "image.jpg");
+    form.append("model", model);
+    const r2 = await fetch("https://api.thehive.ai/api/v3/task/sync", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: form,
+    });
+    console.log("[HiveAIDetect V2] Status:", r2.status);
+    console.log("[HiveAIDetect V2] Body:", (await r2.text()).slice(0, 400));
+  } catch (e: any) { console.error("[HiveAIDetect V2] Error:", e.message); }
+
+  // V3 — input wrapper
+  try {
+    const r3 = await fetch("https://api.thehive.ai/api/v3/task/sync", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model, input: { image: dataUrl } }),
+    });
+    console.log("[HiveAIDetect V3] Status:", r3.status);
+    console.log("[HiveAIDetect V3] Body:", (await r3.text()).slice(0, 400));
+  } catch (e: any) { console.error("[HiveAIDetect V3] Error:", e.message); }
+
+  // V4 — V2 API endpoint with token auth
+  try {
+    const blob = new Blob([imageBytes], { type: mimeType });
+    const form = new FormData();
+    form.append("image", blob, "image.jpg");
+    const r4 = await fetch("https://api.thehive.ai/api/v2/task/sync", {
+      method: "POST",
+      headers: { Authorization: `token ${apiKey}` },
+      body: form,
+    });
+    console.log("[HiveAIDetect V4] Status:", r4.status);
+    console.log("[HiveAIDetect V4] Body:", (await r4.text()).slice(0, 400));
+  } catch (e: any) { console.error("[HiveAIDetect V4] Error:", e.message); }
+
+  // V5 — V2 API endpoint with Bearer auth
+  try {
+    const blob = new Blob([imageBytes], { type: mimeType });
+    const form = new FormData();
+    form.append("image", blob, "image.jpg");
+    const r5 = await fetch("https://api.thehive.ai/api/v2/task/sync", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: form,
+    });
+    console.log("[HiveAIDetect V5] Status:", r5.status);
+    console.log("[HiveAIDetect V5] Body:", (await r5.text()).slice(0, 400));
+  } catch (e: any) { console.error("[HiveAIDetect V5] Error:", e.message); }
 }
 
 interface ModelResult {
