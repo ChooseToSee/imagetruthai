@@ -29,12 +29,15 @@ const ModelCard = ({ m }: { m: ModelBreakdown }) => {
     <div className="rounded-lg border border-border bg-muted/30 p-3">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-semibold text-foreground">{m.model}</span>
-        <span
-          className={`text-xs font-bold ${isAI ? "text-destructive" : "text-success"}`}
-          title={isAI ? "AI generation indicators detected" : "No AI generation indicators detected"}
-        >
-          {m.confidence}% — {isAI ? "indicators found" : "no indicators found"}
-        </span>
+        {isAI ? (
+          <span className="text-xs font-bold text-destructive">
+            AI Indicators Found — {m.confidence}% confidence
+          </span>
+        ) : (
+          <span className="text-xs font-medium text-muted-foreground">
+            No AI Indicators Found
+          </span>
+        )}
       </div>
       <ul className="space-y-1">
         {m.reasons.slice(0, 3).map((r, i) => (
@@ -429,12 +432,15 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                                           <div key={mi} className="rounded-lg border border-border bg-muted/30 p-3">
                                             <div className="flex items-center justify-between mb-2">
                                               <span className="text-xs font-semibold text-foreground">{m.model}</span>
-                                              <span
-                                                className={`text-xs font-bold ${manip.edited ? "text-warning" : "text-success"}`}
-                                                title={manip.edited ? "Manipulation indicators detected" : "No manipulation indicators detected"}
-                                              >
-                                                {manip.confidence}% — {manip.edited ? "indicators found" : "no indicators found"}
-                                              </span>
+                                              {manip.edited ? (
+                                                <span className="text-xs font-bold text-warning">
+                                                  Manipulation Indicators Found — {manip.confidence}% confidence
+                                                </span>
+                                              ) : (
+                                                <span className="text-xs font-medium text-muted-foreground">
+                                                  No Manipulation Indicators Found
+                                                </span>
+                                              )}
                                             </div>
                                             <ul className="space-y-1">
                                               {manip.reasons.slice(0, 3).map((r, j) => (
