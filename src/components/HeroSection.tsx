@@ -36,7 +36,7 @@ interface HeroSectionProps {
   onStartFree: () => void;
 }
 
-const cycleWords = ["Real", "Fake", "AI-Generated", "Photoshopped", "Edited"];
+const cycleWords = ["Real", "Fake", "AI-Generated"];
 
 const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
   const { subscription, user } = useAuth();
