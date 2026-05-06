@@ -120,8 +120,8 @@ const WhyFiveModels = () => {
 
             <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
               Like expert witnesses, our 5 AI models each report their independent findings.
-              Winston AI, SightEngine, and AI or Not look for AI generation indicators.
-              Gemini and Hive look for manipulation indicators.
+              Winston AI, SightEngine, AI or Not, and Hive look for AI generation indicators.
+              Gemini analyzes for visual manipulation.
             </p>
 
             <p className="text-sm leading-relaxed text-muted-foreground">
@@ -148,17 +148,17 @@ const WhyFiveModels = () => {
               <tr>
                 <th className="w-36 pb-1" />
                 <th
-                  colSpan={3}
+                  colSpan={4}
                   className="pb-1 text-center text-xs font-bold uppercase tracking-widest text-primary border-b-2 border-primary px-1"
                 >
-                  AI Analysis
+                  AI Detection
                 </th>
                 <td className="w-2 border-l-2 border-border/60" />
                 <th
-                  colSpan={2}
+                  colSpan={1}
                   className="pb-1 text-center text-xs font-bold uppercase tracking-widest text-amber-400 border-b-2 border-amber-400 px-1"
                 >
-                  Edit Analysis
+                  Visual
                 </th>
               </tr>
               {/* Row 2: Model names */}
@@ -168,6 +168,7 @@ const WhyFiveModels = () => {
                   { name: "Winston", color: "text-primary" },
                   { name: "SightEngine", color: "text-primary" },
                   { name: "AI or Not", color: "text-primary" },
+                  { name: "Hive", color: "text-primary" },
                 ].map((m) => (
                   <th
                     key={m.name}
@@ -179,7 +180,6 @@ const WhyFiveModels = () => {
                 <td className="w-2 border-l-2 border-border/60" />
                 {[
                   { name: "Gemini", color: "text-amber-400" },
-                  { name: "Hive", color: "text-amber-400" },
                 ].map((m) => (
                   <th
                     key={m.name}
