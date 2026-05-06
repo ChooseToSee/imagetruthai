@@ -931,15 +931,15 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                     AI Observational Notes
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed mb-2">
-                    The 5 AI models in this analysis each look for specific indicators based on their training:
+                    The AI models in this analysis each look for specific indicators based on their training:
                   </p>
                   <p className="text-xs text-muted-foreground leading-relaxed mb-2">
-                    <span className="font-medium text-foreground">AI Detection (Winston AI, SightEngine, AI or Not):</span>{" "}
-                    These models look for statistical patterns associated with AI generation tools. They report the probability that this image was created by an AI generator.
+                    <span className="font-medium text-foreground">AI Detection (Winston AI, SightEngine, AI or Not, Hive):</span>{" "}
+                    These models look for statistical patterns associated with AI generation tools. Hive also checks for deepfake indicators and identifies which of 107 known AI generators may have created the image.
                   </p>
                   <p className="text-xs text-muted-foreground leading-relaxed mb-2">
-                    <span className="font-medium text-foreground">Edit Detection (Gemini, Hive):</span>{" "}
-                    These models look for visual signs of post-processing manipulation. They report whether they found indicators of editing — not what type of image this is.
+                    <span className="font-medium text-foreground">Visual Analysis (Gemini):</span>{" "}
+                    Looks for visual signs of post-processing manipulation. Results are supplementary — not forensic proof.
                   </p>
                   <p className="text-xs text-muted-foreground leading-relaxed mb-2">
                     All results are probabilistic. Models report what they find based on their training data and may interpret the same image differently.
