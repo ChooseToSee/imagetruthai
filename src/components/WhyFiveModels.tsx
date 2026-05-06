@@ -22,7 +22,7 @@ const WhyFiveModels = () => {
           </h2>
 
           <p className="mx-auto max-w-xl text-lg text-muted-foreground">
-            No single AI detector catches everything. ImageTruth AI runs 4 independent purpose-built detection models — because what one misses, another may catch. You see every model's findings and decide what they mean.
+            4 independent AI detectors cover generation. 1 visual model covers manipulation. Together they give you evidence no single tool can.
           </p>
         </motion.div>
 
@@ -119,9 +119,7 @@ const WhyFiveModels = () => {
             </div>
 
             <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
-              Like expert witnesses, our 5 AI models each report their independent findings.
-              Winston AI, SightEngine, AI or Not, and Hive look for AI generation indicators.
-              Gemini analyzes for visual manipulation.
+              Like expert witnesses, our 5 AI models each report their independent findings. Four purpose-built detectors — Winston AI, SightEngine, AI or Not, and Hive — look for AI generation indicators across hundreds of known generator signatures. Gemini provides supplementary visual manipulation analysis.
             </p>
 
             <p className="text-sm leading-relaxed text-muted-foreground">

@@ -220,6 +220,9 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
             >
               Upload & Analyze
             </motion.h2>
+            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-primary">
+              Analyzed by 5 independent AI models
+            </p>
             <motion.p
               className="mb-6 text-muted-foreground"
               initial={{ opacity: 0, y: 10 }}

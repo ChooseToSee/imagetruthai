@@ -10,12 +10,12 @@ const steps = [
   {
     icon: Cpu,
     title: "Analyze",
-    description: "Our AI system analyzes visual patterns and metadata signals.",
+    description: "Our 5 AI models analyze your image independently — 4 purpose-built AI detectors plus visual manipulation analysis — then report exactly what each found.",
   },
   {
     icon: FileText,
     title: "Report",
-    description: "See what each model found — independent findings from 4 AI detectors to help you evaluate the image.",
+    description: "See what each model found — independent findings from 5 AI models to help you evaluate the image.",
   },
 ];
 
