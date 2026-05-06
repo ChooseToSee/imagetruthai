@@ -82,6 +82,7 @@ const Index = () => {
   const [demoIndex, setDemoIndex] = useState(0);
   const [streamProgress, setStreamProgress] = useState<{ completed: number; total: number } | null>(null);
   const [partialReady, setPartialReady] = useState(false);
+  const [isFinalResult, setIsFinalResult] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { user, refreshSubscription, subscription } = useAuth();
   const { toast } = useToast();
@@ -102,6 +103,7 @@ const Index = () => {
         const twoHours = 2 * 60 * 60 * 1000;
         if (Date.now() - timestamp < twoHours) {
           setSingleResult({ result, preview });
+          setIsFinalResult(true);
         } else {
           sessionStorage.removeItem("lastAnalysisResult");
         }
@@ -119,6 +121,7 @@ const Index = () => {
       sessionStorage.removeItem("lastAnalysisResult");
       setSingleResult(null);
       setBatchResults(null);
+      setIsFinalResult(false);
       setTimeout(() => {
         document.getElementById("upload")?.scrollIntoView({ behavior: "smooth" });
       }, 300);
@@ -158,6 +161,7 @@ const Index = () => {
   const scrollToUpload = useCallback(() => {
     setSingleResult(null);
     setBatchResults(null);
+    setIsFinalResult(false);
     setTimeout(() => uploadRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   }, []);
 
@@ -172,6 +176,7 @@ const Index = () => {
   const handleDemo = useCallback(() => {
     const demo = DEMOS[demoIndex];
     setSingleResult({ result: demo.result, preview: demo.preview });
+    setIsFinalResult(true);
     setDemoIndex((prev) => (prev + 1) % DEMOS.length);
     setTimeout(() => window.scrollTo({ top: 600, behavior: "smooth" }), 100);
   }, [demoIndex]);
@@ -213,6 +218,7 @@ const Index = () => {
       },
       onDone: (finalResult) => {
         setSingleResult({ result: finalResult, preview });
+        setIsFinalResult(true);
         setStreamProgress(null);
         saveToHistory(file, finalResult);
         saveResultToSession(finalResult, preview);
@@ -295,6 +301,7 @@ const Index = () => {
     setSingleResult(null);
     setBatchResults(null);
     setPartialReady(false);
+    setIsFinalResult(false);
 
     // Get the session token ONCE upfront, while we know the user's session
     // is active (they're interacting with the upload UI). Passing it down
@@ -361,6 +368,7 @@ const Index = () => {
           toast({ title: "Analysis failed", description: "None of the images could be analyzed.", variant: "destructive" });
         } else if (successes.length === 1) {
           setSingleResult({ result: successes[0].result, preview: successes[0].preview });
+          setIsFinalResult(true);
         } else { setBatchResults(successes); }
       }
     } catch (err: any) {
@@ -403,6 +411,7 @@ const Index = () => {
     setSingleResult(null);
     setBatchResults(null);
     setPartialReady(false);
+    setIsFinalResult(false);
     scrollToUpload();
   }, [scrollToUpload]);
 
@@ -418,6 +427,7 @@ const Index = () => {
           <ResultsDisplay
             result={singleResult.result}
             imagePreview={singleResult.preview}
+            isFinalResult={isFinalResult}
             onReset={handleReset}
             streamProgress={streamProgress ?? undefined}
             partialReady={partialReady}
