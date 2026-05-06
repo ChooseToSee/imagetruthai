@@ -781,44 +781,6 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                   </ul>
                 </div>
 
-                {/* Detected Signals (collapsible) */}
-                {detectedSignals && detectedSignals.length > 0 && (
-                  <div className="mt-3">
-                    <button
-                      onClick={() => setShowSignals(!showSignals)}
-                      className="flex w-full items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted/50 transition-colors"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Activity className="h-4 w-4 text-primary" />
-                        Detected Signals
-                      </span>
-                      <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showSignals ? "rotate-180" : ""}`} />
-                    </button>
-
-                    {showSignals && (
-                      <div className="mt-2 rounded-lg border border-border bg-card px-4 py-3 space-y-1.5">
-                        {detectedSignals.map((signal, i) => (
-                          <div key={i} className="flex items-start gap-2 text-xs">
-                            {signal.detected ? (
-                              <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
-                            ) : (
-                              <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0 mt-0.5" />
-                            )}
-                            <span className="text-muted-foreground">
-                              {signal.label}:{" "}
-                              <span className={signal.detected ? "text-amber-500 font-medium" : "text-success"}>
-                                {signal.detected ? "Detected" : "Not detected"}
-                              </span>
-                            </span>
-                          </div>
-                        ))}
-                        <p className="text-[10px] text-muted-foreground/60 pt-2 border-t border-border mt-2 italic">
-                          Signals are pattern indicators only — not definitive findings.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
               </TabsContent>
 
               {/* Edit Detection Tab */}
@@ -967,40 +929,6 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
 
               {/* Details Tab */}
               <TabsContent value="details">
-                {/* Detected Signals Table */}
-                <div className="mb-4">
-                  <h3 className="mb-3 font-display text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Eye className="h-4 w-4 text-primary" />
-                    Detected Signals
-                  </h3>
-                  <div className="rounded-lg border border-border overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-muted/50 border-b border-border">
-                          <th className="px-3 py-2 text-left text-xs font-semibold text-foreground">Signal</th>
-                          <th className="px-3 py-2 text-left text-xs font-semibold text-foreground">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {detectedSignals.map((signal, i) => (
-                          <tr key={i} className="border-b border-border last:border-0">
-                            <td className="px-3 py-2 text-xs text-muted-foreground">{signal.label}</td>
-                            <td className="px-3 py-2">
-                              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                                signal.detected
-                                  ? "bg-destructive/10 text-destructive"
-                                  : "bg-success/10 text-success"
-                              }`}>
-                                {signal.detected ? "Detected" : "Not detected"}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
                 {/* Metadata Information */}
                 <div className="mb-4">
                   <h3 className="mb-3 font-display text-sm font-semibold text-foreground flex items-center gap-2">
