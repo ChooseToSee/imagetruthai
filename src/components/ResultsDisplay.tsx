@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { AlertTriangle, CheckCircle, Info, RotateCcw, ChevronDown, ChevronUp, Brain, Share2, Check, Pencil, ShieldCheck, Shield, Download, FileText, Eye, Link as LinkIcon, Lock, Globe, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle, CheckCircle2, Info, RotateCcw, ChevronDown, ChevronUp, Brain, Share2, Check, Pencil, ShieldCheck, Shield, Download, FileText, Eye, Link as LinkIcon, Lock, Globe, Loader2, Activity } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -90,6 +90,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
   const [isPublic, setIsPublic] = useState(false);
   const [shareReportId, setShareReportId] = useState<string | null>(null);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [showSignals, setShowSignals] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const { plan } = usePlan();
@@ -726,6 +727,45 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                     ))}
                   </ul>
                 </div>
+
+                {/* Detected Signals (collapsible) */}
+                {detectedSignals && detectedSignals.length > 0 && (
+                  <div className="mt-3">
+                    <button
+                      onClick={() => setShowSignals(!showSignals)}
+                      className="flex w-full items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted/50 transition-colors"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Activity className="h-4 w-4 text-primary" />
+                        Detected Signals
+                      </span>
+                      <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showSignals ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {showSignals && (
+                      <div className="mt-2 rounded-lg border border-border bg-card px-4 py-3 space-y-1.5">
+                        {detectedSignals.map((signal, i) => (
+                          <div key={i} className="flex items-start gap-2 text-xs">
+                            {signal.detected ? (
+                              <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+                            ) : (
+                              <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0 mt-0.5" />
+                            )}
+                            <span className="text-muted-foreground">
+                              {signal.label}:{" "}
+                              <span className={signal.detected ? "text-amber-500 font-medium" : "text-success"}>
+                                {signal.detected ? "Detected" : "Not detected"}
+                              </span>
+                            </span>
+                          </div>
+                        ))}
+                        <p className="text-[10px] text-muted-foreground/60 pt-2 border-t border-border mt-2 italic">
+                          Signals are pattern indicators only — not definitive findings.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </TabsContent>
 
               {/* Edit Detection Tab */}
@@ -968,47 +1008,6 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
               </TabsContent>
             </Tabs>
 
-            {!isStreaming &&
-             !partialReady &&
-             result.modelBreakdown &&
-             result.modelBreakdown.length > 0 &&
-             result.modelBreakdown.some(m => m.reasons && m.reasons.length > 0) && (
-            <div className="px-6 pt-2 pb-4 border-t border-border/50 mt-2">
-              <SignalMatrix
-                key={JSON.stringify(
-                  result.modelBreakdown?.map(
-                    m => m.model + m.confidence + (m.reasons?.[0] ?? "")
-                  ) ?? []
-                )}
-                modelBreakdown={result.modelBreakdown?.map(m => ({
-                  model: m.model,
-                  verdict: m.verdict,
-                  confidence: m.confidence,
-                  reasons: m.reasons,
-                })) ?? []}
-                manipulation={
-                  result.manipulation
-                    ? {
-                        verdict: result.manipulation.edited
-                          ? "manipulated"
-                          : "original",
-                        confidence: result.manipulation.confidence,
-                        modelBreakdown: result.modelBreakdown
-                          ?.filter(m => m.manipulation)
-                          .map(m => ({
-                            model: m.model,
-                            verdict: m.manipulation!.edited
-                              ? "manipulated"
-                              : "original",
-                            confidence: m.manipulation!.confidence,
-                            reasons: m.manipulation!.reasons,
-                          })),
-                      }
-                    : null
-                }
-              />
-            </div>
-            )}
 
 
             {/* Footer */}
