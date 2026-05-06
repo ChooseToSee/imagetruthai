@@ -935,11 +935,6 @@ serve(async (req) => {
     const imageBytes = new Uint8Array(await imageFile.arrayBuffer());
     const mimeType = imageFile.type || "image/jpeg";
 
-    if (HIVE_API_KEY) {
-      testHiveAIDetection(imageBytes, mimeType, HIVE_API_KEY).catch((e) =>
-        console.error("[HiveAIDetect] Test failed:", e)
-      );
-    }
 
     const wantsStream = req.headers.get("x-stream") === "true";
 
