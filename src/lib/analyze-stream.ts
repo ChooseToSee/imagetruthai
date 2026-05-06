@@ -81,9 +81,49 @@ export async function analyzeImageStream(
   const decoder = new TextDecoder();
   let buffer = "";
 
+  const processChunk = (chunk: string) => {
+    let event = "";
+    let data = "";
+
+    for (const line of chunk.split("\n")) {
+      if (line.startsWith("event: ")) event = line.slice(7).trim();
+      else if (line.startsWith("data: ")) data += line.slice(6);
+    }
+
+    if (!event || !data) return;
+
+    try {
+      const parsed = JSON.parse(data);
+
+      switch (event) {
+        case "model":
+          callbacks.onModel(parsed as ModelBreakdown);
+          break;
+        case "consensus":
+          callbacks.onConsensus(parsed as StreamConsensus);
+          break;
+        case "done":
+          callbacks.onDone(parsed as AnalysisResult);
+          break;
+        case "error":
+          callbacks.onError(parsed.error || "Analysis failed");
+          break;
+        case "model_error":
+          // Individual model failure, consensus will still work
+          break;
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  };
+
   while (true) {
     const { done, value } = await reader.read();
-    if (done) break;
+    if (done) {
+      const finalChunk = buffer.trim();
+      if (finalChunk) processChunk(finalChunk);
+      break;
+    }
 
     buffer += decoder.decode(value, { stream: true });
 
@@ -91,40 +131,7 @@ export async function analyzeImageStream(
     while ((newlineIdx = buffer.indexOf("\n\n")) !== -1) {
       const chunk = buffer.slice(0, newlineIdx);
       buffer = buffer.slice(newlineIdx + 2);
-
-      let event = "";
-      let data = "";
-
-      for (const line of chunk.split("\n")) {
-        if (line.startsWith("event: ")) event = line.slice(7).trim();
-        else if (line.startsWith("data: ")) data = line.slice(6);
-      }
-
-      if (!event || !data) continue;
-
-      try {
-        const parsed = JSON.parse(data);
-
-        switch (event) {
-          case "model":
-            callbacks.onModel(parsed as ModelBreakdown);
-            break;
-          case "consensus":
-            callbacks.onConsensus(parsed as StreamConsensus);
-            break;
-          case "done":
-            callbacks.onDone(parsed as AnalysisResult);
-            break;
-          case "error":
-            callbacks.onError(parsed.error || "Analysis failed");
-            break;
-          case "model_error":
-            // Individual model failure, consensus will still work
-            break;
-        }
-      } catch {
-        // Ignore parse errors
-      }
+      processChunk(chunk);
     }
   }
 }
