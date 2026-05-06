@@ -34,6 +34,11 @@ export interface ManipulationResult {
   tips: string[];
 }
 
+export interface DetectedSignal {
+  label: string;
+  detected: boolean;
+}
+
 export interface AnalysisResult {
   verdict: "ai" | "human";
   confidence: number;
@@ -41,11 +46,13 @@ export interface AnalysisResult {
   tips: string[];
   modelBreakdown?: ModelBreakdown[];
   manipulation?: ManipulationResult;
+  signals?: DetectedSignal[];
 }
 
 interface ResultsDisplayProps {
   result: AnalysisResult;
   imagePreview: string;
+  isFinalResult?: boolean;
   onReset: () => void;
   streamProgress?: { completed: number; total: number };
   partialReady?: boolean;
@@ -80,7 +87,7 @@ const ModelCard = ({ m }: { m: ModelBreakdown }) => {
   );
 };
 
-const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partialReady, onKeepWaiting }: ResultsDisplayProps) => {
+const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, streamProgress, partialReady, onKeepWaiting }: ResultsDisplayProps) => {
   const isAI = result.verdict === "ai";
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [showEditBreakdown, setShowEditBreakdown] = useState(false);
@@ -145,8 +152,8 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
   // whenever the streaming result updates with new reasons / model breakdown).
   const detectedSignals = useMemo(() => {
     // Prefer server-provided signals when available
-    if ((result as any)?.signals && Array.isArray((result as any).signals) && (result as any).signals.length > 0) {
-      return (result as any).signals as { label: string; detected: boolean }[];
+    if (result.signals && result.signals.length > 0) {
+      return result.signals;
     }
 
     const breakdown = result?.modelBreakdown ?? [];
