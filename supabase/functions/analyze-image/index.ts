@@ -8,6 +8,29 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-stream, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+async function testHiveAIDetection(
+  imageBytes: Uint8Array,
+  mimeType: string,
+  apiKey: string
+): Promise<void> {
+  const b64 = base64Encode(imageBytes);
+  const dataUrl = `data:${mimeType};base64,${b64}`;
+  const res = await fetch("https://api.thehive.ai/api/v3/task/sync", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      input: [{ type: "image", data: dataUrl }],
+      models: ["ai_generated_image_detection"],
+    }),
+  });
+  const text = await res.text();
+  console.log("[HiveAIDetect] Status:", res.status);
+  console.log("[HiveAIDetect] Response:", text.slice(0, 500));
+}
+
 interface ModelResult {
   model: string;
   verdict: "ai" | "human";
