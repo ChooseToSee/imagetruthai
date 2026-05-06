@@ -161,6 +161,7 @@ const Index = () => {
   const scrollToUpload = useCallback(() => {
     setSingleResult(null);
     setBatchResults(null);
+    setIsFinalResult(false);
     setTimeout(() => uploadRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   }, []);
 
@@ -367,6 +368,7 @@ const Index = () => {
           toast({ title: "Analysis failed", description: "None of the images could be analyzed.", variant: "destructive" });
         } else if (successes.length === 1) {
           setSingleResult({ result: successes[0].result, preview: successes[0].preview });
+          setIsFinalResult(true);
         } else { setBatchResults(successes); }
       }
     } catch (err: any) {
