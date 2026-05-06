@@ -119,7 +119,7 @@ const WhyFiveModels = () => {
             </div>
 
             <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
-              Like expert witnesses, our 5 AI models each report their independent findings. Four purpose-built detectors — Winston AI, SightEngine, AI or Not, and Hive — look for AI generation indicators across hundreds of known generator signatures. Gemini provides supplementary visual manipulation analysis.
+              Like expert witnesses, our 5 AI models each report their independent findings. Winston AI, SightEngine, AI or Not, and Hive look for AI generation indicators across hundreds of known generator signatures. Gemini — Google's frontier vision model and one of the most capable visual reasoning systems available — analyzes every image for signs of post-processing manipulation including compositing, retouching, object insertion, and editing artifacts. Visual manipulation requires fundamentally different detection methods than AI generation, and Gemini's broad visual understanding makes it uniquely suited for this task.
             </p>
 
             <p className="text-sm leading-relaxed text-muted-foreground">
