@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import ImageHeatmap from "@/components/ImageHeatmap";
-import SignalMatrix from "@/components/SignalMatrix";
+
 import { decideXShareNavigation } from "@/lib/x-share";
 import { buildOgShareUrl } from "@/lib/share-url";
 
