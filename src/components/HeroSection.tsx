@@ -177,30 +177,12 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
           </motion.h1>
 
           <motion.p
-            className="mx-auto mb-4 max-w-2xl text-base font-medium text-white/90 sm:text-lg"
+            className="mx-auto mb-10 max-w-2xl text-base leading-relaxed text-white/90 sm:text-lg"
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.15 }}
           >
-            Powered by 5 independent AI models for consensus comparison
-          </motion.p>
-
-          <motion.p
-            className="mx-auto mb-6 max-w-xl text-lg leading-relaxed text-muted-foreground"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            Upload any image and see what 5 independent AI models find — 4 purpose-built detectors analyzing for AI generation, plus visual manipulation analysis.
-          </motion.p>
-
-          <motion.p
-            className="mx-auto mb-10 max-w-lg text-sm text-muted-foreground/80"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.25 }}
-          >
-            More models mean fewer blind spots. What one detector misses, another may catch. You see every finding and decide what it means.
+            5 independent AI models analyze your image to detect generation patterns, deepfake signatures, manipulation signals, generator attribution, and hundreds of additional indicators. More perspectives mean improved discovery.
           </motion.p>
 
           <motion.div

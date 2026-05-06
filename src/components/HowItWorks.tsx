@@ -10,7 +10,7 @@ const steps = [
   {
     icon: Cpu,
     title: "Analyze",
-    description: "Our 5 AI models analyze your image independently — 4 purpose-built AI detectors plus visual manipulation analysis — then report exactly what each found.",
+    description: "5 independent AI models analyze your image simultaneously — each using different methods to detect generation patterns, deepfake signatures, manipulation signals, and hundreds of additional indicators.",
   },
   {
     icon: FileText,
