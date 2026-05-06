@@ -80,6 +80,8 @@ export async function analyzeImageStream(
   const reader = resp.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
+  let lastConsensus: StreamConsensus | null = null;
+  let deliveredDone = false;
 
   const processChunk = (chunk: string) => {
     let event = "";
@@ -103,9 +105,11 @@ export async function analyzeImageStream(
           callbacks.onModel(parsed as ModelBreakdown);
           break;
         case "consensus":
+          lastConsensus = parsed as StreamConsensus;
           callbacks.onConsensus(parsed as StreamConsensus);
           break;
         case "done":
+          deliveredDone = true;
           callbacks.onDone(parsed as AnalysisResult);
           break;
         case "error":
@@ -126,6 +130,9 @@ export async function analyzeImageStream(
       buffer += decoder.decode();
       const finalChunk = buffer.trim();
       if (finalChunk) processChunk(finalChunk);
+      if (!deliveredDone && lastConsensus) {
+        callbacks.onDone(lastConsensus);
+      }
       break;
     }
 
