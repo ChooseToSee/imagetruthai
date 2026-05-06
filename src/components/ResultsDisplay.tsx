@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { AlertTriangle, CheckCircle, CheckCircle2, Info, RotateCcw, ChevronDown, ChevronUp, Brain, Share2, Check, Pencil, ShieldCheck, Shield, Download, FileText, Eye, Link as LinkIcon, Lock, Globe, Loader2, Activity } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -141,25 +141,71 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
       ? "Moderate confidence — independent verification suggested"
       : "Low confidence — results inconclusive, verify independently";
 
-  // Build detected signals from reasons
-  const signalKeywords = [
-    { label: "Lighting Inconsistencies", keywords: ["lighting", "shadow", "illumination"] },
-    { label: "Compression Artifacts", keywords: ["compression", "jpeg", "artifact", "quality"] },
-    { label: "Edge Irregularities", keywords: ["edge", "boundary", "outline", "halo"] },
-    { label: "Metadata Anomalies", keywords: ["metadata", "exif", "camera", "gps"] },
-    { label: "Texture Inconsistencies", keywords: ["texture", "noise", "grain", "smoothing", "skin"] },
-    { label: "Pattern Anomalies", keywords: ["pattern", "repeating", "clone", "uniform"] },
-  ];
+  // Build detected signals from the full result (memoized so it recomputes
+  // whenever the streaming result updates with new reasons / model breakdown).
+  const detectedSignals = useMemo(() => {
+    // Prefer server-provided signals when available
+    if ((result as any)?.signals && Array.isArray((result as any).signals) && (result as any).signals.length > 0) {
+      return (result as any).signals as { label: string; detected: boolean }[];
+    }
 
-  const allReasons = [
-    ...result.reasons,
-    ...(manipulation?.reasons ?? []),
-  ].map((r) => r.toLowerCase());
+    const breakdown = result?.modelBreakdown ?? [];
+    const allReasonsLower = [
+      ...(result?.reasons ?? []),
+      ...(manipulation?.reasons ?? []),
+      ...breakdown.flatMap((m) => m.reasons ?? []),
+    ].map((r) => r.toLowerCase());
 
-  const detectedSignals = signalKeywords.map((s) => ({
-    label: s.label,
-    detected: s.keywords.some((kw) => allReasons.some((r) => r.includes(kw))),
-  }));
+    const hasKeyword = (keywords: string[]) =>
+      keywords.some((kw) => allReasonsLower.some((r) => r.includes(kw)));
+
+    return [
+      {
+        label: "AI Generation Patterns",
+        detected: result?.verdict === "ai" && (result?.confidence ?? 0) > 60,
+      },
+      {
+        label: "Synthetic Pixel Patterns",
+        detected: breakdown.filter((m) => m.verdict === "ai").length >= 2,
+      },
+      {
+        label: "Deepfake Indicators",
+        detected: breakdown.some(
+          (m) => m.model === "Hive" && m.verdict === "ai" &&
+            (m.reasons ?? []).some((r) => r.toLowerCase().includes("deepfake"))
+        ),
+      },
+      {
+        label: "Manipulation Indicators",
+        detected: manipulation?.edited ?? false,
+      },
+      {
+        label: "Metadata Anomalies",
+        detected: hasKeyword(["metadata", "exif", "camera", "gps"]),
+      },
+      {
+        label: "Generator Signature Match",
+        detected: hasKeyword(["generator", "midjourney", "dall-e", "dall·e", "stable diffusion", "flux", "sora"]),
+      },
+      {
+        label: "Lighting Inconsistencies",
+        detected: hasKeyword(["lighting", "shadow", "illumination"]),
+      },
+      {
+        label: "Compression Artifacts",
+        detected: hasKeyword(["compression", "jpeg", "artifact"]),
+      },
+      {
+        label: "Texture Inconsistencies",
+        detected: hasKeyword(["texture", "noise", "grain", "smoothing", "skin"]),
+      },
+    ];
+  }, [result, manipulation]);
+
+  // Reset accordion state when a new result arrives so we never show stale data
+  useEffect(() => {
+    setShowSignals(false);
+  }, [result]);
 
   const handleGenerateShareLink = useCallback(async (): Promise<string | null> => {
     if (!user) {
