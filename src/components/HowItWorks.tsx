@@ -15,7 +15,7 @@ const steps = [
   {
     icon: FileText,
     title: "Report",
-    description: "Receive a structured report with AI-generated insights.",
+    description: "See what each model found — independent findings from 4 AI detectors to help you evaluate the image.",
   },
 ];
 

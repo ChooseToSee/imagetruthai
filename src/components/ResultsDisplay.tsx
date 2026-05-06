@@ -583,6 +583,9 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
               )}
             </div>
             {/* Tabbed results */}
+            <p className="text-xs text-muted-foreground/70 text-center mb-3 px-2">
+              These results show what each model found — analytical findings to help you evaluate this image, not a final determination.
+            </p>
             <Tabs defaultValue="ai-detection" className="px-6 pb-4">
               <TabsList className="grid w-full grid-cols-3 mb-4 h-11 bg-muted/80 border border-border">
                 <TabsTrigger value="ai-detection" className="gap-2 text-xs sm:text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=inactive]:bg-card data-[state=inactive]:text-foreground data-[state=inactive]:border data-[state=inactive]:border-border data-[state=inactive]:hover:bg-accent">
@@ -627,7 +630,9 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {totalModels > 0
-                        ? `${modelsAgreed} of ${totalModels} models found ${isAI ? "indicators of AI generation" : "no indicators of AI generation"}`
+                        ? modelsAgreed === totalModels
+                          ? `All ${totalModels} models found ${isAI ? "AI generation indicators" : "no AI generation indicators"} in this image.`
+                          : "Models disagreed — see individual findings below to evaluate the evidence."
                         : isAI
                         ? "Indicators of AI generation were detected."
                         : "No indicators of AI generation were detected."}

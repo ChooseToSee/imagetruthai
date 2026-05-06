@@ -16,8 +16,16 @@ const FinalCTA = ({ onStartFree }: FinalCTAProps) => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          Start Analyzing Images Today
+          See What 4 AI Detectors Find
         </motion.h2>
+        <motion.p
+          className="mb-6 text-sm text-muted-foreground"
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+        >
+          Free to start. No verdict — just evidence. You decide.
+        </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
