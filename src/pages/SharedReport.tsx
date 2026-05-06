@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, AlertTriangle, CheckCircle, Pencil, ShieldCheck, Info, ArrowRight } from "lucide-react";
+import { Loader2, AlertTriangle, CheckCircle, CheckCircle2, Pencil, ShieldCheck, Info, ArrowRight, Activity, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ImageHeatmap from "@/components/ImageHeatmap";
 import Navbar from "@/components/Navbar";
@@ -38,6 +38,7 @@ const SharedReport = () => {
   const [report, setReport] = useState<SharedReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showSignals, setShowSignals] = useState(false);
 
   useEffect(() => {
     if (!token) return;
