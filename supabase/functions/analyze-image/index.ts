@@ -626,9 +626,10 @@ async function analyzeWithHiveAI(
 // ── Weighted consensus ───────────────────────────────────────────────
 function computeConsensus(results: ModelResult[], expectedTotal = results.length) {
   const baseWeights: Record<string, number> = {
-    Winston: 0.40,
-    SightEngine: 0.30,
-    "AI or Not": 0.30,
+    Winston: 0.35,
+    SightEngine: 0.25,
+    "AI or Not": 0.25,
+    Hive: 0.25,
   };
 
   // Count how many models agree on each verdict
