@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, AlertTriangle, CheckCircle, Pencil, ShieldCheck, Info, ArrowRight } from "lucide-react";
+import { Loader2, AlertTriangle, CheckCircle, CheckCircle2, Pencil, ShieldCheck, Info, ArrowRight, Activity, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ImageHeatmap from "@/components/ImageHeatmap";
 import Navbar from "@/components/Navbar";
@@ -38,6 +38,7 @@ const SharedReport = () => {
   const [report, setReport] = useState<SharedReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showSignals, setShowSignals] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -285,28 +286,40 @@ const SharedReport = () => {
                   </div>
                 )}
 
-                {/* Detected signals table */}
-                <div className="mb-4">
-                  <h3 className="mb-2 text-sm font-semibold text-foreground">Detected Signals</h3>
-                  <div className="rounded-lg border border-border overflow-hidden">
-                    <table className="w-full text-sm">
-                      <tbody>
+                {/* Detected Signals accordion */}
+                {detectedSignals.length > 0 && (
+                  <div className="mb-4">
+                    <button
+                      onClick={() => setShowSignals(!showSignals)}
+                      className="flex w-full items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted/50"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Activity className="h-4 w-4 text-primary" />
+                        Detected Signals
+                      </span>
+                      <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showSignals ? "rotate-180" : ""}`} />
+                    </button>
+                    {showSignals && (
+                      <div className="mt-2 space-y-1.5 rounded-lg border border-border bg-card px-4 py-3">
                         {detectedSignals.map((s, i) => (
-                          <tr key={i} className="border-b border-border last:border-0">
-                            <td className="px-3 py-2 text-xs text-muted-foreground">{s.label}</td>
-                            <td className="px-3 py-2">
-                              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                                s.detected ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"
-                              }`}>
-                                {s.detected ? "Detected" : "Not detected"}
-                              </span>
-                            </td>
-                          </tr>
+                          <div key={i} className="flex items-start gap-2 text-xs">
+                            {s.detected ? (
+                              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+                            ) : (
+                              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+                            )}
+                            <span className="text-muted-foreground">
+                              {s.label}: <span className={s.detected ? "font-medium text-warning" : "text-success"}>{s.detected ? "Detected" : "Not detected"}</span>
+                            </span>
+                          </div>
                         ))}
-                      </tbody>
-                    </table>
+                        <p className="mt-2 border-t border-border pt-2 text-[10px] italic text-muted-foreground/60">
+                          Signals are pattern indicators only — not definitive findings.
+                        </p>
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
 
                 {/* AI explanation */}
                 <div className="rounded-lg bg-muted/50 p-4 mb-4">

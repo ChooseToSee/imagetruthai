@@ -10,7 +10,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import { useToast } from "@/hooks/use-toast";
 import ImageHeatmap from "@/components/ImageHeatmap";
-import SignalMatrix from "@/components/SignalMatrix";
 
 export interface BatchItem {
   fileName: string;
@@ -479,47 +478,6 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                           )}
                         </TabsContent>
                       </Tabs>
-
-                      {/* Signal Matrix — per-image */}
-                      {item.result.modelBreakdown &&
-                       item.result.modelBreakdown.length > 0 &&
-                       item.result.modelBreakdown.some(m => m.reasons && m.reasons.length > 0) && (
-                        <div className="mt-4 pt-4 border-t border-border/50">
-                          <SignalMatrix
-                            key={JSON.stringify(
-                              item.result.modelBreakdown?.map(
-                                m => m.model + m.confidence + (m.reasons?.[0] ?? "")
-                              ) ?? []
-                            )}
-                            modelBreakdown={item.result.modelBreakdown?.map(m => ({
-                              model: m.model,
-                              verdict: m.verdict,
-                              confidence: m.confidence,
-                              reasons: m.reasons,
-                            })) ?? []}
-                            manipulation={
-                              item.result.manipulation
-                                ? {
-                                    verdict: item.result.manipulation.edited
-                                      ? "manipulated"
-                                      : "original",
-                                    confidence: item.result.manipulation.confidence,
-                                    modelBreakdown: item.result.modelBreakdown
-                                      ?.filter(m => m.manipulation)
-                                      .map(m => ({
-                                        model: m.model,
-                                        verdict: m.manipulation!.edited
-                                          ? "manipulated"
-                                          : "original",
-                                        confidence: m.manipulation!.confidence,
-                                        reasons: m.manipulation!.reasons,
-                                      })),
-                                  }
-                                : null
-                            }
-                          />
-                        </div>
-                      )}
 
                       {/* Share link section */}
                       {itemShareLink && (
