@@ -1127,6 +1127,12 @@ serve(async (req) => {
         run: () => analyzeWithAIorNot(imageBytes, mimeType, AIORNOT_API_KEY),
       });
     }
+    if (HIVE_API_KEY) {
+      tasks.push({
+        label: "Hive",
+        run: () => analyzeWithHiveAI(imageBytes, mimeType, tempImageUrl, HIVE_API_KEY),
+      });
+    }
 
     if (tasks.length === 0) {
       return new Response(JSON.stringify({ error: "No API keys configured for any detection service" }), {
