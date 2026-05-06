@@ -22,7 +22,7 @@ const WhyFiveModels = () => {
           </h2>
 
           <p className="mx-auto max-w-xl text-lg text-muted-foreground">
-            Every AI model has blind spots. Five independent models cover each other's gaps — so signals one misses, another catches.
+            No single AI detector catches everything. ImageTruth AI runs 4 independent purpose-built detection models — because what one misses, another may catch. You see every model's findings and decide what they mean.
           </p>
         </motion.div>
 
