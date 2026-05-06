@@ -202,7 +202,7 @@ const WhyFiveModels = () => {
                   <td className="w-36 py-3 pr-4 text-[11px] font-medium text-muted-foreground text-right">
                     {row.signal}
                   </td>
-                  {row.cells.slice(0, 3).map((detected, i) => (
+                  {row.cells.slice(0, 4).map((detected, i) => (
                     <td key={i} className="py-3 px-1 text-center">
                       {detected ? (
                         <motion.div
@@ -223,7 +223,7 @@ const WhyFiveModels = () => {
                   ))}
                   {/* Divider column */}
                   <td className="w-2 border-l-2 border-border/60" />
-                  {row.cells.slice(3).map((detected, i) => (
+                  {row.cells.slice(4).map((detected, i) => (
                     <td key={i} className="py-3 px-1 text-center">
                       {detected ? (
                         <motion.div
