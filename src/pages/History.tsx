@@ -338,7 +338,10 @@ const History = () => {
                         </div>
                         {showFullResults ? (
                           <p className="text-xs text-muted-foreground">
-                            {scan.confidence}% — {scan.verdict === "ai" ? "AI indicators detected" : "No AI indicators detected"} · {new Date(scan.created_at).toLocaleDateString()}
+                            {scan.verdict === "ai"
+                              ? `AI Indicators Found — ${scan.confidence}% confidence`
+                              : "No AI Indicators Found"}{" "}
+                            · {new Date(scan.created_at).toLocaleDateString()}
                           </p>
                         ) : (
                           <p className="text-xs text-muted-foreground">
@@ -395,7 +398,9 @@ const History = () => {
                           <p className={`text-xs ${isInconclusive ? "text-amber-500 font-semibold" : "text-muted-foreground"}`}>
                             {isInconclusive
                               ? "Inconclusive — models disagreed"
-                              : `${scan.manipulation.confidence}% — manipulation indicators ${scan.manipulation.edited ? "detected" : "not detected"}`}
+                              : scan.manipulation.edited
+                              ? `Manipulation Indicators Found — ${scan.manipulation.confidence}% confidence`
+                              : "No Manipulation Indicators Found"}
                           </p>
                           <ul className="space-y-1 mt-1">
                             {(scan.manipulation.reasons || []).slice(0, 3).map((reason: string, i: number) => (
