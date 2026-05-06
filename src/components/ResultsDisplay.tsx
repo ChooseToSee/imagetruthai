@@ -644,7 +644,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
             </div>
             {/* Tabbed results */}
             <p className="text-xs text-muted-foreground/70 text-center mb-3 px-2">
-              5 independent AI models analyzed this image — 4 looking for AI generation indicators, 1 analyzing for visual manipulation. These are their findings.
+              5 independent AI models analyzed this image — each reporting what it found. These are analytical findings to help you evaluate this image, not a final determination.
             </p>
             <Tabs defaultValue="ai-detection" className="px-6 pb-4">
               <TabsList className="grid w-full grid-cols-3 mb-4 h-11 bg-muted/80 border border-border">
