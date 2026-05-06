@@ -13,75 +13,67 @@ async function testHiveAIDetection(
   mimeType: string,
   apiKey: string
 ): Promise<void> {
-  const b64 = base64Encode(imageBytes);
-  const dataUrl = `data:${mimeType};base64,${b64}`;
-  const model = "hive/ai-generated-and-deepfake-content-detection";
+  console.log("[HiveAIDetect] Testing correct endpoint...");
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const sb = createClient(supabaseUrl, supabaseServiceKey);
 
-  // V1 — classic top-level shape
-  try {
-    const r1 = await fetch("https://api.thehive.ai/api/v3/task/sync", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model, image: { url: dataUrl } }),
-    });
-    console.log("[HiveAIDetect V1] Status:", r1.status);
-    console.log("[HiveAIDetect V1] Body:", (await r1.text()).slice(0, 400));
-  } catch (e: any) { console.error("[HiveAIDetect V1] Error:", e.message); }
+  const ext = mimeType.split("/")[1] || "jpg";
+  const testPath = `temp/hive-test-${crypto.randomUUID()}.${ext}`;
 
-  // V2 — multipart form-data v3
-  try {
-    const blob = new Blob([imageBytes], { type: mimeType });
-    const form = new FormData();
-    form.append("image", blob, "image.jpg");
-    form.append("model", model);
-    const r2 = await fetch("https://api.thehive.ai/api/v3/task/sync", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}` },
-      body: form,
-    });
-    console.log("[HiveAIDetect V2] Status:", r2.status);
-    console.log("[HiveAIDetect V2] Body:", (await r2.text()).slice(0, 400));
-  } catch (e: any) { console.error("[HiveAIDetect V2] Error:", e.message); }
+  const { error: uploadErr } = await sb.storage
+    .from("scan-images")
+    .upload(testPath, imageBytes, { contentType: mimeType, upsert: true });
 
-  // V3 — input wrapper
-  try {
-    const r3 = await fetch("https://api.thehive.ai/api/v3/task/sync", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model, input: { image: dataUrl } }),
-    });
-    console.log("[HiveAIDetect V3] Status:", r3.status);
-    console.log("[HiveAIDetect V3] Body:", (await r3.text()).slice(0, 400));
-  } catch (e: any) { console.error("[HiveAIDetect V3] Error:", e.message); }
+  if (uploadErr) {
+    console.error("[HiveAIDetect] Upload failed:", uploadErr.message);
+    return;
+  }
 
-  // V4 — V2 API endpoint with token auth
-  try {
-    const blob = new Blob([imageBytes], { type: mimeType });
-    const form = new FormData();
-    form.append("image", blob, "image.jpg");
-    const r4 = await fetch("https://api.thehive.ai/api/v2/task/sync", {
-      method: "POST",
-      headers: { Authorization: `token ${apiKey}` },
-      body: form,
-    });
-    console.log("[HiveAIDetect V4] Status:", r4.status);
-    console.log("[HiveAIDetect V4] Body:", (await r4.text()).slice(0, 400));
-  } catch (e: any) { console.error("[HiveAIDetect V4] Error:", e.message); }
+  const { data: urlData } = sb.storage.from("scan-images").getPublicUrl(testPath);
+  const publicUrl = urlData.publicUrl;
+  console.log("[HiveAIDetect] Testing with URL:", publicUrl.slice(0, 80));
 
-  // V5 — V2 API endpoint with Bearer auth
   try {
-    const blob = new Blob([imageBytes], { type: mimeType });
-    const form = new FormData();
-    form.append("image", blob, "image.jpg");
-    const r5 = await fetch("https://api.thehive.ai/api/v2/task/sync", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}` },
-      body: form,
-    });
-    console.log("[HiveAIDetect V5] Status:", r5.status);
-    console.log("[HiveAIDetect V5] Body:", (await r5.text()).slice(0, 400));
-  } catch (e: any) { console.error("[HiveAIDetect V5] Error:", e.message); }
+    const res = await fetch(
+      "https://api.thehive.ai/api/v3/hive/ai-generated-and-deepfake-content-detection",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          media_metadata: true,
+          input: [{ media_url: publicUrl }],
+        }),
+      }
+    );
+    console.log("[HiveAIDetect] Status:", res.status);
+    const text = await res.text();
+    console.log("[HiveAIDetect] Response:", text.slice(0, 800));
+    try {
+      const data = JSON.parse(text);
+      const classes = data?.output?.[0]?.classes ?? [];
+      const aiScore = classes.find((c: any) => c.class === "ai_generated")?.value ?? null;
+      const notAiScore = classes.find((c: any) => c.class === "not_ai_generated")?.value ?? null;
+      const deepfakeScore = classes.find((c: any) => c.class === "deepfake")?.value ?? null;
+      console.log("[HiveAIDetect] Parsed:", {
+        ai_generated: aiScore,
+        not_ai_generated: notAiScore,
+        deepfake: deepfakeScore,
+        total_classes: classes.length,
+      });
+    } catch {
+      console.log("[HiveAIDetect] Could not parse JSON");
+    }
+  } catch (e: any) {
+    console.error("[HiveAIDetect] Fetch error:", e.message);
+  }
+
+  await sb.storage.from("scan-images").remove([testPath]);
 }
+
 
 interface ModelResult {
   model: string;
