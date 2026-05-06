@@ -116,7 +116,7 @@ const ResultsDisplay = ({ result, imagePreview, onReset, streamProgress, partial
   const isEdited = manipulation?.edited ?? false;
   const isEditInconclusive = !!manipulation && manipulation.confidence >= 45 && manipulation.confidence <= 55;
 
-  const AI_DETECTION_MODELS = ["Winston", "Winston AI", "SightEngine", "AI or Not"];
+  const AI_DETECTION_MODELS = ["Winston", "Winston AI", "SightEngine", "AI or Not", "Hive"];
   const TOTAL_AI_DETECTION_MODELS = 3;
   const aiDetectionBreakdown = result.modelBreakdown?.filter((m) =>
     AI_DETECTION_MODELS.includes(m.model)
