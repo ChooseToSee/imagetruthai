@@ -986,6 +986,45 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                     AI-generated analysis may be inaccurate. Results are informational only and should be independently verified.
                   </p>
                 </div>
+
+                {/* Detected Signals (collapsible) */}
+                {isFinalResult && detectedSignals && detectedSignals.length > 0 && (
+                  <div className="mt-3">
+                    <button
+                      onClick={() => setShowSignals(!showSignals)}
+                      className="flex w-full items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted/50"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Activity className="h-4 w-4 text-primary" />
+                        Detected Signals
+                      </span>
+                      <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${showSignals ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {showSignals && (
+                      <div className="mt-2 space-y-1.5 rounded-lg border border-border bg-card px-4 py-3">
+                        {detectedSignals.map((signal, i) => (
+                          <div key={i} className="flex items-start gap-2 text-xs">
+                            {signal.detected ? (
+                              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+                            ) : (
+                              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+                            )}
+                            <span className="text-muted-foreground">
+                              {signal.label}:{" "}
+                              <span className={signal.detected ? "font-medium text-warning" : "text-success"}>
+                                {signal.detected ? "Detected" : "Not detected"}
+                              </span>
+                            </span>
+                          </div>
+                        ))}
+                        <p className="mt-2 border-t border-border pt-2 text-[10px] italic text-muted-foreground/60">
+                          Signals are pattern indicators only — not definitive findings.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
 
