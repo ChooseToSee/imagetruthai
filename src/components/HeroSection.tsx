@@ -191,7 +191,7 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            Upload any image and see what 4 independent AI detectors find. More models mean fewer blind spots — because what one misses, another may catch.
+            Upload any image and see what 5 independent AI models find — 4 purpose-built detectors analyzing for AI generation, plus visual manipulation analysis.
           </motion.p>
 
           <motion.p
@@ -200,7 +200,7 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.25 }}
           >
-            ImageTruth AI doesn't give you a verdict. It gives you evidence — independent analysis from 4 purpose-built AI detection models, so you can make your own informed judgment.
+            More models mean fewer blind spots. What one detector misses, another may catch. You see every finding and decide what it means.
           </motion.p>
 
           <motion.div

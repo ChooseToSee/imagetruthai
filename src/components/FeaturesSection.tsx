@@ -5,7 +5,7 @@ const features = [
   {
     icon: Cpu,
     title: "AI-Powered Image Analysis",
-    description: "Multi-model analysis using leading AI detection engines.",
+    description: "5-model analysis — 4 AI generation detectors plus visual manipulation analysis — for the most comprehensive image evaluation available.",
   },
   {
     icon: Layers,
