@@ -83,12 +83,15 @@ export async function analyzeImageStream(
 
   const processChunk = (chunk: string) => {
     let event = "";
-    let data = "";
+    const dataLines: string[] = [];
 
-    for (const line of chunk.split("\n")) {
-      if (line.startsWith("event: ")) event = line.slice(7).trim();
-      else if (line.startsWith("data: ")) data += line.slice(6);
+    for (const rawLine of chunk.split(/\r?\n/)) {
+      const line = rawLine.trimEnd();
+      if (line.startsWith("event:")) event = line.slice(6).trim();
+      else if (line.startsWith("data:")) dataLines.push(line.slice(5).trimStart());
     }
+
+    const data = dataLines.join("\n");
 
     if (!event || !data) return;
 
@@ -120,6 +123,7 @@ export async function analyzeImageStream(
   while (true) {
     const { done, value } = await reader.read();
     if (done) {
+      buffer += decoder.decode();
       const finalChunk = buffer.trim();
       if (finalChunk) processChunk(finalChunk);
       break;
