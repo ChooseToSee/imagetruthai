@@ -22,13 +22,30 @@ async function testHiveAIDetection(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      input: [{ type: "image", data: dataUrl }],
-      models: ["ai_generated_image_detection"],
+      input: [{ type: "image_url", image_url: { url: dataUrl } }],
+      model: "hive/ai-generated-and-deepfake-content-detection",
     }),
   });
-  const text = await res.text();
   console.log("[HiveAIDetect] Status:", res.status);
-  console.log("[HiveAIDetect] Response:", text.slice(0, 500));
+  const text = await res.text();
+  console.log("[HiveAIDetect] Response:", text.slice(0, 800));
+
+  if (!res.ok) {
+    const res2 = await fetch("https://api.thehive.ai/api/v3/task/sync", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        models: ["hive/ai-generated-and-deepfake-content-detection"],
+        input: [{ type: "image_url", image_url: { url: dataUrl } }],
+      }),
+    });
+    console.log("[HiveAIDetect Alt] Status:", res2.status);
+    const text2 = await res2.text();
+    console.log("[HiveAIDetect Alt] Response:", text2.slice(0, 800));
+  }
 }
 
 interface ModelResult {
