@@ -8,71 +8,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-stream, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-async function testHiveAIDetection(
-  imageBytes: Uint8Array,
-  mimeType: string,
-  apiKey: string
-): Promise<void> {
-  console.log("[HiveAIDetect] Testing correct endpoint...");
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const sb = createClient(supabaseUrl, supabaseServiceKey);
-
-  const ext = mimeType.split("/")[1] || "jpg";
-  const testPath = `temp/hive-test-${crypto.randomUUID()}.${ext}`;
-
-  const { error: uploadErr } = await sb.storage
-    .from("scan-images")
-    .upload(testPath, imageBytes, { contentType: mimeType, upsert: true });
-
-  if (uploadErr) {
-    console.error("[HiveAIDetect] Upload failed:", uploadErr.message);
-    return;
-  }
-
-  const { data: urlData } = sb.storage.from("scan-images").getPublicUrl(testPath);
-  const publicUrl = urlData.publicUrl;
-  console.log("[HiveAIDetect] Testing with URL:", publicUrl.slice(0, 80));
-
-  try {
-    const res = await fetch(
-      "https://api.thehive.ai/api/v3/hive/ai-generated-and-deepfake-content-detection",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          media_metadata: true,
-          input: [{ media_url: publicUrl }],
-        }),
-      }
-    );
-    console.log("[HiveAIDetect] Status:", res.status);
-    const text = await res.text();
-    console.log("[HiveAIDetect] Response:", text.slice(0, 800));
-    try {
-      const data = JSON.parse(text);
-      const classes = data?.output?.[0]?.classes ?? [];
-      const aiScore = classes.find((c: any) => c.class === "ai_generated")?.value ?? null;
-      const notAiScore = classes.find((c: any) => c.class === "not_ai_generated")?.value ?? null;
-      const deepfakeScore = classes.find((c: any) => c.class === "deepfake")?.value ?? null;
-      console.log("[HiveAIDetect] Parsed:", {
-        ai_generated: aiScore,
-        not_ai_generated: notAiScore,
-        deepfake: deepfakeScore,
-        total_classes: classes.length,
-      });
-    } catch {
-      console.log("[HiveAIDetect] Could not parse JSON");
-    }
-  } catch (e: any) {
-    console.error("[HiveAIDetect] Fetch error:", e.message);
-  }
-
-  await sb.storage.from("scan-images").remove([testPath]);
-}
+// (testHiveAIDetection removed — replaced by analyzeWithHiveAI below)
 
 
 interface ModelResult {
