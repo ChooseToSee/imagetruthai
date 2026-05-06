@@ -82,6 +82,7 @@ const Index = () => {
   const [demoIndex, setDemoIndex] = useState(0);
   const [streamProgress, setStreamProgress] = useState<{ completed: number; total: number } | null>(null);
   const [partialReady, setPartialReady] = useState(false);
+  const [isFinalResult, setIsFinalResult] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { user, refreshSubscription, subscription } = useAuth();
   const { toast } = useToast();
@@ -213,6 +214,7 @@ const Index = () => {
       },
       onDone: (finalResult) => {
         setSingleResult({ result: finalResult, preview });
+        setIsFinalResult(true);
         setStreamProgress(null);
         saveToHistory(file, finalResult);
         saveResultToSession(finalResult, preview);
@@ -295,6 +297,7 @@ const Index = () => {
     setSingleResult(null);
     setBatchResults(null);
     setPartialReady(false);
+    setIsFinalResult(false);
 
     // Get the session token ONCE upfront, while we know the user's session
     // is active (they're interacting with the upload UI). Passing it down
@@ -418,6 +421,7 @@ const Index = () => {
           <ResultsDisplay
             result={singleResult.result}
             imagePreview={singleResult.preview}
+            isFinalResult={isFinalResult}
             onReset={handleReset}
             streamProgress={streamProgress ?? undefined}
             partialReady={partialReady}
