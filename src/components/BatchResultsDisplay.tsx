@@ -208,6 +208,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
           <div className="space-y-3">
             {items.map((item, i) => {
               const isAI = item.result.verdict === "ai";
+              const vInfo = computeVerdictState(item.result.modelBreakdown, item.result.verdict);
               const isExpanded = expandedIndex === i;
               const manipulation = item.result.manipulation;
               const isEdited = manipulation?.edited ?? false;
