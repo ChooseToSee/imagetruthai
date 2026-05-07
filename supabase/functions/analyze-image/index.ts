@@ -604,12 +604,12 @@ async function analyzeWithHiveAI(
 
   const reasons: string[] = [];
   if (verdict === "ai") {
-    reasons.push(`Hive detected ${(combinedAiScore * 100).toFixed(1)}% probability of AI generation`);
+    reasons.push("Hive found AI generation indicators across its 107 generator signatures");
     if (topGenerator) {
-      reasons.push(`Most likely generator: ${topGenerator.name} (${(topGenerator.score * 100).toFixed(1)}%)`);
+      reasons.push(`Most likely generator: ${topGenerator.name}`);
     }
     if (deepfakeScore > 0.1) {
-      reasons.push(`Deepfake indicators detected: ${(deepfakeScore * 100).toFixed(1)}%`);
+      reasons.push("Deepfake indicators also detected");
     }
     reasons.push("Hive analyzed 107 AI generator signatures including Midjourney, DALL-E, Stable Diffusion, Sora and more");
   } else {
