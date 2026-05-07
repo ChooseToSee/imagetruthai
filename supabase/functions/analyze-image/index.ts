@@ -717,6 +717,17 @@ type EditResult = { label: string; edited: boolean; confidence: number; reasons:
 function computeManipulation(editResults: EditResult[]) {
   if (editResults.length === 0) return undefined;
 
+  // Single model (Gemini-only mode): return directly without consensus calc.
+  if (editResults.length === 1) {
+    const r = editResults[0];
+    return {
+      edited: r.edited,
+      confidence: r.confidence,
+      reasons: r.reasons.slice(0, 5),
+      tips: getManipulationTips(),
+    };
+  }
+
   // ── Confidence-threshold filter ────────────────────────────────────
   // Hive VLM has been observed returning low-confidence (≈50–55%)
   // "Not edited" verdicts on clearly edited images, which drags the
