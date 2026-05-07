@@ -161,7 +161,7 @@ async function analyzeWithSightEngine(
 
   const reasons: string[] = [];
   if (verdict === "ai") {
-    reasons.push(`SightEngine's AI generation classifier scored ${(aiGenerated * 100).toFixed(1)}% probability of AI generation`);
+    reasons.push("SightEngine's AI generation classifier found indicators in this image");
     reasons.push("SightEngine's genai model is purpose-built to detect diffusion model and GAN outputs");
     reasons.push("Statistical patterns in this image match those associated with AI generation tools");
   } else {
