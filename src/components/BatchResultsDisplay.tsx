@@ -252,7 +252,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                             ? "no AI indicators"
                             : vInfo.state === "all"
                             ? "AI indicators"
-                            : `${vInfo.aiModelCount}/${vInfo.totalModelCount} models found`}
+                            : `${vInfo.aiModelCount}/${vInfo.totalModelCount} found AI indicators`}
                         </span>
                         {manipulation && (
                           <>
