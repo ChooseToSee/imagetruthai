@@ -253,6 +253,16 @@ const History = () => {
           </div>
         ) : (
           <div className="space-y-3">
+            <div className="flex justify-center">
+              <Button
+                variant="outline"
+                onClick={() => { sessionStorage.setItem("scrollToUpload", "true"); navigate("/"); }}
+                className="gap-2"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Analyze More Images
+              </Button>
+            </div>
             {/* Bulk actions bar */}
             <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-2">
               <div className="flex items-center gap-3">
