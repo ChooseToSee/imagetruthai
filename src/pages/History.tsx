@@ -437,9 +437,6 @@ const History = () => {
                               <p className="text-xs font-semibold text-foreground">
                                 Edit Detection — {editV.label(scan.manipulation.confidence)}
                               </p>
-                              <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
-                                <div className={`h-full rounded-full ${editV.barClass}`} style={{ width: `${scan.manipulation.confidence}%` }} />
-                              </div>
                               {editV.state === "mixed" && (
                                 <p className="text-[11px] text-amber-500/80 mt-1">
                                   Mixed findings — one model detected manipulation indicators while the other did not.
