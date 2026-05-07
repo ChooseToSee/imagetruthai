@@ -459,11 +459,6 @@ const History = () => {
                           <p className={`text-xs font-semibold ${editV.textClass}`}>
                             {editV.label(scan.manipulation.confidence)}
                           </p>
-                          {editV.state === "mixed" && (
-                            <p className="text-[11px] text-amber-500/80 mt-0.5">
-                              Mixed findings — one model detected manipulation indicators while the other did not.
-                            </p>
-                          )}
                           <ul className="space-y-1 mt-1">
                             {(scan.manipulation.reasons || []).slice(0, 3).map((reason: string, i: number) => (
                               <li key={i} className="text-xs text-muted-foreground">• {reason}</li>
