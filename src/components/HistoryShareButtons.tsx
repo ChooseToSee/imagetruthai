@@ -133,7 +133,7 @@ const HistoryShareButtons = ({ scan }: HistoryShareButtonsProps) => {
       try {
         await navigator.share({
           title: "ImageTruth AI Analysis",
-          text: `${scan.confidence}% — ${isAI ? "AI indicators detected" : "No AI indicators detected"}`,
+          text: `${isAI ? "AI indicators detected" : "No AI indicators detected"}`,
           url: crawlerUrl,
         });
         return;
