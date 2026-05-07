@@ -322,6 +322,16 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
     }
   }, [result, imagePreview, shareLink, user, handleGenerateShareLink, toast]);
 
+  const aiVoteCount = (result.modelBreakdown ?? []).filter(
+    (m) => (m.confidence > 0 || m.reasons.length > 0) && m.verdict === "ai"
+  ).length;
+  const totalVoteModels = (result.modelBreakdown ?? []).filter(
+    (m) => m.confidence > 0 || m.reasons.length > 0
+  ).length || 4;
+  const voteSummary = aiVoteCount === 0
+    ? `No models found AI generation indicators`
+    : `${aiVoteCount} of ${totalVoteModels} models found AI generation indicators`;
+
   const handleXShare = useCallback(async () => {
     let linkToShare = shareLink;
     if (!linkToShare) {
@@ -331,13 +341,8 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
         linkToShare = null;
       }
     }
-    // Route X (and other crawlers) through the OG edge function so the
-    // tweet preview thumbnail shows the actual analyzed image instead of
-    // the generic brand share-image.png.
     const crawlerUrl = linkToShare ? buildOgShareUrl(linkToShare) : "https://imagetruthai.com";
-    const tweetText = `🔍 ${result.confidence}% — ${
-      isAI ? "AI indicators detected 🤖" : "No AI indicators detected ✅"
-    }\n\nSee what 5 AI models found:\n${crawlerUrl}\n\nvia @ImageTruthAI`;
+    const tweetText = `🔍 ${voteSummary}\n\nSee what AI models found:\n${crawlerUrl}\n\nvia @ImageTruthAI`;
     const decision = decideXShareNavigation(tweetText, navigator.userAgent);
     console.log("[XShare] Tweet URL:", decision.url.slice(0, 300));
     console.log("[XShare] URL length:", decision.url.length, "mode:", decision.mode);
@@ -348,7 +353,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
       }
       window.open(decision.url, "_blank", "noopener,noreferrer");
     }, 100);
-  }, [shareLink, handleGenerateShareLink, result.confidence, isAI]);
+  }, [shareLink, handleGenerateShareLink, voteSummary]);
 
   const handleFacebookShare = useCallback(async () => {
     let linkToShare = shareLink;
