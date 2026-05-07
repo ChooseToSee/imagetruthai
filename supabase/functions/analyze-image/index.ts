@@ -512,7 +512,7 @@ async function analyzeWithAIorNot(
   }
 
   if (verdict === "ai") {
-    reasons.push(`AI or Not identified AI generation indicators with ${(aiConf * 100).toFixed(1)}% confidence`);
+    reasons.push("AI or Not identified AI generation indicators in this image");
     reasons.push(topGenerator ? `Most likely generator: ${topGenerator.replace(/_/g, " ")}` : "Specific generator not identified");
     reasons.push("AI or Not specializes in identifying AI synthesis patterns across major generation platforms");
   } else {
