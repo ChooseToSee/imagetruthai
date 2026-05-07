@@ -825,9 +825,6 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                             Mixed findings — one model detected manipulation indicators while the other did not. Review individual model results for the full picture.
                           </p>
                         )}
-                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                          <div className={`h-full rounded-full ${editVerdictInfo.barClass}`} style={{ width: `${manipulation.confidence}%` }} />
-                        </div>
                       </div>
                     </motion.div>
 
