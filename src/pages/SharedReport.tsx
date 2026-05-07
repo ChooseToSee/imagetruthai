@@ -229,9 +229,6 @@ const SharedReport = () => {
                         Mixed findings — some models detected indicators, others did not. Review individual model results below for the full picture.
                       </p>
                     )}
-                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                      <div className={`h-full rounded-full ${verdictInfo.barClass}`} style={{ width: `${confidence}%` }} />
-                    </div>
                   </div>
                 </div>
 
