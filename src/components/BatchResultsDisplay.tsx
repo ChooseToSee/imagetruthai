@@ -212,6 +212,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
               const isExpanded = expandedIndex === i;
               const manipulation = item.result.manipulation;
               const isEdited = manipulation?.edited ?? false;
+              const editInfo = computeEditVerdictState(item.result.modelBreakdown, isEdited);
               const itemShareLink = shareLinks[i];
 
               return (
