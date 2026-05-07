@@ -252,7 +252,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                             ? "no AI indicators"
                             : vInfo.state === "all"
                             ? "AI indicators"
-                            : `${vInfo.aiModelCount}/${vInfo.totalModelCount} models found`}
+                            : `${vInfo.aiModelCount}/${vInfo.totalModelCount} found AI indicators`}
                         </span>
                         {manipulation && (
                           <>
@@ -404,9 +404,6 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                                       Mixed findings — one model detected manipulation indicators while the other did not.
                                     </p>
                                   )}
-                                  <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
-                                    <div className={`h-full rounded-full ${editInfo.barClass}`} style={{ width: `${manipulation.confidence}%` }} />
-                                  </div>
                                 </div>
                               </div>
 

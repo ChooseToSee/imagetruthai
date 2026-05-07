@@ -229,9 +229,6 @@ const SharedReport = () => {
                         Mixed findings — some models detected indicators, others did not. Review individual model results below for the full picture.
                       </p>
                     )}
-                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                      <div className={`h-full rounded-full ${verdictInfo.barClass}`} style={{ width: `${confidence}%` }} />
-                    </div>
                   </div>
                 </div>
 
@@ -260,16 +257,6 @@ const SharedReport = () => {
                                 {m.confidence}% — {mIsAI ? "indicators found" : "no indicators found"}
                               </span>
                             </div>
-                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                              <div
-                                className={`h-full rounded-full ${mIsAI ? "bg-destructive" : "bg-success"}`}
-                                style={{ width: `${m.confidence}%`, float: mIsAI ? "right" : "left" }}
-                              />
-                            </div>
-                            <div className="flex justify-between mt-0.5 mb-2">
-                              <span className="text-[10px] text-muted-foreground">{mIsAI ? "100%" : "1%"}</span>
-                              <span className="text-[10px] text-muted-foreground">{mIsAI ? "1%" : "100%"}</span>
-                            </div>
                           </div>
                         );
                       })}
@@ -297,9 +284,6 @@ const SharedReport = () => {
                           Mixed findings — one model detected manipulation indicators while the other did not. Review individual model results for the full picture.
                         </p>
                       )}
-                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                        <div className={`h-full rounded-full ${editVerdictInfo.barClass}`} style={{ width: `${manipulation.confidence}%` }} />
-                      </div>
                     </div>
                   </div>
                 )}

@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Clock, AlertTriangle, CheckCircle, Lock, FileDown, ChevronDown, ChevronUp, ZoomIn, Home, Upload, History as HistoryIcon, Zap } from "lucide-react";
+import { Trash2, Clock, AlertTriangle, CheckCircle, Lock, FileDown, ChevronDown, ChevronUp, ZoomIn, Home, Upload, History as HistoryIcon, Zap, RotateCcw } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ImageLightbox from "@/components/ImageLightbox";
@@ -253,6 +253,16 @@ const History = () => {
           </div>
         ) : (
           <div className="space-y-3">
+            <div className="flex justify-center">
+              <Button
+                variant="outline"
+                onClick={() => { sessionStorage.setItem("scrollToUpload", "true"); navigate("/"); }}
+                className="gap-2"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Analyze More Images
+              </Button>
+            </div>
             {/* Bulk actions bar */}
             <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-2">
               <div className="flex items-center gap-3">
@@ -340,7 +350,7 @@ const History = () => {
                               ? "No AI indicators"
                               : v.state === "all"
                               ? "AI indicators"
-                              : `${v.aiModelCount}/${v.totalModelCount} models`;
+                              : `${v.aiModelCount}/${v.totalModelCount} found AI indicators`;
                             return (
                               <span className={`rounded-full ${v.bgClass} px-2 py-0.5 text-xs font-medium ${v.textClass} shrink-0`}>{pillText}</span>
                             );
@@ -409,9 +419,6 @@ const History = () => {
                             <p className="text-xs font-semibold text-foreground">
                               {scan.confidence}% — {v.label()}
                             </p>
-                            <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
-                              <div className={`h-full rounded-full ${v.barClass}`} style={{ width: `${scan.confidence}%` }} />
-                            </div>
                             {v.state === "mixed" && (
                               <p className="text-[11px] text-amber-500/80 mt-1">
                                 Mixed findings — some models detected indicators, others did not.
@@ -430,9 +437,6 @@ const History = () => {
                               <p className="text-xs font-semibold text-foreground">
                                 Edit Detection — {editV.label(scan.manipulation.confidence)}
                               </p>
-                              <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
-                                <div className={`h-full rounded-full ${editV.barClass}`} style={{ width: `${scan.manipulation.confidence}%` }} />
-                              </div>
                               {editV.state === "mixed" && (
                                 <p className="text-[11px] text-amber-500/80 mt-1">
                                   Mixed findings — one model detected manipulation indicators while the other did not.
