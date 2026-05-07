@@ -417,7 +417,7 @@ const History = () => {
                           )}
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-semibold text-foreground">
-                              {scan.confidence}% — {v.label()}
+                              {v.label()}
                             </p>
                             {v.state === "mixed" && (
                               <p className="text-[11px] text-amber-500/80 mt-1">
