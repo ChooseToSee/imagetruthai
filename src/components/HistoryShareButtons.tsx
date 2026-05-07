@@ -107,9 +107,9 @@ const HistoryShareButtons = ({ scan }: HistoryShareButtonsProps) => {
   }, [shareLink, generateLink]);
 
   const getShareText = (link: string) =>
-    `🔍 ${scan.confidence}% — ${
+    `🔍 ${
       isAI ? "AI indicators detected 🤖" : "No AI indicators detected ✅"
-    }\n\nSee what 5 AI models found:\n${link}\n\nvia @ImageTruthAI`;
+    }\n\nSee what AI models found:\n${link}\n\nvia @ImageTruthAI`;
 
   const handleXShare = async () => {
     const link = await getOrCreateShareLink();
