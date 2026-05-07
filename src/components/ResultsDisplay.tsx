@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import ImageHeatmap from "@/components/ImageHeatmap";
+import { computeVerdictState, consensusText } from "@/lib/verdict-state";
 
 import { decideXShareNavigation } from "@/lib/x-share";
 import { buildOgShareUrl } from "@/lib/share-url";
