@@ -38,9 +38,9 @@ const DEMO_AI_RESULT: AnalysisResult = {
     "Reverse-image-search to check for known AI-generated content",
   ],
   modelBreakdown: [
-    { model: "Winston", verdict: "ai", confidence: 96, reasons: ["Winston AI scored 96% AI generation probability"] },
-    { model: "SightEngine", verdict: "ai", confidence: 93, reasons: ["SightEngine scored 93.1% AI generation probability"] },
-    { model: "AI or Not", verdict: "ai", confidence: 91, reasons: ["AI or Not verdict: AI-generated with 91.4% confidence"] },
+    { model: "Winston", verdict: "ai", confidence: 96, reasons: ["Winston AI detected pixel patterns associated with AI image generation"] },
+    { model: "SightEngine", verdict: "ai", confidence: 93, reasons: ["SightEngine's AI generation classifier found indicators in this image"] },
+    { model: "AI or Not", verdict: "ai", confidence: 91, reasons: ["AI or Not identified AI generation indicators in this image"] },
   ],
 };
 
@@ -60,9 +60,9 @@ const DEMO_REAL_RESULT: AnalysisResult = {
     "Check for consistent perspective and lighting across the scene",
   ],
   modelBreakdown: [
-    { model: "Winston", verdict: "human", confidence: 93, reasons: ["Winston AI scored 93% authentic probability"] },
-    { model: "SightEngine", verdict: "human", confidence: 89, reasons: ["SightEngine scored 89.2% authentic probability"] },
-    { model: "AI or Not", verdict: "human", confidence: 88, reasons: ["AI or Not verdict: Human-created with 88.5% confidence"] },
+    { model: "Winston", verdict: "human", confidence: 93, reasons: ["Winston AI found no pixel patterns associated with AI generation tools"] },
+    { model: "SightEngine", verdict: "human", confidence: 89, reasons: ["SightEngine's AI generation classifier found no indicators in this image"] },
+    { model: "AI or Not", verdict: "human", confidence: 88, reasons: ["AI or Not found no AI generation signatures in this image"] },
   ],
 };
 

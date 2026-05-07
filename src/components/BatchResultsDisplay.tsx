@@ -200,9 +200,10 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
   const aiCount = items.filter((i) => i.result.verdict === "ai").length;
   const humanCount = items.length - aiCount;
   const editedCount = items.filter((i) => i.result.manipulation?.edited).length;
-  const avgConfidence = Math.round(
-    items.reduce((sum, i) => sum + i.result.confidence, 0) / items.length
-  );
+  const imagesWithIndicators = items.filter((i) =>
+    i.result.modelBreakdown?.some((m) => m.verdict === "ai")
+  ).length;
+  void aiCount; void humanCount; void editedCount; void imagesWithIndicators;
 
   return (
     <section className="py-12">
