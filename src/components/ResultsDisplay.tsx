@@ -372,9 +372,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
       try {
         await navigator.share({
           title: "ImageTruth AI Analysis",
-          text: `${result.confidence}% — ${
-            isAI ? "AI generation indicators detected" : "No AI generation indicators detected"
-          }`,
+          text: voteSummary,
           url: urlToShare,
         });
         return;
