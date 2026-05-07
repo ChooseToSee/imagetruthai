@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import { useToast } from "@/hooks/use-toast";
 import ImageHeatmap from "@/components/ImageHeatmap";
-import { computeVerdictState, computeEditVerdictState, editConsensusText } from "@/lib/verdict-state";
+import { computeVerdictState, computeEditVerdictState } from "@/lib/verdict-state";
 
 export interface BatchItem {
   fileName: string;
@@ -263,11 +263,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                               <Pencil className={`h-3.5 w-3.5 ${editInfo.textClass}`} />
                             )}
                             <span className={`text-xs font-medium ${editInfo.textClass}`}>
-                              {editInfo.state === "none"
-                                ? "No edit indicators"
-                                : editInfo.state === "all"
-                                ? "Edit indicators"
-                                : `${editInfo.editModelCount}/${editInfo.totalEditModelCount} edit models`}
+                              {editInfo.state === "none" ? "No edit indicators" : "Edit indicators"}
                             </span>
                           </>
                         )}
@@ -387,9 +383,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                           {manipulation ? (
                             <div className="space-y-3">
                               <div className={`flex items-center gap-3 rounded-lg px-3 py-2 ${editInfo.bgClass} border ${editInfo.borderClass}`}>
-                                {editInfo.state === "mixed" ? (
-                                  <Info className={`h-4 w-4 shrink-0 ${editInfo.textClass}`} />
-                                ) : editInfo.state === "all" ? (
+                                {editInfo.state === "all" ? (
                                   <Pencil className={`h-4 w-4 shrink-0 ${editInfo.textClass}`} />
                                 ) : (
                                   <ShieldCheck className={`h-4 w-4 shrink-0 ${editInfo.textClass}`} />
@@ -398,12 +392,6 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                                   <p className="text-sm font-bold text-foreground">
                                     {editInfo.label(manipulation.confidence)}
                                   </p>
-                                  <p className="text-[11px] text-muted-foreground">{editConsensusText(editInfo)}</p>
-                                  {editInfo.state === "mixed" && (
-                                    <p className="text-[11px] text-amber-500/80 mt-1">
-                                      Mixed findings — one model detected manipulation indicators while the other did not.
-                                    </p>
-                                  )}
                                 </div>
                               </div>
 

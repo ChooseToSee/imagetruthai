@@ -9,7 +9,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SocialShareButtons from "@/components/SocialShareButtons";
 import { decideXShareNavigation } from "@/lib/x-share";
-import { computeVerdictState, consensusText, computeEditVerdictState, editConsensusText } from "@/lib/verdict-state";
+import { computeVerdictState, consensusText, computeEditVerdictState } from "@/lib/verdict-state";
 import type { AnalysisResult, ModelBreakdown, ManipulationResult } from "@/components/ResultsDisplay";
 
 interface SharedReportData {
@@ -267,9 +267,7 @@ const SharedReport = () => {
                 {/* Edit detection */}
                 {manipulation && (
                   <div className={`flex items-center gap-3 rounded-lg px-4 py-3 mb-4 ${editVerdictInfo.bgClass} border ${editVerdictInfo.borderClass}`}>
-                    {editVerdictInfo.state === "mixed" ? (
-                      <Info className={`h-5 w-5 shrink-0 ${editVerdictInfo.textClass}`} />
-                    ) : editVerdictInfo.state === "all" ? (
+                    {editVerdictInfo.state === "all" ? (
                       <Pencil className={`h-5 w-5 shrink-0 ${editVerdictInfo.textClass}`} />
                     ) : (
                       <ShieldCheck className={`h-5 w-5 shrink-0 ${editVerdictInfo.textClass}`} />
@@ -278,12 +276,6 @@ const SharedReport = () => {
                       <p className="font-display text-base font-bold text-foreground">
                         {editVerdictInfo.label(manipulation.confidence)}
                       </p>
-                      <p className="text-xs text-muted-foreground">{editConsensusText(editVerdictInfo)}</p>
-                      {editVerdictInfo.state === "mixed" && (
-                        <p className="text-xs text-amber-500/80 mt-1.5">
-                          Mixed findings — one model detected manipulation indicators while the other did not. Review individual model results for the full picture.
-                        </p>
-                      )}
                     </div>
                   </div>
                 )}

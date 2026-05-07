@@ -717,6 +717,17 @@ type EditResult = { label: string; edited: boolean; confidence: number; reasons:
 function computeManipulation(editResults: EditResult[]) {
   if (editResults.length === 0) return undefined;
 
+  // Single model (Gemini-only mode): return directly without consensus calc.
+  if (editResults.length === 1) {
+    const r = editResults[0];
+    return {
+      edited: r.edited,
+      confidence: r.confidence,
+      reasons: r.reasons.slice(0, 5),
+      tips: getManipulationTips(),
+    };
+  }
+
   // ── Confidence-threshold filter ────────────────────────────────────
   // Hive VLM has been observed returning low-confidence (≈50–55%)
   // "Not edited" verdicts on clearly edited images, which drags the
@@ -1152,12 +1163,15 @@ serve(async (req) => {
         run: () => analyzeEditWithAI(imageBytes, mimeType, GOOGLE_AI_API_KEY),
       });
     }
-    if (HIVE_API_KEY) {
-      editTasks.push({
-        label: "Hive",
-        run: () => analyzeEditWithHive(imageBytes, mimeType, HIVE_API_KEY),
-      });
-    }
+    // Hive VLM removed from edit detection — consistently returns "Not edited"
+    // regardless of image content. Function kept (analyzeEditWithHive) in case
+    // we want to restore it later.
+    // if (HIVE_API_KEY) {
+    //   editTasks.push({
+    //     label: "Hive",
+    //     run: () => analyzeEditWithHive(imageBytes, mimeType, HIVE_API_KEY),
+    //   });
+    // }
 
     const attachEditToModels = (models: ModelResult[], edits: { label: string; result: EditResult }[]) => {
       for (const edit of edits) {
