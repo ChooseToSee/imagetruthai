@@ -238,18 +238,20 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                         {item.fileName}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        {isAI ? (
-                          <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+                        {vInfo.state === "none" ? (
+                          <CheckCircle className={`h-3.5 w-3.5 ${vInfo.textClass}`} />
                         ) : (
-                          <CheckCircle className="h-3.5 w-3.5 text-success" />
+                          <AlertTriangle className={`h-3.5 w-3.5 ${vInfo.textClass}`} />
                         )}
                         <span
-                          className={`text-sm font-semibold ${
-                            isAI ? "text-destructive" : "text-success"
-                          }`}
-                          title={isAI ? "AI generation indicators detected" : "No AI generation indicators detected"}
+                          className={`text-sm font-semibold ${vInfo.textClass}`}
+                          title={vInfo.label()}
                         >
-                          {item.result.confidence}% — {isAI ? "AI indicators" : "no AI indicators"}
+                          {item.result.confidence}% — {vInfo.state === "none"
+                            ? "no AI indicators"
+                            : vInfo.state === "all"
+                            ? "AI indicators"
+                            : `${vInfo.aiModelCount}/${vInfo.totalModelCount} models found`}
                         </span>
                         {manipulation && (
                           <>
