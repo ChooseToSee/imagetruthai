@@ -119,8 +119,6 @@ const SharedReport = () => {
   }
 
   const isAI = report.verdict === "ai";
-  const confidence = Number(report.confidence);
-  const confidenceLabel = confidence >= 85 ? "High" : confidence >= 60 ? "Moderate" : "Low";
   const manipulation = report.manipulation as ManipulationResult | null;
   const isEdited = manipulation?.edited ?? false;
   const modelBreakdown = (report.model_breakdown as ModelBreakdown[]) ?? [];

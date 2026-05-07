@@ -143,13 +143,6 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
 
   const verdictInfo = computeVerdictState(result.modelBreakdown, result.verdict);
 
-  const confidenceLabel = result.confidence >= 85 ? "High" : result.confidence >= 60 ? "Moderate" : "Low";
-  const confidenceLabelDescription =
-    confidenceLabel === "High"
-      ? "High confidence in model findings"
-      : confidenceLabel === "Moderate"
-      ? "Moderate confidence — independent verification suggested"
-      : "Low confidence — results inconclusive, verify independently";
 
   // Build detected signals from the full result (memoized so it recomputes
   // whenever the streaming result updates with new reasons / model breakdown).
