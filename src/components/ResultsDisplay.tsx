@@ -693,7 +693,11 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                   )}
                   <div className="flex-1">
                     <p className="font-display text-lg font-bold text-foreground">
-                      {result.confidence}% — {verdictInfo.label()}
+                      {verdictInfo.state === "none"
+                        ? `0 of ${TOTAL_AI_DETECTION_MODELS} models found AI generation indicators`
+                        : verdictInfo.state === "all"
+                        ? `All ${verdictInfo.totalModelCount || TOTAL_AI_DETECTION_MODELS} models found AI generation indicators`
+                        : `${verdictInfo.aiModelCount} of ${verdictInfo.totalModelCount || TOTAL_AI_DETECTION_MODELS} models found AI generation indicators`}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {consensusText(verdictInfo)}
@@ -703,7 +707,6 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                         Mixed findings — some models detected indicators, others did not. Review individual model results below for the full picture.
                       </p>
                     )}
-                    {/* Confidence bar removed */}
                     {(() => {
                       const activeModels = aiDetectionBreakdown.filter(
                         (m) => m.confidence > 0 && m.reasons.length > 0
