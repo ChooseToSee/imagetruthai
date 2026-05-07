@@ -404,9 +404,6 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                                       Mixed findings — one model detected manipulation indicators while the other did not.
                                     </p>
                                   )}
-                                  <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
-                                    <div className={`h-full rounded-full ${editInfo.barClass}`} style={{ width: `${manipulation.confidence}%` }} />
-                                  </div>
                                 </div>
                               </div>
 
