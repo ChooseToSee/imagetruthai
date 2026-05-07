@@ -401,18 +401,18 @@ const History = () => {
                         ))}
                       </ul>
                       {scan.manipulation && (() => {
-                        const isInconclusive =
-                          scan.manipulation.confidence >= 45 && scan.manipulation.confidence <= 55;
+                        const editV = computeEditVerdictState(scan.model_breakdown, scan.manipulation.edited);
                         return (
                         <div className="mt-3">
                           <p className="text-xs font-medium text-foreground mb-1">Edit Detection — What Models Found</p>
-                          <p className={`text-xs ${isInconclusive ? "text-amber-500 font-semibold" : "text-muted-foreground"}`}>
-                            {isInconclusive
-                              ? "Inconclusive — models disagreed"
-                              : scan.manipulation.edited
-                              ? `Manipulation Indicators Found — ${scan.manipulation.confidence}% confidence`
-                              : "No Manipulation Indicators Found"}
+                          <p className={`text-xs font-semibold ${editV.textClass}`}>
+                            {editV.label(scan.manipulation.confidence)}
                           </p>
+                          {editV.state === "mixed" && (
+                            <p className="text-[11px] text-amber-500/80 mt-0.5">
+                              Mixed findings — one model detected manipulation indicators while the other did not.
+                            </p>
+                          )}
                           <ul className="space-y-1 mt-1">
                             {(scan.manipulation.reasons || []).slice(0, 3).map((reason: string, i: number) => (
                               <li key={i} className="text-xs text-muted-foreground">• {reason}</li>
