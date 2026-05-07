@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { X, Check, Shield, Brain } from "lucide-react";
+import { X, Check, ScanSearch, Brain } from "lucide-react";
 
 const WhyFiveModels = () => {
   return (
@@ -111,19 +111,15 @@ const WhyFiveModels = () => {
           >
             <div className="mb-6 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                <Shield className="h-5 w-5 text-primary" />
+                <ScanSearch className="h-5 w-5 text-primary" />
               </div>
               <h3 className="font-display text-lg font-semibold text-foreground">
-                The Jury Principle
+                More Perspectives, Better Discovery
               </h3>
             </div>
 
-            <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
-              Like expert witnesses, our 5 AI models each report their independent findings. Winston AI, SightEngine, AI or Not, and Hive look for AI generation indicators across hundreds of known generator signatures. Gemini — Google's frontier vision model and one of the most capable visual reasoning systems available — analyzes every image for signs of post-processing manipulation including compositing, retouching, object insertion, and editing artifacts. Visual manipulation requires fundamentally different detection methods than AI generation, and Gemini's broad visual understanding makes it uniquely suited for this task.
-            </p>
-
             <p className="text-sm leading-relaxed text-muted-foreground">
-              The consensus reflects what the majority found — and you see every individual report.
+              No single detection method catches everything. Generation patterns, deepfake signatures, manipulation signals, generator attribution — each requires different expertise. By combining 5 models that each specialize in different indicators, ImageTruth AI gives a more complete diagnosis versus any single tool.
             </p>
           </motion.div>
         </div>
