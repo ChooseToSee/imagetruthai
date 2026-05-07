@@ -220,7 +220,7 @@ export async function exportReportPdf(
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "bold");
       pdf.setTextColor(manip.edited ? 200 : 50, manip.edited ? 130 : 160, manip.edited ? 0 : 80);
-      pdf.text(`${model.model}: ${manip.confidence}% — ${manip.edited ? "manipulation indicators found" : "no manipulation indicators found"}`, 18, y);
+      pdf.text(`${model.model}: ${manip.edited ? "manipulation indicators found" : "no manipulation indicators found"}`, 18, y);
       y += 5;
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(9);
