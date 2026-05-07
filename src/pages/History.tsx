@@ -23,6 +23,7 @@ import HistoryShareButtons from "@/components/HistoryShareButtons";
 import { useToast } from "@/hooks/use-toast";
 import { exportReportPdf } from "@/lib/pdf-export";
 import type { AnalysisResult } from "@/components/ResultsDisplay";
+import { computeVerdictState } from "@/lib/verdict-state";
 
 interface ScanRecord {
   id: string;
@@ -322,25 +323,35 @@ const History = () => {
                             <ZoomIn className="h-4 w-4 text-foreground" />
                           </div>
                         </div>
-                      ) : scan.verdict === "ai" ? (
-                        <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
-                      ) : (
-                        <CheckCircle className="h-5 w-5 text-success shrink-0" />
-                      )}
+                      ) : (() => {
+                        const v = computeVerdictState(scan.model_breakdown, scan.verdict as "ai" | "human");
+                        return v.state === "none" ? (
+                          <CheckCircle className={`h-5 w-5 shrink-0 ${v.textClass}`} />
+                        ) : (
+                          <AlertTriangle className={`h-5 w-5 shrink-0 ${v.textClass}`} />
+                        );
+                      })()}
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-medium text-foreground truncate">{scan.file_name}</p>
-                          {scan.verdict === "ai" ? (
-                            <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive shrink-0">AI indicators</span>
-                          ) : (
-                            <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success shrink-0">No AI indicators</span>
-                          )}
+                          {(() => {
+                            const v = computeVerdictState(scan.model_breakdown, scan.verdict as "ai" | "human");
+                            const pillText = v.state === "none"
+                              ? "No AI indicators"
+                              : v.state === "all"
+                              ? "AI indicators"
+                              : `${v.aiModelCount}/${v.totalModelCount} models`;
+                            return (
+                              <span className={`rounded-full ${v.bgClass} px-2 py-0.5 text-xs font-medium ${v.textClass} shrink-0`}>{pillText}</span>
+                            );
+                          })()}
                         </div>
                         {showFullResults ? (
                           <p className="text-xs text-muted-foreground">
-                            {scan.verdict === "ai"
-                              ? `AI Indicators Found — ${scan.confidence}% confidence`
-                              : "No AI Indicators Found"}{" "}
+                            {(() => {
+                              const v = computeVerdictState(scan.model_breakdown, scan.verdict as "ai" | "human");
+                              return `${v.label()} — ${scan.confidence}% confidence`;
+                            })()}{" "}
                             · {new Date(scan.created_at).toLocaleDateString()}
                           </p>
                         ) : (

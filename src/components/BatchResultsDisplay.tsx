@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import { useToast } from "@/hooks/use-toast";
 import ImageHeatmap from "@/components/ImageHeatmap";
+import { computeVerdictState } from "@/lib/verdict-state";
 
 export interface BatchItem {
   fileName: string;
@@ -207,6 +208,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
           <div className="space-y-3">
             {items.map((item, i) => {
               const isAI = item.result.verdict === "ai";
+              const vInfo = computeVerdictState(item.result.modelBreakdown, item.result.verdict);
               const isExpanded = expandedIndex === i;
               const manipulation = item.result.manipulation;
               const isEdited = manipulation?.edited ?? false;
@@ -236,18 +238,20 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                         {item.fileName}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        {isAI ? (
-                          <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+                        {vInfo.state === "none" ? (
+                          <CheckCircle className={`h-3.5 w-3.5 ${vInfo.textClass}`} />
                         ) : (
-                          <CheckCircle className="h-3.5 w-3.5 text-success" />
+                          <AlertTriangle className={`h-3.5 w-3.5 ${vInfo.textClass}`} />
                         )}
                         <span
-                          className={`text-sm font-semibold ${
-                            isAI ? "text-destructive" : "text-success"
-                          }`}
-                          title={isAI ? "AI generation indicators detected" : "No AI generation indicators detected"}
+                          className={`text-sm font-semibold ${vInfo.textClass}`}
+                          title={vInfo.label()}
                         >
-                          {item.result.confidence}% — {isAI ? "AI indicators" : "no AI indicators"}
+                          {item.result.confidence}% — {vInfo.state === "none"
+                            ? "no AI indicators"
+                            : vInfo.state === "all"
+                            ? "AI indicators"
+                            : `${vInfo.aiModelCount}/${vInfo.totalModelCount} models found`}
                         </span>
                         {manipulation && (
                           <>
