@@ -212,19 +212,25 @@ const SharedReport = () => {
 
               {/* AI Detection result */}
               <div className="px-6 pb-4">
-                <div className={`flex items-center gap-3 rounded-lg px-4 py-3 mb-4 ${
-                  isAI ? "bg-destructive/10 border border-destructive/20" : "bg-success/10 border border-success/20"
-                }`}>
-                  {isAI ? (
-                    <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
+                <div className={`flex items-center gap-3 rounded-lg px-4 py-3 mb-4 ${verdictInfo.bgClass} border ${verdictInfo.borderClass}`}>
+                  {verdictInfo.state === "none" ? (
+                    <CheckCircle className={`h-5 w-5 shrink-0 ${verdictInfo.textClass}`} />
                   ) : (
-                    <CheckCircle className="h-5 w-5 text-success shrink-0" />
+                    <AlertTriangle className={`h-5 w-5 shrink-0 ${verdictInfo.textClass}`} />
                   )}
-                  <div>
+                  <div className="flex-1">
                     <p className="font-display text-lg font-bold text-foreground">
-                      {confidence}% — {isAI ? "AI Generation Indicators Detected" : "No AI Generation Indicators Detected"}
+                      {confidence}% — {verdictInfo.label()}
                     </p>
-                    <p className="text-xs text-muted-foreground">Confidence: {confidenceLabel}</p>
+                    <p className="text-xs text-muted-foreground">{consensusText(verdictInfo)} · Confidence: {confidenceLabel}</p>
+                    {verdictInfo.state === "mixed" && (
+                      <p className="text-xs text-amber-500/80 mt-1.5">
+                        Mixed findings — some models detected indicators, others did not. Review individual model results below for the full picture.
+                      </p>
+                    )}
+                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div className={`h-full rounded-full ${verdictInfo.barClass}`} style={{ width: `${confidence}%` }} />
+                    </div>
                   </div>
                 </div>
 
