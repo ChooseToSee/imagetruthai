@@ -396,7 +396,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                                 )}
                                 <div className="flex-1">
                                   <p className="text-sm font-bold text-foreground">
-                                    {editInfo.label(manipulation.confidence)}
+                                    {editInfo.label()}
                                   </p>
                                 </div>
                               </div>
