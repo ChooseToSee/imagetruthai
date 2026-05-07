@@ -125,6 +125,7 @@ const SharedReport = () => {
   const isEdited = manipulation?.edited ?? false;
   const modelBreakdown = (report.model_breakdown as ModelBreakdown[]) ?? [];
   const verdictInfo = computeVerdictState(modelBreakdown, report.verdict as "ai" | "human");
+  const editVerdictInfo = computeEditVerdictState(modelBreakdown, isEdited);
 
   const allReasons = [
     ...report.reasons,
