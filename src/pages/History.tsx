@@ -392,6 +392,58 @@ const History = () => {
                       </Button>
                     </div>
                   </div>
+                  {showFullResults && (() => {
+                    const v = computeVerdictState(scan.model_breakdown, scan.verdict as "ai" | "human");
+                    const editV = scan.manipulation
+                      ? computeEditVerdictState(scan.model_breakdown, scan.manipulation.edited)
+                      : null;
+                    return (
+                      <div className="border-t border-border px-4 py-3 space-y-2 bg-card">
+                        <div className={`flex items-start gap-3 rounded-lg px-3 py-2 ${v.bgClass} border ${v.borderClass}`}>
+                          {v.state === "none" ? (
+                            <CheckCircle className={`h-4 w-4 shrink-0 mt-0.5 ${v.textClass}`} />
+                          ) : (
+                            <AlertTriangle className={`h-4 w-4 shrink-0 mt-0.5 ${v.textClass}`} />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-foreground">
+                              {scan.confidence}% — {v.label()}
+                            </p>
+                            <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
+                              <div className={`h-full rounded-full ${v.barClass}`} style={{ width: `${scan.confidence}%` }} />
+                            </div>
+                            {v.state === "mixed" && (
+                              <p className="text-[11px] text-amber-500/80 mt-1">
+                                Mixed findings — some models detected indicators, others did not.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {editV && (
+                          <div className={`flex items-start gap-3 rounded-lg px-3 py-2 ${editV.bgClass} border ${editV.borderClass}`}>
+                            {editV.state === "none" ? (
+                              <CheckCircle className={`h-4 w-4 shrink-0 mt-0.5 ${editV.textClass}`} />
+                            ) : (
+                              <AlertTriangle className={`h-4 w-4 shrink-0 mt-0.5 ${editV.textClass}`} />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-foreground">
+                                Edit Detection — {editV.label(scan.manipulation.confidence)}
+                              </p>
+                              <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
+                                <div className={`h-full rounded-full ${editV.barClass}`} style={{ width: `${scan.manipulation.confidence}%` }} />
+                              </div>
+                              {editV.state === "mixed" && (
+                                <p className="text-[11px] text-amber-500/80 mt-1">
+                                  Mixed findings — one model detected manipulation indicators while the other did not.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                   {showFullResults && isExpanded && scan.reasons.length > 0 && (
                     <div className="border-t border-border px-4 py-3 bg-muted/30">
                       <p className="text-xs font-medium text-foreground mb-2">What the Models Found</p>
