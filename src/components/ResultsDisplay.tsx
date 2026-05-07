@@ -949,9 +949,9 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                     {manipulation && (
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">Edit Detection</span>
-                        <span className={`font-medium ${isEditInconclusive ? "text-amber-500" : "text-foreground"}`}>
-                          {isEditInconclusive
-                            ? "Inconclusive"
+                        <span className={`font-medium ${editVerdictInfo.textClass}`}>
+                          {editVerdictInfo.state === "mixed"
+                            ? `${editVerdictInfo.editModelCount}/${editVerdictInfo.totalEditModelCount} models found indicators`
                             : `${manipulation.confidence}% ${isEdited ? "likely edited" : "likely original"}`}
                         </span>
                       </div>
