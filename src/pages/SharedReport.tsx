@@ -181,7 +181,7 @@ const SharedReport = () => {
               </button>
               <SocialShareButtons
                 getShareUrl={() => window.location.href}
-                shareText={`🔍 Check out this image analysis from ImageTruth AI — ${confidence}% ${isAI ? "AI generation indicators detected" : "no AI generation indicators detected"}.`}
+                shareText={`🔍 Check out this image analysis from ImageTruth AI — ${isAI ? "AI generation indicators detected" : "no AI generation indicators detected"}.`}
               />
             </div>
 
