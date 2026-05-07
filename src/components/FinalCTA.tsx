@@ -16,7 +16,7 @@ const FinalCTA = ({ onStartFree }: FinalCTAProps) => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          See What 4 AI Detectors Find
+          See What 5 AI Models Find
         </motion.h2>
         <motion.p
           className="mb-6 text-sm text-muted-foreground"
