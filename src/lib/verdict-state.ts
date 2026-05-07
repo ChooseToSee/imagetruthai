@@ -76,12 +76,6 @@ export function computeVerdictState(
   };
 }
 
-// (placeholder kept structure aligned)
-function _noop() {
-  return {
-  };
-}
-
 export function consensusText(info: VerdictStateInfo): string {
   const { aiModelCount, totalModelCount, state } = info;
   const total = totalModelCount || 5;
