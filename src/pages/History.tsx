@@ -360,7 +360,7 @@ const History = () => {
                           <p className="text-xs text-muted-foreground">
                             {(() => {
                               const v = computeVerdictState(scan.model_breakdown, scan.verdict as "ai" | "human");
-                              return `${v.label()} — ${scan.confidence}% confidence`;
+                              return v.label();
                             })()}{" "}
                             · {new Date(scan.created_at).toLocaleDateString()}
                           </p>
