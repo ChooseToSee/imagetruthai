@@ -671,35 +671,35 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
               {/* AI Detection Tab */}
               <TabsContent value="ai-detection">
                 <motion.div
-                  className={`flex items-center gap-3 rounded-lg px-4 py-3 mb-4 ${
-                    isAI
-                      ? "bg-destructive/10 border border-destructive/20"
-                      : "bg-success/10 border border-success/20"
-                  }`}
+                  className={`flex items-center gap-3 rounded-lg px-4 py-3 mb-4 ${verdictInfo.bgClass} border ${verdictInfo.borderClass}`}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3, duration: 0.4 }}
                 >
-                  {isAI ? (
-                    <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
+                  {verdictInfo.state === "none" ? (
+                    <CheckCircle className={`h-5 w-5 shrink-0 ${verdictInfo.textClass}`} />
                   ) : (
-                    <CheckCircle className="h-5 w-5 text-success shrink-0" />
+                    <AlertTriangle className={`h-5 w-5 shrink-0 ${verdictInfo.textClass}`} />
                   )}
                   <div className="flex-1">
                     <p className="font-display text-lg font-bold text-foreground">
-                      {isAI
-                        ? `${result.confidence}% Likely AI-Generated`
-                        : `${result.confidence}% Likely Human-Created`}
+                      {result.confidence}% — {verdictInfo.label()}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {totalModels > 0
-                        ? modelsAgreed === totalModels
-                          ? `All ${totalModels} AI detection models found ${isAI ? "indicators of AI generation" : "no indicators of AI generation"} in this image.`
-                          : `${modelsAgreed} of ${totalModels} AI detection models found indicators — see individual findings below.`
-                        : isAI
-                        ? "Indicators of AI generation were detected."
-                        : "No indicators of AI generation were detected."}
+                      {consensusText(verdictInfo)}
                     </p>
+                    {verdictInfo.state === "mixed" && (
+                      <p className="text-xs text-amber-500/80 mt-1.5">
+                        Mixed findings — some models detected indicators, others did not. Review individual model results below for the full picture.
+                      </p>
+                    )}
+                    {/* Confidence bar */}
+                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className={`h-full rounded-full ${verdictInfo.barClass}`}
+                        style={{ width: `${result.confidence}%` }}
+                      />
+                    </div>
                     {(() => {
                       const activeModels = aiDetectionBreakdown.filter(
                         (m) => m.confidence > 0 && m.reasons.length > 0
