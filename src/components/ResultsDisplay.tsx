@@ -797,39 +797,33 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                 {manipulation ? (
                   <>
                     <motion.div
-                      className={`flex items-center gap-3 rounded-lg px-4 py-3 mb-4 ${
-                        isEditInconclusive
-                          ? "bg-amber-500/10 border border-amber-500/20"
-                          : isEdited
-                          ? "bg-warning/10 border border-warning/20"
-                          : "bg-success/10 border border-success/20"
-                      }`}
+                      className={`flex items-center gap-3 rounded-lg px-4 py-3 mb-4 ${editVerdictInfo.bgClass} border ${editVerdictInfo.borderClass}`}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.3, duration: 0.4 }}
                     >
-                      {isEditInconclusive ? (
-                        <Info className="h-5 w-5 text-amber-500 shrink-0" />
-                      ) : isEdited ? (
-                        <Pencil className="h-5 w-5 text-warning shrink-0" />
+                      {editVerdictInfo.state === "mixed" ? (
+                        <Info className={`h-5 w-5 shrink-0 ${editVerdictInfo.textClass}`} />
+                      ) : editVerdictInfo.state === "all" ? (
+                        <Pencil className={`h-5 w-5 shrink-0 ${editVerdictInfo.textClass}`} />
                       ) : (
-                        <ShieldCheck className="h-5 w-5 text-success shrink-0" />
+                        <ShieldCheck className={`h-5 w-5 shrink-0 ${editVerdictInfo.textClass}`} />
                       )}
                       <div className="flex-1">
                         <p className="font-display text-lg font-bold text-foreground">
-                          {isEditInconclusive
-                            ? "Inconclusive — models disagreed"
-                            : isEdited
-                            ? `${manipulation.confidence}% Likely Edited`
-                            : `${manipulation.confidence}% Likely Unmodified`}
+                          {editVerdictInfo.label(manipulation.confidence)}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {isEditInconclusive
-                            ? "Edit detection models split evenly — result is not reliable for this image."
-                            : isEdited
-                            ? "Visual analysis found manipulation indicators."
-                            : "Visual analysis found no manipulation indicators."}
+                          {editConsensusText(editVerdictInfo)}
                         </p>
+                        {editVerdictInfo.state === "mixed" && (
+                          <p className="text-xs text-amber-500/80 mt-1.5">
+                            Mixed findings — one model detected manipulation indicators while the other did not. Review individual model results for the full picture.
+                          </p>
+                        )}
+                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                          <div className={`h-full rounded-full ${editVerdictInfo.barClass}`} style={{ width: `${manipulation.confidence}%` }} />
+                        </div>
                       </div>
                     </motion.div>
 
