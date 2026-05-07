@@ -703,13 +703,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                         Mixed findings — some models detected indicators, others did not. Review individual model results below for the full picture.
                       </p>
                     )}
-                    {/* Confidence bar */}
-                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                      <div
-                        className={`h-full rounded-full ${verdictInfo.barClass}`}
-                        style={{ width: `${result.confidence}%` }}
-                      />
-                    </div>
+                    {/* Confidence bar removed */}
                     {(() => {
                       const activeModels = aiDetectionBreakdown.filter(
                         (m) => m.confidence > 0 && m.reasons.length > 0
