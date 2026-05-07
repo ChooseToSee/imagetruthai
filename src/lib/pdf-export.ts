@@ -163,7 +163,7 @@ export async function exportReportPdf(
           model.verdict === "ai" ? 50 : 160,
           model.verdict === "ai" ? 50 : 80
         );
-        pdf.text(`${model.model}: ${model.confidence}% — ${model.verdict === "ai" ? "AI indicators found" : "no AI indicators found"}`, 18, y);
+        pdf.text(`${model.model}: ${model.verdict === "ai" ? "AI indicators found" : "no AI indicators found"}`, 18, y);
         y += 5;
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(9);
