@@ -91,3 +91,84 @@ export function consensusText(info: VerdictStateInfo): string {
   }
   return `${aiModelCount} of ${total} models found AI generation indicators — see individual model findings below.`;
 }
+
+export interface EditVerdictStateInfo {
+  state: VerdictState;
+  editModelCount: number;
+  totalEditModelCount: number;
+  textClass: string;
+  bgClass: string;
+  borderClass: string;
+  barClass: string;
+  label: (confidence?: number) => string;
+}
+
+export function computeEditVerdictState(
+  modelBreakdown: ModelBreakdown[] | undefined,
+  fallbackEdited?: boolean
+): EditVerdictStateInfo {
+  const editModels = (modelBreakdown ?? []).filter((m) => m.manipulation !== undefined);
+  const editModelCount = editModels.filter((m) => m.manipulation?.edited === true).length;
+  const totalEditModelCount = editModels.length;
+
+  let state: VerdictState;
+  if (totalEditModelCount === 0) {
+    state = fallbackEdited ? "all" : "none";
+  } else if (editModelCount === 0) {
+    state = "none";
+  } else if (editModelCount === totalEditModelCount) {
+    state = "all";
+  } else {
+    state = "mixed";
+  }
+
+  if (state === "none") {
+    return {
+      state,
+      editModelCount,
+      totalEditModelCount,
+      textClass: "text-success",
+      bgClass: "bg-success/10",
+      borderClass: "border-success/20",
+      barClass: "bg-success",
+      label: (c) => c != null ? `${c}% — No Manipulation Indicators Found` : "No Manipulation Indicators Found",
+    };
+  }
+  if (state === "all") {
+    return {
+      state,
+      editModelCount,
+      totalEditModelCount,
+      textClass: "text-warning",
+      bgClass: "bg-warning/10",
+      borderClass: "border-warning/20",
+      barClass: "bg-warning",
+      label: (c) => c != null ? `${c}% — Manipulation Indicators Found` : "Manipulation Indicators Found",
+    };
+  }
+  return {
+    state,
+    editModelCount,
+    totalEditModelCount,
+    textClass: "text-amber-500",
+    bgClass: "bg-amber-500/10",
+    borderClass: "border-amber-500/20",
+    barClass: "bg-amber-500",
+    label: () =>
+      `Manipulation Indicators Found by ${editModelCount} of ${totalEditModelCount} Models`,
+  };
+}
+
+export function editConsensusText(info: EditVerdictStateInfo): string {
+  const { editModelCount, totalEditModelCount, state } = info;
+  const total = totalEditModelCount || 2;
+  if (state === "none") {
+    return "No manipulation indicators detected by any model.";
+  }
+  if (state === "all") {
+    return total === 2
+      ? "Both visual analysis models found manipulation indicators in this image."
+      : `All ${total} visual analysis models found manipulation indicators in this image.`;
+  }
+  return `${editModelCount} of ${total} visual analysis models found manipulation indicators — results are mixed. Review individual model findings below.`;
+}
