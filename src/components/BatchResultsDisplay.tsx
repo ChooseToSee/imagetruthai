@@ -263,11 +263,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                               <Pencil className={`h-3.5 w-3.5 ${editInfo.textClass}`} />
                             )}
                             <span className={`text-xs font-medium ${editInfo.textClass}`}>
-                              {editInfo.state === "none"
-                                ? "No edit indicators"
-                                : editInfo.state === "all"
-                                ? "Edit indicators"
-                                : `${editInfo.editModelCount}/${editInfo.totalEditModelCount} edit models`}
+                              {editInfo.state === "none" ? "No edit indicators" : "Edit indicators"}
                             </span>
                           </>
                         )}
