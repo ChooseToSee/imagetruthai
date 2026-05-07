@@ -875,7 +875,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                                     <span className="text-xs font-semibold text-foreground">{m.model}</span>
                                     {manip.edited ? (
                                       <span className="text-xs font-bold text-warning">
-                                        Manipulation Indicators Found — {manip.confidence}% confidence
+                                        Manipulation Indicators Found
                                       </span>
                                     ) : (
                                       <span className="text-xs font-medium text-muted-foreground">
