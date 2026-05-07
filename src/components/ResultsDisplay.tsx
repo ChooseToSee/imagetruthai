@@ -68,7 +68,7 @@ const ModelCard = ({ m }: { m: ModelBreakdown }) => {
         <span className="text-xs font-semibold text-foreground">{m.model}</span>
         {isAI ? (
           <span className="text-xs font-bold text-destructive">
-            AI Indicators Found — {m.confidence}% confidence
+            AI Indicators Found
           </span>
         ) : (
           <span className="text-xs font-medium text-muted-foreground">
