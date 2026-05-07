@@ -438,7 +438,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
 
   const handleShare = async () => {
     const editInfo = manipulation
-      ? `\nEdit detection: ${editVerdictInfo.state === "mixed" ? `${editVerdictInfo.editModelCount} of ${editVerdictInfo.totalEditModelCount} models found manipulation indicators (mixed)` : `${manipulation.confidence}% — manipulation indicators ${isEdited ? "detected" : "not detected"}`}.`
+      ? `\nEdit detection: ${manipulation.confidence}% — manipulation indicators ${isEdited ? "detected" : "not detected"}.`
       : "";
     const modelCount = result.modelBreakdown?.length ?? 1;
 
