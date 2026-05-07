@@ -457,7 +457,7 @@ const History = () => {
                         <div className="mt-3">
                           <p className="text-xs font-medium text-foreground mb-1">Edit Detection — What Models Found</p>
                           <p className={`text-xs font-semibold ${editV.textClass}`}>
-                            {editV.label(scan.manipulation.confidence)}
+                            {editV.label()}
                           </p>
                           <ul className="space-y-1 mt-1">
                             {(scan.manipulation.reasons || []).slice(0, 3).map((reason: string, i: number) => (
