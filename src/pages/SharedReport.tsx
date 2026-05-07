@@ -258,7 +258,7 @@ const SharedReport = () => {
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-xs font-semibold text-foreground">{m.model}</span>
                               <span className={`text-xs font-bold ${mIsAI ? "text-destructive" : "text-success"}`}>
-                                {m.confidence}% — {mIsAI ? "indicators found" : "no indicators found"}
+                                {mIsAI ? "Indicators found" : "No indicators found"}
                               </span>
                             </div>
                           </div>
