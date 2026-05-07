@@ -141,6 +141,8 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
   ).length;
   const totalModels = TOTAL_AI_DETECTION_MODELS;
 
+  const verdictInfo = computeVerdictState(result.modelBreakdown, result.verdict);
+
   const confidenceLabel = result.confidence >= 85 ? "High" : result.confidence >= 60 ? "Moderate" : "Low";
   const confidenceLabelDescription =
     confidenceLabel === "High"
