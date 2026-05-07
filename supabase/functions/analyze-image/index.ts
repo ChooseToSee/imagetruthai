@@ -1152,12 +1152,15 @@ serve(async (req) => {
         run: () => analyzeEditWithAI(imageBytes, mimeType, GOOGLE_AI_API_KEY),
       });
     }
-    if (HIVE_API_KEY) {
-      editTasks.push({
-        label: "Hive",
-        run: () => analyzeEditWithHive(imageBytes, mimeType, HIVE_API_KEY),
-      });
-    }
+    // Hive VLM removed from edit detection — consistently returns "Not edited"
+    // regardless of image content. Function kept (analyzeEditWithHive) in case
+    // we want to restore it later.
+    // if (HIVE_API_KEY) {
+    //   editTasks.push({
+    //     label: "Hive",
+    //     run: () => analyzeEditWithHive(imageBytes, mimeType, HIVE_API_KEY),
+    //   });
+    // }
 
     const attachEditToModels = (models: ModelResult[], edits: { label: string; result: EditResult }[]) => {
       for (const edit of edits) {
