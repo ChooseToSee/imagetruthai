@@ -263,6 +263,11 @@ const WhyFiveModels = () => {
               4 signals were caught by models that others missed — coverage no single model could provide alone
             </p>
           </div>
+          <div className="mt-4 rounded-lg border border-amber-400/20 bg-amber-400/5 p-4">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              <span className="font-semibold text-amber-400">Gemini</span> — Google's frontier vision model — provides visual manipulation analysis, looking for signs of post-processing including compositing, retouching, object insertion, and editing artifacts.
+            </p>
+          </div>
         </motion.div>
       </div>
     </section>
