@@ -279,18 +279,27 @@ const SharedReport = () => {
 
                 {/* Edit detection */}
                 {manipulation && (
-                  <div className={`flex items-center gap-3 rounded-lg px-4 py-3 mb-4 ${
-                    isEdited ? "bg-warning/10 border border-warning/20" : "bg-success/10 border border-success/20"
-                  }`}>
-                    {isEdited ? (
-                      <Pencil className="h-5 w-5 text-warning shrink-0" />
+                  <div className={`flex items-center gap-3 rounded-lg px-4 py-3 mb-4 ${editVerdictInfo.bgClass} border ${editVerdictInfo.borderClass}`}>
+                    {editVerdictInfo.state === "mixed" ? (
+                      <Info className={`h-5 w-5 shrink-0 ${editVerdictInfo.textClass}`} />
+                    ) : editVerdictInfo.state === "all" ? (
+                      <Pencil className={`h-5 w-5 shrink-0 ${editVerdictInfo.textClass}`} />
                     ) : (
-                      <ShieldCheck className="h-5 w-5 text-success shrink-0" />
+                      <ShieldCheck className={`h-5 w-5 shrink-0 ${editVerdictInfo.textClass}`} />
                     )}
-                    <div>
+                    <div className="flex-1">
                       <p className="font-display text-base font-bold text-foreground">
-                        {manipulation.confidence}% — Manipulation Indicators {isEdited ? "Detected" : "Not Detected"}
+                        {editVerdictInfo.label(manipulation.confidence)}
                       </p>
+                      <p className="text-xs text-muted-foreground">{editConsensusText(editVerdictInfo)}</p>
+                      {editVerdictInfo.state === "mixed" && (
+                        <p className="text-xs text-amber-500/80 mt-1.5">
+                          Mixed findings — one model detected manipulation indicators while the other did not. Review individual model results for the full picture.
+                        </p>
+                      )}
+                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                        <div className={`h-full rounded-full ${editVerdictInfo.barClass}`} style={{ width: `${manipulation.confidence}%` }} />
+                      </div>
                     </div>
                   </div>
                 )}
