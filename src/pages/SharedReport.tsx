@@ -142,7 +142,7 @@ const SharedReport = () => {
       <Helmet>
         <title>Analysis Report — ImageTruth AI</title>
         <meta name="description" content="View the AI image analysis report from ImageTruth AI." />
-        <meta property="og:title" content={`ImageTruth AI — ${confidence}% ${isAI ? "AI Generation Indicators Detected" : "No AI Generation Indicators Detected"}`} />
+        <meta property="og:title" content={`ImageTruth AI — ${isAI ? "AI Generation Indicators Detected" : "No AI Generation Indicators Detected"}`} />
         <meta property="og:description" content={report.reasons[0] || "View the full AI image analysis report."} />
         <meta property="og:image" content={report.image_url || "https://imagetruthai.com/share-image.png"} />
         <meta property="og:type" content="article" />
