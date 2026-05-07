@@ -23,6 +23,7 @@ import HistoryShareButtons from "@/components/HistoryShareButtons";
 import { useToast } from "@/hooks/use-toast";
 import { exportReportPdf } from "@/lib/pdf-export";
 import type { AnalysisResult } from "@/components/ResultsDisplay";
+import { computeVerdictState } from "@/lib/verdict-state";
 
 interface ScanRecord {
   id: string;
