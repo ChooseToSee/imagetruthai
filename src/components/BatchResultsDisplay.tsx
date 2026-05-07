@@ -254,11 +254,11 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                           className={`text-sm font-semibold ${vInfo.textClass}`}
                           title={vInfo.label()}
                         >
-                          {item.result.confidence}% — {vInfo.state === "none"
-                            ? "no AI indicators"
+                          {vInfo.state === "none"
+                            ? `0 of ${vInfo.totalModelCount || 4} found AI indicators`
                             : vInfo.state === "all"
-                            ? "AI indicators"
-                            : `${vInfo.aiModelCount}/${vInfo.totalModelCount} found AI indicators`}
+                            ? `${vInfo.totalModelCount || 4} of ${vInfo.totalModelCount || 4} found AI indicators`
+                            : `${vInfo.aiModelCount} of ${vInfo.totalModelCount} found AI indicators`}
                         </span>
                         {manipulation && (
                           <>
