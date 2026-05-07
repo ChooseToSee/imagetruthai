@@ -135,10 +135,10 @@ export function computeEditVerdictState(
       state,
       editModelCount,
       totalEditModelCount,
-      textClass: "text-warning",
-      bgClass: "bg-warning/10",
-      borderClass: "border-warning/20",
-      barClass: "bg-warning",
+      textClass: "text-amber-500",
+      bgClass: "bg-amber-500/10",
+      borderClass: "border-amber-500/20",
+      barClass: "bg-amber-500",
       label: (c) => c != null ? `${c}% — Manipulation Indicators Found` : "Manipulation Indicators Found",
     };
   }
