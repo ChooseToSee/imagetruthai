@@ -437,11 +437,6 @@ const History = () => {
                               <p className="text-xs font-semibold text-foreground">
                                 Edit Detection — {editV.label(scan.manipulation.confidence)}
                               </p>
-                              {editV.state === "mixed" && (
-                                <p className="text-[11px] text-amber-500/80 mt-1">
-                                  Mixed findings — one model detected manipulation indicators while the other did not.
-                                </p>
-                              )}
                             </div>
                           </div>
                         )}
