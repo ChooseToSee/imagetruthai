@@ -580,6 +580,16 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
     <section className="py-12">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl">
+          <div className="mb-4 flex justify-center">
+            <Button
+              variant="outline"
+              onClick={onReset}
+              className="gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Analyze More Images
+            </Button>
+          </div>
           <motion.div
             className="rounded-xl border border-border bg-card shadow-card overflow-hidden"
             initial={{ opacity: 0, y: 30, scale: 0.95 }}

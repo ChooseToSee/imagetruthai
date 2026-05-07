@@ -72,8 +72,7 @@ export function computeVerdictState(
     bgClass: "bg-amber-500/10",
     borderClass: "border-amber-500/20",
     barClass: "bg-amber-500",
-    label: () =>
-      `AI Indicators Found by ${aiModelCount} of ${totalModelCount} Models`,
+    label: () => `${aiModelCount}/4 found AI indicators`,
   };
 }
 
@@ -86,10 +85,7 @@ export function consensusText(info: VerdictStateInfo): string {
   if (state === "all") {
     return `All ${total} models found AI generation indicators in this image.`;
   }
-  if (aiModelCount <= 2) {
-    return `${aiModelCount} of ${total} models found AI generation indicators — results are mixed. See individual model findings below.`;
-  }
-  return `${aiModelCount} of ${total} models found AI generation indicators — see individual model findings below.`;
+  return `${aiModelCount}/4 AI detection models found AI generation indicators — results are mixed. See individual model findings below.`;
 }
 
 export interface EditVerdictStateInfo {
