@@ -197,12 +197,9 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
     toast({ title: newPublic ? "Report is now public" : "Report is now private" });
   }, [shareLinks, toast]);
 
-  const aiCount = items.filter((i) => i.result.verdict === "ai").length;
-  const humanCount = items.length - aiCount;
-  const editedCount = items.filter((i) => i.result.manipulation?.edited).length;
-  const avgConfidence = Math.round(
-    items.reduce((sum, i) => sum + i.result.confidence, 0) / items.length
-  );
+  // Batch summary card is hidden until a later release; calculations
+  // (counts, images-with-indicators) will be re-introduced when the
+  // summary stats card is rendered.
 
   return (
     <section className="py-12">
