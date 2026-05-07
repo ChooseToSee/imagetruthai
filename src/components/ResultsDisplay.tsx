@@ -389,7 +389,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
       "_blank",
       "width=600,height=400,noopener,noreferrer"
     );
-  }, [shareLink, handleGenerateShareLink, result.confidence, isAI]);
+  }, [shareLink, handleGenerateShareLink, voteSummary]);
 
   const handleLinkedInShare = useCallback(async () => {
     let linkToShare = shareLink;
