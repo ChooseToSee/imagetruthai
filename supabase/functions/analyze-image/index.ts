@@ -105,7 +105,7 @@ async function analyzeWithWinston(
 
   const reasons: string[] = [];
   if (verdict === "ai") {
-    reasons.push(`Winston AI detected pixel patterns associated with AI image generation (${aiScore}% probability)`);
+    reasons.push("Winston AI detected pixel patterns associated with AI image generation");
     reasons.push("Winston's classifier is trained to identify patterns from diffusion models, GANs, and other AI generation tools");
     reasons.push("These patterns differ statistically from those found in photographs and human-made digital art");
   } else {
