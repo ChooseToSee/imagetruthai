@@ -441,11 +441,11 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
 
   const handleShare = async () => {
     const editInfo = manipulation
-      ? `\nEdit detection: ${manipulation.confidence}% — manipulation indicators ${isEdited ? "detected" : "not detected"}.`
+      ? `\nEdit detection: manipulation indicators ${isEdited ? "found" : "not found"}.`
       : "";
     const modelCount = result.modelBreakdown?.length ?? 1;
 
-    const summary = `🔍 ImageTruth AI Analysis\n${result.confidence}% — ${isAI ? "AI generation indicators detected 🤖" : "No AI generation indicators detected ✅"}\n${result.reasons[0] || ""}${editInfo}\nAnalyzed by ${modelCount} independent AI model${modelCount !== 1 ? "s" : ""} for consensus accuracy.\nNote: Results show what models found — not a definitive determination.`;
+    const summary = `🔍 ImageTruth AI Analysis\n${voteSummary}\n${result.reasons[0] || ""}${editInfo}\nAnalyzed by ${modelCount} independent AI model${modelCount !== 1 ? "s" : ""} for consensus accuracy.\nNote: Results show what models found — not a definitive determination.`;
 
     const appUrl = "https://imagetruthai.com";
     const reportUrl = shareLink || appUrl;
