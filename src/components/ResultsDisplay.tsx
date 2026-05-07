@@ -129,7 +129,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
 
   const manipulation = result.manipulation;
   const isEdited = manipulation?.edited ?? false;
-  const isEditInconclusive = !!manipulation && manipulation.confidence >= 45 && manipulation.confidence <= 55;
+  const editVerdictInfo = computeEditVerdictState(result.modelBreakdown, isEdited);
 
   const AI_DETECTION_MODELS = ["Winston", "Winston AI", "SightEngine", "AI or Not", "Hive"];
   const TOTAL_AI_DETECTION_MODELS = 4;
