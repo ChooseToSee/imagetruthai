@@ -419,9 +419,6 @@ const History = () => {
                             <p className="text-xs font-semibold text-foreground">
                               {scan.confidence}% — {v.label()}
                             </p>
-                            <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
-                              <div className={`h-full rounded-full ${v.barClass}`} style={{ width: `${scan.confidence}%` }} />
-                            </div>
                             {v.state === "mixed" && (
                               <p className="text-[11px] text-amber-500/80 mt-1">
                                 Mixed findings — some models detected indicators, others did not.
