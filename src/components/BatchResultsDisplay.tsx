@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import { useToast } from "@/hooks/use-toast";
 import ImageHeatmap from "@/components/ImageHeatmap";
+import { computeVerdictState } from "@/lib/verdict-state";
 
 export interface BatchItem {
   fileName: string;
