@@ -934,11 +934,6 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                   </h3>
                   <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1.5">
                     <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Confidence Level</span>
-                      <span className="font-medium text-foreground">{confidenceLabel}</span>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground/70 italic -mt-1">{confidenceLabelDescription}</p>
-                    <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">AI Detection Models</span>
                       <span className="font-medium text-foreground">{totalModels > 0 ? `${totalModels} models analyzed` : "N/A"}</span>
                     </div>
@@ -950,7 +945,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">Edit Detection</span>
                         <span className={`font-medium ${isEdited ? "text-amber-500" : "text-success"}`}>
-                          {manipulation.confidence}% {isEdited ? "likely edited" : "likely original"}
+                          {isEdited ? "Manipulation indicators found" : "No manipulation indicators"}
                         </span>
                       </div>
                     )}
