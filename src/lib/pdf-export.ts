@@ -53,7 +53,7 @@ export async function exportReportPdf(
       : "No AI indicators detected";
 
     const shareText = encodeURIComponent(
-      `🔍 ${result.confidence}% — ${verdictText}\n\nSee what 5 AI models found:\n${shareUrl}\n\nvia @ImageTruthAI`
+      `🔍 ${verdictText}\n\nSee what AI models found:\n${shareUrl}\n\nvia @ImageTruthAI`
     );
 
     const xUrl = `https://x.com/intent/tweet?text=${shareText}&via=ImageTruthAI`;
