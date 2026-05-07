@@ -221,9 +221,13 @@ const SharedReport = () => {
                   )}
                   <div className="flex-1">
                     <p className="font-display text-lg font-bold text-foreground">
-                      {confidence}% — {verdictInfo.label()}
+                      {verdictInfo.state === "none"
+                        ? `0 of ${verdictInfo.totalModelCount || 4} models found AI generation indicators`
+                        : verdictInfo.state === "all"
+                        ? `All ${verdictInfo.totalModelCount || 4} models found AI generation indicators`
+                        : `${verdictInfo.aiModelCount} of ${verdictInfo.totalModelCount || 4} models found AI generation indicators`}
                     </p>
-                    <p className="text-xs text-muted-foreground">{consensusText(verdictInfo)} · Confidence: {confidenceLabel}</p>
+                    <p className="text-xs text-muted-foreground">{consensusText(verdictInfo)}</p>
                     {verdictInfo.state === "mixed" && (
                       <p className="text-xs text-amber-500/80 mt-1.5">
                         Mixed findings — some models detected indicators, others did not. Review individual model results below for the full picture.
