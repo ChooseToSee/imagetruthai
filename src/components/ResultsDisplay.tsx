@@ -795,35 +795,31 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                 <div className="flex items-start gap-1.5 mb-4">
                   <Info className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                   <p className="text-[10px] text-muted-foreground leading-relaxed">
-                    Edit detection models analyze this image for specific manipulation indicators such as compositing, cloning, splicing, and object insertion. They report what they find — not what type of image this is. Absence of findings does not guarantee the image is unmodified.
+                    Visual manipulation analysis is provided by Gemini, Google's frontier vision model. Results indicate what Gemini's visual reasoning found — not forensic proof. A single model is used for manipulation analysis; treat findings as one signal among several.
                   </p>
                 </div>
                 {manipulation ? (
                   <>
                     <motion.div
-                      className={`flex items-center gap-3 rounded-lg px-4 py-3 mb-4 ${editVerdictInfo.bgClass} border ${editVerdictInfo.borderClass}`}
+                      className={`flex items-center gap-3 rounded-lg px-4 py-3 mb-4 ${manipulation.edited ? "bg-amber-500/10 border-amber-500/20" : "bg-success/10 border-success/20"} border`}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.3, duration: 0.4 }}
                     >
-                      {editVerdictInfo.state === "mixed" ? (
-                        <Info className={`h-5 w-5 shrink-0 ${editVerdictInfo.textClass}`} />
-                      ) : editVerdictInfo.state === "all" ? (
-                        <Pencil className={`h-5 w-5 shrink-0 ${editVerdictInfo.textClass}`} />
+                      {manipulation.edited ? (
+                        <Pencil className="h-5 w-5 shrink-0 text-amber-500" />
                       ) : (
-                        <ShieldCheck className={`h-5 w-5 shrink-0 ${editVerdictInfo.textClass}`} />
+                        <ShieldCheck className="h-5 w-5 shrink-0 text-success" />
                       )}
                       <div className="flex-1">
-                        <p className="font-display text-lg font-bold text-foreground">
-                          {editVerdictInfo.label(manipulation.confidence)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {editConsensusText(editVerdictInfo)}
-                        </p>
-                        {editVerdictInfo.state === "mixed" && (
-                          <p className="text-xs text-amber-500/80 mt-1.5">
-                            Mixed findings — one model detected manipulation indicators while the other did not. Review individual model results for the full picture.
-                          </p>
+                        {manipulation.edited ? (
+                          <span className="text-sm font-semibold text-amber-500">
+                            Manipulation Indicators Found — {manipulation.confidence}% confidence
+                          </span>
+                        ) : (
+                          <span className="text-sm font-medium text-success">
+                            No Manipulation Indicators Found
+                          </span>
                         )}
                       </div>
                     </motion.div>
