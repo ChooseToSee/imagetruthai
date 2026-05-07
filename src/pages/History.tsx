@@ -350,7 +350,7 @@ const History = () => {
                               ? "No AI indicators"
                               : v.state === "all"
                               ? "AI indicators"
-                              : `${v.aiModelCount}/${v.totalModelCount} models`;
+                              : `${v.aiModelCount}/${v.totalModelCount} found AI indicators`;
                             return (
                               <span className={`rounded-full ${v.bgClass} px-2 py-0.5 text-xs font-medium ${v.textClass} shrink-0`}>{pillText}</span>
                             );
