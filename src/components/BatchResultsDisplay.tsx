@@ -31,7 +31,7 @@ const ModelCard = ({ m }: { m: ModelBreakdown }) => {
         <span className="text-xs font-semibold text-foreground">{m.model}</span>
         {isAI ? (
           <span className="text-xs font-bold text-destructive">
-            AI Indicators Found — {m.confidence}% confidence
+            AI Indicators Found
           </span>
         ) : (
           <span className="text-xs font-medium text-muted-foreground">
@@ -83,11 +83,17 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
   const { plan } = usePlan();
 
   const handleShareItem = async (item: BatchItem, index: number) => {
-    const isAI = item.result.verdict === "ai";
+    const breakdown = item.result.modelBreakdown ?? [];
+    const active = breakdown.filter((m) => m.confidence > 0 || m.reasons.length > 0);
+    const aiCount = active.filter((m) => m.verdict === "ai").length;
+    const total = active.length || 4;
+    const summary = aiCount === 0
+      ? `No models found AI generation indicators`
+      : `${aiCount} of ${total} models found AI generation indicators`;
     const editInfo = item.result.manipulation
-      ? ` | Edit: ${item.result.manipulation.confidence}% — manipulation indicators ${item.result.manipulation.edited ? "detected" : "not detected"}`
+      ? ` | Edit: manipulation indicators ${item.result.manipulation.edited ? "found" : "not found"}`
       : "";
-    const text = `ImageTruth AI: "${item.fileName}" — ${item.result.confidence}% ${isAI ? "AI generation indicators detected" : "no AI generation indicators detected"}. ${item.result.reasons[0]}${editInfo}`;
+    const text = `ImageTruth AI: "${item.fileName}" — ${summary}. ${item.result.reasons[0] || ""}${editInfo}`;
     const url = shareLinks[index]?.link || "";
     const res = await shareContent(text, "ImageTruth AI Result", url, item.preview);
     if (res === "copied") {
@@ -248,11 +254,11 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                           className={`text-sm font-semibold ${vInfo.textClass}`}
                           title={vInfo.label()}
                         >
-                          {item.result.confidence}% — {vInfo.state === "none"
-                            ? "no AI indicators"
+                          {vInfo.state === "none"
+                            ? `0 of ${vInfo.totalModelCount || 4} found AI indicators`
                             : vInfo.state === "all"
-                            ? "AI indicators"
-                            : `${vInfo.aiModelCount}/${vInfo.totalModelCount} found AI indicators`}
+                            ? `${vInfo.totalModelCount || 4} of ${vInfo.totalModelCount || 4} found AI indicators`
+                            : `${vInfo.aiModelCount} of ${vInfo.totalModelCount} found AI indicators`}
                         </span>
                         {manipulation && (
                           <>
@@ -390,7 +396,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                                 )}
                                 <div className="flex-1">
                                   <p className="text-sm font-bold text-foreground">
-                                    {editInfo.label(manipulation.confidence)}
+                                    {editInfo.label()}
                                   </p>
                                 </div>
                               </div>
@@ -432,7 +438,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                                               <span className="text-xs font-semibold text-foreground">{m.model}</span>
                                               {manip.edited ? (
                                                 <span className="text-xs font-bold text-warning">
-                                                  Manipulation Indicators Found — {manip.confidence}% confidence
+                                                  Manipulation Indicators Found
                                                 </span>
                                               ) : (
                                                 <span className="text-xs font-medium text-muted-foreground">

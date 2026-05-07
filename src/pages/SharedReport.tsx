@@ -65,7 +65,7 @@ const SharedReport = () => {
     const isAIVerdict = report.verdict === "ai";
     const title = `ImageTruth AI Analysis: ${
       isAIVerdict ? "AI Generation Indicators Detected" : "No AI Generation Indicators Detected"
-    } (${report.confidence}%)`;
+    }`;
     const description = "Analyzed by 5 independent AI models. Results show what models found — not a definitive determination.";
 
     const setMeta = (property: string, content: string) => {
@@ -142,7 +142,7 @@ const SharedReport = () => {
       <Helmet>
         <title>Analysis Report — ImageTruth AI</title>
         <meta name="description" content="View the AI image analysis report from ImageTruth AI." />
-        <meta property="og:title" content={`ImageTruth AI — ${confidence}% ${isAI ? "AI Generation Indicators Detected" : "No AI Generation Indicators Detected"}`} />
+        <meta property="og:title" content={`ImageTruth AI — ${isAI ? "AI Generation Indicators Detected" : "No AI Generation Indicators Detected"}`} />
         <meta property="og:description" content={report.reasons[0] || "View the full AI image analysis report."} />
         <meta property="og:image" content={report.image_url || "https://imagetruthai.com/share-image.png"} />
         <meta property="og:type" content="article" />
@@ -181,7 +181,7 @@ const SharedReport = () => {
               </button>
               <SocialShareButtons
                 getShareUrl={() => window.location.href}
-                shareText={`🔍 Check out this image analysis from ImageTruth AI — ${confidence}% ${isAI ? "AI generation indicators detected" : "no AI generation indicators detected"}.`}
+                shareText={`🔍 Check out this image analysis from ImageTruth AI — ${isAI ? "AI generation indicators detected" : "no AI generation indicators detected"}.`}
               />
             </div>
 
@@ -221,9 +221,13 @@ const SharedReport = () => {
                   )}
                   <div className="flex-1">
                     <p className="font-display text-lg font-bold text-foreground">
-                      {confidence}% — {verdictInfo.label()}
+                      {verdictInfo.state === "none"
+                        ? `0 of ${verdictInfo.totalModelCount || 4} models found AI generation indicators`
+                        : verdictInfo.state === "all"
+                        ? `All ${verdictInfo.totalModelCount || 4} models found AI generation indicators`
+                        : `${verdictInfo.aiModelCount} of ${verdictInfo.totalModelCount || 4} models found AI generation indicators`}
                     </p>
-                    <p className="text-xs text-muted-foreground">{consensusText(verdictInfo)} · Confidence: {confidenceLabel}</p>
+                    <p className="text-xs text-muted-foreground">{consensusText(verdictInfo)}</p>
                     {verdictInfo.state === "mixed" && (
                       <p className="text-xs text-amber-500/80 mt-1.5">
                         Mixed findings — some models detected indicators, others did not. Review individual model results below for the full picture.
@@ -254,7 +258,7 @@ const SharedReport = () => {
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-xs font-semibold text-foreground">{m.model}</span>
                               <span className={`text-xs font-bold ${mIsAI ? "text-destructive" : "text-success"}`}>
-                                {m.confidence}% — {mIsAI ? "indicators found" : "no indicators found"}
+                                {mIsAI ? "Indicators found" : "No indicators found"}
                               </span>
                             </div>
                           </div>
@@ -274,7 +278,7 @@ const SharedReport = () => {
                     )}
                     <div className="flex-1">
                       <p className="font-display text-base font-bold text-foreground">
-                        {editVerdictInfo.label(manipulation.confidence)}
+                        {editVerdictInfo.label()}
                       </p>
                     </div>
                   </div>

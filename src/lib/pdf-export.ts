@@ -53,7 +53,7 @@ export async function exportReportPdf(
       : "No AI indicators detected";
 
     const shareText = encodeURIComponent(
-      `🔍 ${result.confidence}% — ${verdictText}\n\nSee what 5 AI models found:\n${shareUrl}\n\nvia @ImageTruthAI`
+      `🔍 ${verdictText}\n\nSee what AI models found:\n${shareUrl}\n\nvia @ImageTruthAI`
     );
 
     const xUrl = `https://x.com/intent/tweet?text=${shareText}&via=ImageTruthAI`;
@@ -113,23 +113,19 @@ export async function exportReportPdf(
     // Skip image if cross-origin fails
   }
 
-  // Verdict
+  // Verdict — vote count style
+  const aiModels = (result.modelBreakdown ?? []).filter(m => m.confidence > 0 || m.reasons.length > 0);
+  const aiCount = aiModels.filter(m => m.verdict === "ai").length;
+  const totalCount = aiModels.length || 4;
   const isAI = result.verdict === "ai";
-  const confidenceLabel = result.confidence >= 85 ? "High" : result.confidence >= 60 ? "Moderate" : "Low";
+  const verdictLine = aiCount === 0
+    ? "No models found AI generation indicators"
+    : `${aiCount} of ${totalCount} models found AI generation indicators`;
 
   pdf.setFontSize(14);
   pdf.setFont("helvetica", "bold");
-  pdf.setTextColor(isAI ? 200 : 50, isAI ? 50 : 160, isAI ? 50 : 80);
-  pdf.text(
-    `${result.confidence}% — ${isAI ? "AI Generation Indicators Detected" : "No AI Generation Indicators Detected"}`,
-    pageW / 2,
-    y,
-    { align: "center" }
-  );
-  y += 6;
-  pdf.setFontSize(10);
-  pdf.setTextColor(120, 120, 120);
-  pdf.text(`Confidence Level: ${confidenceLabel}`, pageW / 2, y, { align: "center" });
+  pdf.setTextColor(aiCount === 0 ? 50 : 200, aiCount === 0 ? 160 : 50, aiCount === 0 ? 80 : 50);
+  pdf.text(verdictLine, pageW / 2, y, { align: "center" });
   y += 10;
 
   // Reasons
@@ -167,7 +163,7 @@ export async function exportReportPdf(
           model.verdict === "ai" ? 50 : 160,
           model.verdict === "ai" ? 50 : 80
         );
-        pdf.text(`${model.model}: ${model.confidence}% — ${model.verdict === "ai" ? "AI indicators found" : "no AI indicators found"}`, 18, y);
+        pdf.text(`${model.model}: ${model.verdict === "ai" ? "AI indicators found" : "no AI indicators found"}`, 18, y);
         y += 5;
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(9);
@@ -194,14 +190,8 @@ export async function exportReportPdf(
     y += 6;
     pdf.setFontSize(10);
     pdf.setFont("helvetica", "bold");
-    const isEditInconclusive = m.confidence >= 45 && m.confidence <= 55;
-    if (isEditInconclusive) {
-      pdf.setTextColor(217, 119, 6); // amber-600
-      pdf.text("Inconclusive — models disagreed", 18, y);
-    } else {
-      pdf.setTextColor(m.edited ? 200 : 50, m.edited ? 130 : 160, m.edited ? 0 : 80);
-      pdf.text(`${m.confidence}% — Manipulation Indicators ${m.edited ? "Detected" : "Not Detected"}`, 18, y);
-    }
+    pdf.setTextColor(m.edited ? 200 : 50, m.edited ? 130 : 160, m.edited ? 0 : 80);
+    pdf.text(`Manipulation Indicators ${m.edited ? "Found" : "Not Found"}`, 18, y);
     y += 6;
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(9);
@@ -230,7 +220,7 @@ export async function exportReportPdf(
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "bold");
       pdf.setTextColor(manip.edited ? 200 : 50, manip.edited ? 130 : 160, manip.edited ? 0 : 80);
-      pdf.text(`${model.model}: ${manip.confidence}% — ${manip.edited ? "manipulation indicators found" : "no manipulation indicators found"}`, 18, y);
+      pdf.text(`${model.model}: ${manip.edited ? "manipulation indicators found" : "no manipulation indicators found"}`, 18, y);
       y += 5;
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(9);

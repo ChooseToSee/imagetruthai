@@ -360,7 +360,7 @@ const History = () => {
                           <p className="text-xs text-muted-foreground">
                             {(() => {
                               const v = computeVerdictState(scan.model_breakdown, scan.verdict as "ai" | "human");
-                              return `${v.label()} — ${scan.confidence}% confidence`;
+                              return v.label();
                             })()}{" "}
                             · {new Date(scan.created_at).toLocaleDateString()}
                           </p>
@@ -417,7 +417,7 @@ const History = () => {
                           )}
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-semibold text-foreground">
-                              {scan.confidence}% — {v.label()}
+                              {v.label()}
                             </p>
                             {v.state === "mixed" && (
                               <p className="text-[11px] text-amber-500/80 mt-1">
@@ -435,7 +435,7 @@ const History = () => {
                             )}
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-semibold text-foreground">
-                                Edit Detection — {editV.label(scan.manipulation.confidence)}
+                                Edit Detection — {editV.label()}
                               </p>
                             </div>
                           </div>
@@ -457,7 +457,7 @@ const History = () => {
                         <div className="mt-3">
                           <p className="text-xs font-medium text-foreground mb-1">Edit Detection — What Models Found</p>
                           <p className={`text-xs font-semibold ${editV.textClass}`}>
-                            {editV.label(scan.manipulation.confidence)}
+                            {editV.label()}
                           </p>
                           <ul className="space-y-1 mt-1">
                             {(scan.manipulation.reasons || []).slice(0, 3).map((reason: string, i: number) => (

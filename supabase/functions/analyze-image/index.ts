@@ -105,7 +105,7 @@ async function analyzeWithWinston(
 
   const reasons: string[] = [];
   if (verdict === "ai") {
-    reasons.push(`Winston AI detected pixel patterns associated with AI image generation (${aiScore}% probability)`);
+    reasons.push("Winston AI detected pixel patterns associated with AI image generation");
     reasons.push("Winston's classifier is trained to identify patterns from diffusion models, GANs, and other AI generation tools");
     reasons.push("These patterns differ statistically from those found in photographs and human-made digital art");
   } else {
@@ -161,7 +161,7 @@ async function analyzeWithSightEngine(
 
   const reasons: string[] = [];
   if (verdict === "ai") {
-    reasons.push(`SightEngine's AI generation classifier scored ${(aiGenerated * 100).toFixed(1)}% probability of AI generation`);
+    reasons.push("SightEngine's AI generation classifier found indicators in this image");
     reasons.push("SightEngine's genai model is purpose-built to detect diffusion model and GAN outputs");
     reasons.push("Statistical patterns in this image match those associated with AI generation tools");
   } else {
@@ -512,7 +512,7 @@ async function analyzeWithAIorNot(
   }
 
   if (verdict === "ai") {
-    reasons.push(`AI or Not identified AI generation indicators with ${(aiConf * 100).toFixed(1)}% confidence`);
+    reasons.push("AI or Not identified AI generation indicators in this image");
     reasons.push(topGenerator ? `Most likely generator: ${topGenerator.replace(/_/g, " ")}` : "Specific generator not identified");
     reasons.push("AI or Not specializes in identifying AI synthesis patterns across major generation platforms");
   } else {
@@ -604,12 +604,12 @@ async function analyzeWithHiveAI(
 
   const reasons: string[] = [];
   if (verdict === "ai") {
-    reasons.push(`Hive detected ${(combinedAiScore * 100).toFixed(1)}% probability of AI generation`);
+    reasons.push("Hive found AI generation indicators across its 107 generator signatures");
     if (topGenerator) {
-      reasons.push(`Most likely generator: ${topGenerator.name} (${(topGenerator.score * 100).toFixed(1)}%)`);
+      reasons.push(`Most likely generator: ${topGenerator.name}`);
     }
     if (deepfakeScore > 0.1) {
-      reasons.push(`Deepfake indicators detected: ${(deepfakeScore * 100).toFixed(1)}%`);
+      reasons.push("Deepfake indicators also detected");
     }
     reasons.push("Hive analyzed 107 AI generator signatures including Midjourney, DALL-E, Stable Diffusion, Sora and more");
   } else {

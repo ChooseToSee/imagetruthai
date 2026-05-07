@@ -127,7 +127,7 @@ export function computeEditVerdictState(
       bgClass: "bg-success/10",
       borderClass: "border-success/20",
       barClass: "bg-success",
-      label: (c) => c != null ? `${c}% — No Manipulation Indicators Found` : "No Manipulation Indicators Found",
+      label: () => "No Manipulation Indicators Found",
     };
   }
   if (state === "all") {
@@ -139,7 +139,7 @@ export function computeEditVerdictState(
       bgClass: "bg-amber-500/10",
       borderClass: "border-amber-500/20",
       barClass: "bg-amber-500",
-      label: (c) => c != null ? `${c}% — Manipulation Indicators Found` : "Manipulation Indicators Found",
+      label: () => "Manipulation Indicators Found",
     };
   }
   return {

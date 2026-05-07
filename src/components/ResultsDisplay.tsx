@@ -68,7 +68,7 @@ const ModelCard = ({ m }: { m: ModelBreakdown }) => {
         <span className="text-xs font-semibold text-foreground">{m.model}</span>
         {isAI ? (
           <span className="text-xs font-bold text-destructive">
-            AI Indicators Found — {m.confidence}% confidence
+            AI Indicators Found
           </span>
         ) : (
           <span className="text-xs font-medium text-muted-foreground">
@@ -322,6 +322,16 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
     }
   }, [result, imagePreview, shareLink, user, handleGenerateShareLink, toast]);
 
+  const aiVoteCount = (result.modelBreakdown ?? []).filter(
+    (m) => (m.confidence > 0 || m.reasons.length > 0) && m.verdict === "ai"
+  ).length;
+  const totalVoteModels = (result.modelBreakdown ?? []).filter(
+    (m) => m.confidence > 0 || m.reasons.length > 0
+  ).length || 4;
+  const voteSummary = aiVoteCount === 0
+    ? `No models found AI generation indicators`
+    : `${aiVoteCount} of ${totalVoteModels} models found AI generation indicators`;
+
   const handleXShare = useCallback(async () => {
     let linkToShare = shareLink;
     if (!linkToShare) {
@@ -331,13 +341,8 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
         linkToShare = null;
       }
     }
-    // Route X (and other crawlers) through the OG edge function so the
-    // tweet preview thumbnail shows the actual analyzed image instead of
-    // the generic brand share-image.png.
     const crawlerUrl = linkToShare ? buildOgShareUrl(linkToShare) : "https://imagetruthai.com";
-    const tweetText = `🔍 ${result.confidence}% — ${
-      isAI ? "AI indicators detected 🤖" : "No AI indicators detected ✅"
-    }\n\nSee what 5 AI models found:\n${crawlerUrl}\n\nvia @ImageTruthAI`;
+    const tweetText = `🔍 ${voteSummary}\n\nSee what AI models found:\n${crawlerUrl}\n\nvia @ImageTruthAI`;
     const decision = decideXShareNavigation(tweetText, navigator.userAgent);
     console.log("[XShare] Tweet URL:", decision.url.slice(0, 300));
     console.log("[XShare] URL length:", decision.url.length, "mode:", decision.mode);
@@ -348,7 +353,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
       }
       window.open(decision.url, "_blank", "noopener,noreferrer");
     }, 100);
-  }, [shareLink, handleGenerateShareLink, result.confidence, isAI]);
+  }, [shareLink, handleGenerateShareLink, voteSummary]);
 
   const handleFacebookShare = useCallback(async () => {
     let linkToShare = shareLink;
@@ -367,9 +372,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
       try {
         await navigator.share({
           title: "ImageTruth AI Analysis",
-          text: `${result.confidence}% — ${
-            isAI ? "AI generation indicators detected" : "No AI generation indicators detected"
-          }`,
+          text: voteSummary,
           url: urlToShare,
         });
         return;
@@ -386,7 +389,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
       "_blank",
       "width=600,height=400,noopener,noreferrer"
     );
-  }, [shareLink, handleGenerateShareLink, result.confidence, isAI]);
+  }, [shareLink, handleGenerateShareLink, voteSummary]);
 
   const handleLinkedInShare = useCallback(async () => {
     let linkToShare = shareLink;
@@ -438,11 +441,11 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
 
   const handleShare = async () => {
     const editInfo = manipulation
-      ? `\nEdit detection: ${manipulation.confidence}% — manipulation indicators ${isEdited ? "detected" : "not detected"}.`
+      ? `\nEdit detection: manipulation indicators ${isEdited ? "found" : "not found"}.`
       : "";
     const modelCount = result.modelBreakdown?.length ?? 1;
 
-    const summary = `🔍 ImageTruth AI Analysis\n${result.confidence}% — ${isAI ? "AI generation indicators detected 🤖" : "No AI generation indicators detected ✅"}\n${result.reasons[0] || ""}${editInfo}\nAnalyzed by ${modelCount} independent AI model${modelCount !== 1 ? "s" : ""} for consensus accuracy.\nNote: Results show what models found — not a definitive determination.`;
+    const summary = `🔍 ImageTruth AI Analysis\n${voteSummary}\n${result.reasons[0] || ""}${editInfo}\nAnalyzed by ${modelCount} independent AI model${modelCount !== 1 ? "s" : ""} for consensus accuracy.\nNote: Results show what models found — not a definitive determination.`;
 
     const appUrl = "https://imagetruthai.com";
     const reportUrl = shareLink || appUrl;
@@ -657,7 +660,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
             </div>
             {/* Tabbed results */}
             <p className="text-xs text-muted-foreground/70 text-center mb-3 px-2">
-              5 independent AI models analyzed this image — each reporting what it found. These are analytical findings to help you evaluate this image, not a final determination.
+              What each model found — no verdicts, just findings.
             </p>
             <Tabs defaultValue="ai-detection" className="px-6 pb-4">
               <TabsList className="grid w-full grid-cols-3 mb-4 h-11 bg-muted/80 border border-border">
@@ -693,7 +696,11 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                   )}
                   <div className="flex-1">
                     <p className="font-display text-lg font-bold text-foreground">
-                      {result.confidence}% — {verdictInfo.label()}
+                      {verdictInfo.state === "none"
+                        ? `0 of ${TOTAL_AI_DETECTION_MODELS} models found AI generation indicators`
+                        : verdictInfo.state === "all"
+                        ? `All ${verdictInfo.totalModelCount || TOTAL_AI_DETECTION_MODELS} models found AI generation indicators`
+                        : `${verdictInfo.aiModelCount} of ${verdictInfo.totalModelCount || TOTAL_AI_DETECTION_MODELS} models found AI generation indicators`}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {consensusText(verdictInfo)}
@@ -703,7 +710,6 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                         Mixed findings — some models detected indicators, others did not. Review individual model results below for the full picture.
                       </p>
                     )}
-                    {/* Confidence bar removed */}
                     {(() => {
                       const activeModels = aiDetectionBreakdown.filter(
                         (m) => m.confidence > 0 && m.reasons.length > 0
@@ -814,7 +820,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                       <div className="flex-1">
                         {manipulation.edited ? (
                           <span className="text-sm font-semibold text-amber-500">
-                            Manipulation Indicators Found — {manipulation.confidence}% confidence
+                            Manipulation Indicators Found
                           </span>
                         ) : (
                           <span className="text-sm font-medium text-success">
@@ -872,7 +878,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                                     <span className="text-xs font-semibold text-foreground">{m.model}</span>
                                     {manip.edited ? (
                                       <span className="text-xs font-bold text-warning">
-                                        Manipulation Indicators Found — {manip.confidence}% confidence
+                                        Manipulation Indicators Found
                                       </span>
                                     ) : (
                                       <span className="text-xs font-medium text-muted-foreground">
@@ -931,11 +937,6 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                   </h3>
                   <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1.5">
                     <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Confidence Level</span>
-                      <span className="font-medium text-foreground">{confidenceLabel}</span>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground/70 italic -mt-1">{confidenceLabelDescription}</p>
-                    <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">AI Detection Models</span>
                       <span className="font-medium text-foreground">{totalModels > 0 ? `${totalModels} models analyzed` : "N/A"}</span>
                     </div>
@@ -947,7 +948,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">Edit Detection</span>
                         <span className={`font-medium ${isEdited ? "text-amber-500" : "text-success"}`}>
-                          {manipulation.confidence}% {isEdited ? "likely edited" : "likely original"}
+                          {isEdited ? "Manipulation indicators found" : "No manipulation indicators"}
                         </span>
                       </div>
                     )}
@@ -1092,7 +1093,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                       Share preview:
                     </p>
                     <p className="text-[10px] text-muted-foreground leading-relaxed whitespace-pre-line">
-                      {`🔍 ${result.confidence}% likely ${isAI ? "AI-Generated 🤖" : "Human-Created ✅"}\n${result.reasons[0]}\n\nView: ${shareLink}`}
+                      {`🔍 ${voteSummary}\n${result.reasons[0]}\n\nView: ${shareLink}`}
                     </p>
                   </div>
                 </div>
