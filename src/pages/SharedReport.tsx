@@ -65,7 +65,7 @@ const SharedReport = () => {
     const isAIVerdict = report.verdict === "ai";
     const title = `ImageTruth AI Analysis: ${
       isAIVerdict ? "AI Generation Indicators Detected" : "No AI Generation Indicators Detected"
-    } (${report.confidence}%)`;
+    }`;
     const description = "Analyzed by 5 independent AI models. Results show what models found — not a definitive determination.";
 
     const setMeta = (property: string, content: string) => {
