@@ -817,7 +817,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                       <div className="flex-1">
                         {manipulation.edited ? (
                           <span className="text-sm font-semibold text-amber-500">
-                            Manipulation Indicators Found — {manipulation.confidence}% confidence
+                            Manipulation Indicators Found
                           </span>
                         ) : (
                           <span className="text-sm font-medium text-success">
