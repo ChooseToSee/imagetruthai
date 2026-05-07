@@ -9,6 +9,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SocialShareButtons from "@/components/SocialShareButtons";
 import { decideXShareNavigation } from "@/lib/x-share";
+import { computeVerdictState, consensusText } from "@/lib/verdict-state";
 import type { AnalysisResult, ModelBreakdown, ManipulationResult } from "@/components/ResultsDisplay";
 
 interface SharedReportData {
