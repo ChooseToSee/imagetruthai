@@ -1093,7 +1093,7 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                       Share preview:
                     </p>
                     <p className="text-[10px] text-muted-foreground leading-relaxed whitespace-pre-line">
-                      {`🔍 ${result.confidence}% likely ${isAI ? "AI-Generated 🤖" : "Human-Created ✅"}\n${result.reasons[0]}\n\nView: ${shareLink}`}
+                      {`🔍 ${voteSummary}\n${result.reasons[0]}\n\nView: ${shareLink}`}
                     </p>
                   </div>
                 </div>
