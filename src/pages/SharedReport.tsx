@@ -278,7 +278,7 @@ const SharedReport = () => {
                     )}
                     <div className="flex-1">
                       <p className="font-display text-base font-bold text-foreground">
-                        {editVerdictInfo.label(manipulation.confidence)}
+                        {editVerdictInfo.label()}
                       </p>
                     </div>
                   </div>
