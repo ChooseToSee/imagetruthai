@@ -83,11 +83,17 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
   const { plan } = usePlan();
 
   const handleShareItem = async (item: BatchItem, index: number) => {
-    const isAI = item.result.verdict === "ai";
+    const breakdown = item.result.modelBreakdown ?? [];
+    const active = breakdown.filter((m) => m.confidence > 0 || m.reasons.length > 0);
+    const aiCount = active.filter((m) => m.verdict === "ai").length;
+    const total = active.length || 4;
+    const summary = aiCount === 0
+      ? `No models found AI generation indicators`
+      : `${aiCount} of ${total} models found AI generation indicators`;
     const editInfo = item.result.manipulation
-      ? ` | Edit: ${item.result.manipulation.confidence}% — manipulation indicators ${item.result.manipulation.edited ? "detected" : "not detected"}`
+      ? ` | Edit: manipulation indicators ${item.result.manipulation.edited ? "found" : "not found"}`
       : "";
-    const text = `ImageTruth AI: "${item.fileName}" — ${item.result.confidence}% ${isAI ? "AI generation indicators detected" : "no AI generation indicators detected"}. ${item.result.reasons[0]}${editInfo}`;
+    const text = `ImageTruth AI: "${item.fileName}" — ${summary}. ${item.result.reasons[0] || ""}${editInfo}`;
     const url = shareLinks[index]?.link || "";
     const res = await shareContent(text, "ImageTruth AI Result", url, item.preview);
     if (res === "copied") {
