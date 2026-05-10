@@ -15,6 +15,15 @@ export async function exportReportPdf(
   imageUrl: string,
   shareUrl?: string
 ): Promise<void> {
+  // Always use the production domain in PDFs, regardless of where the PDF was generated.
+  if (shareUrl) {
+    try {
+      const u = new URL(shareUrl);
+      shareUrl = `https://imagetruthai.com${u.pathname}${u.search}${u.hash}`;
+    } catch {
+      // leave as-is if not a valid URL
+    }
+  }
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = pdf.internal.pageSize.getWidth();
   let y = 15;
