@@ -207,6 +207,13 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
         <div className="mx-auto max-w-4xl">
           {/* Batch Summary card hidden until a later release */}
 
+          <div className="mb-4 flex justify-center">
+            <Button variant="outline" onClick={onReset} className="gap-2">
+              <RotateCcw className="h-4 w-4" />
+              Analyze More Images
+            </Button>
+          </div>
+
           {/* Individual results */}
           <div className="space-y-3">
             {items.map((item, i) => {
