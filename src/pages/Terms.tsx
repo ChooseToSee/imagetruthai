@@ -9,7 +9,7 @@ const Terms = () => {
         <h1 className="font-display text-3xl font-bold mb-8">Terms of Service</h1>
 
         <div className="prose prose-sm text-muted-foreground space-y-6">
-          <p>Last updated: March 2026</p>
+          <p>Last updated: May 2026</p>
 
           <p>
             These Terms of Service ("Terms") govern your use of the ImageTruth AI website and
@@ -27,10 +27,19 @@ const Terms = () => {
 
           <h2 className="text-lg font-semibold text-foreground">2. Service Description</h2>
           <p>
-            ImageTruth AI provides AI-powered image analysis to help detect AI-generated content and
-            image manipulation. Results are provided as informational guidance only and should not be
-            considered definitive proof of authenticity or manipulation. No AI detection tool is 100%
-            accurate and results may vary.
+            ImageTruth AI aggregates and presents findings from five independent AI models that
+            analyze images for indicators of AI generation, deepfake signatures, and visual
+            manipulation. ImageTruth AI does not make determinations or render verdicts about
+            whether an image is authentic or AI-generated. Results show what each model
+            independently found — analytical findings to help users evaluate images, not
+            conclusions drawn by Choose To See, LLC.
+          </p>
+          <p>
+            Results are provided as informational guidance only and should not be considered
+            definitive proof of authenticity or manipulation. No AI detection model is 100% accurate
+            and results may vary. See our{" "}
+            <a href="/ai-disclaimer" className="text-primary hover:underline">AI Disclaimer</a>{" "}
+            for full details.
           </p>
 
           <h2 className="text-lg font-semibold text-foreground">3. Accounts and Subscriptions</h2>
@@ -54,13 +63,18 @@ const Terms = () => {
 
           <h2 className="text-lg font-semibold text-foreground">4. Accuracy Disclaimer</h2>
           <p>
-            No AI detection tool is 100% accurate. ImageTruth AI is designed as an assistive tool to
-            help evaluate images. We make no guarantees regarding the accuracy, completeness, or
-            reliability of analysis results. We are not liable for any decisions, actions, or
-            consequences arising from reliance on our analysis. Results should always be
-            independently verified before being used for any consequential purpose. See our{" "}
+            No AI detection model is 100% accurate. ImageTruth AI presents findings from
+            third-party AI models — it does not make its own determinations about image
+            authenticity. Individual models may produce false positives (reporting indicators in
+            authentic images) or false negatives (finding no indicators in AI-generated images).
+          </p>
+          <p>
+            We make no guarantees regarding the accuracy, completeness, or reliability of any
+            model's findings. We are not liable for any decisions, actions, or consequences arising
+            from reliance on analysis results. Results should always be independently verified
+            before being used for any consequential purpose. See our{" "}
             <a href="/ai-disclaimer" className="text-primary hover:underline">AI Disclaimer</a>{" "}
-            for more details.
+            for full details.
           </p>
 
           <h2 className="text-lg font-semibold text-foreground">5. Acceptable Use</h2>
