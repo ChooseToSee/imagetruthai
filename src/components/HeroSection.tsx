@@ -24,7 +24,7 @@ const editingSignals = [
   { icon: ScanEye, title: "Generative Model Fingerprints", description: "Identify subtle pixel-level patterns and noise signatures left by diffusion and GAN-based image generators." },
   { icon: Fingerprint, title: "Synthetic Texture Analysis", description: "Spot unnaturally smooth skin, hair, and surface textures that commonly appear in AI-generated imagery." },
   { icon: Search, title: "Anatomical & Structural Anomalies", description: "Detect distorted hands, mismatched eyes, warped backgrounds, and other telltale generative errors." },
-  { icon: Shield, title: "Multi-Model Consensus", description: "Cross-reference findings from 3 independent AI-detection models to reduce false positives and increase confidence." },
+  { icon: Shield, title: "Multi-Model Consensus", description: "Cross-reference findings from 4 independent AI-detection models to reduce false positives and improve discovery." },
   { icon: FileWarning, title: "Editing Artifacts", description: "Detect traces left by image editing tools including cloning, splicing, and retouching." },
   { icon: ScanEye, title: "Compression Inconsistencies", description: "Identify mismatched compression levels that may indicate regions were altered after initial save." },
   { icon: Fingerprint, title: "Photoshop Manipulation", description: "Flag signatures commonly associated with Adobe Photoshop and similar editing software." },
