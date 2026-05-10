@@ -594,17 +594,6 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
           >
             {/* Image preview with heatmap */}
             <div className="p-6 pb-0">
-              <div className="flex justify-center mb-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onReset}
-                  className="gap-2 text-xs border-primary text-primary hover:bg-primary/10 hover:text-primary"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  Upload Another Image
-                </Button>
-              </div>
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

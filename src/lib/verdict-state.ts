@@ -127,7 +127,7 @@ export function computeEditVerdictState(
       bgClass: "bg-success/10",
       borderClass: "border-success/20",
       barClass: "bg-success",
-      label: () => "No Manipulation Indicators Found",
+      label: () => "No edit indicators found",
     };
   }
   if (state === "all") {
@@ -139,7 +139,7 @@ export function computeEditVerdictState(
       bgClass: "bg-amber-500/10",
       borderClass: "border-amber-500/20",
       barClass: "bg-amber-500",
-      label: () => "Manipulation Indicators Found",
+      label: () => "Edit indicators found",
     };
   }
   return {
@@ -150,8 +150,7 @@ export function computeEditVerdictState(
     bgClass: "bg-amber-500/10",
     borderClass: "border-amber-500/20",
     barClass: "bg-amber-500",
-    label: () =>
-      `Manipulation Indicators Found by ${editModelCount} of ${totalEditModelCount} Models`,
+    label: () => "Edit indicators found",
   };
 }
 
