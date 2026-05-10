@@ -9,7 +9,7 @@ const Privacy = () => {
         <h1 className="font-display text-3xl font-bold mb-8">Privacy Policy</h1>
 
         <div className="prose prose-sm text-muted-foreground space-y-6">
-          <p>Last updated: March 2026</p>
+          <p>Last updated: May 2026</p>
 
           <p>
             This Privacy Policy describes how Choose To See, LLC, doing business as ImageTruth AI
@@ -85,12 +85,15 @@ const Privacy = () => {
             <li><strong className="text-foreground">SightEngine:</strong> AI image analysis</li>
             <li><strong className="text-foreground">AI or Not:</strong> AI image analysis</li>
             <li><strong className="text-foreground">Google (Gemini):</strong> AI image analysis</li>
-            <li><strong className="text-foreground">Hive:</strong> AI image analysis</li>
+            <li><strong className="text-foreground">Hive:</strong> AI generation and deepfake detection analysis</li>
           </ul>
           <p>
             Each provider processes your data solely for the purposes we specify and is
             contractually obligated to protect your data. Your images may be transmitted to these
-            providers for analysis purposes only.
+            providers for analysis purposes only. Hive is used specifically for AI generation
+            detection and deepfake identification across 107 known generator signatures. Google
+            Gemini is used specifically for visual manipulation analysis. Winston AI, SightEngine,
+            and AI or Not are used specifically for AI generation detection.
           </p>
           <p>
             Your information may be transferred to and processed in countries other than your own.
