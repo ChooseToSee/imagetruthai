@@ -685,11 +685,12 @@ function computeConsensus(results: ModelResult[], expectedTotal = results.length
     }
   }
 
-  const agreementCount = aligned.length;
-  if (agreementCount === expectedTotal && expectedTotal > 0) {
-    allReasons.unshift(`All ${expectedTotal} AI models found ${verdict === "ai" ? "indicators of AI generation" : "no indicators of AI generation"} in this image`);
+  if (aiCount === 0) {
+    allReasons.unshift(`No AI generation indicators found by any of the ${expectedTotal} models. Models may interpret different image characteristics — see per-model breakdown for details`);
+  } else if (aiCount === expectedTotal && expectedTotal > 0) {
+    allReasons.unshift(`All ${expectedTotal} AI models found AI generation indicators in this image`);
   } else {
-    allReasons.unshift(`${agreementCount} of ${expectedTotal} AI models found indicators of ${verdict === "ai" ? "AI generation" : "authentic origin"}. Models may interpret different image characteristics — see per-model breakdown for details`);
+    allReasons.unshift(`${aiCount} of ${expectedTotal} AI models found AI generation indicators. Models may interpret different image characteristics — see per-model breakdown for details`);
   }
 
   const tips = [
