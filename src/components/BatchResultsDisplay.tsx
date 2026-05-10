@@ -74,7 +74,7 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
   };
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [showBreakdown, setShowBreakdown] = useState<number | null>(null);
-  const [showEditBreakdown, setShowEditBreakdown] = useState<number | null>(null);
+  
   const [exportingPdfIndex, setExportingPdfIndex] = useState<number | null>(null);
   const [sharingIndex, setSharingIndex] = useState<number | null>(null);
   const [shareLinks, setShareLinks] = useState<Record<number, { link: string; id: string; isPublic: boolean }>>({});

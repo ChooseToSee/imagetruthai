@@ -91,7 +91,7 @@ const ModelCard = ({ m }: { m: ModelBreakdown }) => {
 const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, streamProgress, partialReady, onKeepWaiting }: ResultsDisplayProps) => {
   const isAI = result.verdict === "ai";
   const [showBreakdown, setShowBreakdown] = useState(false);
-  const [showEditBreakdown, setShowEditBreakdown] = useState(false);
+  
   const [copied, setCopied] = useState(false);
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [isSharing, setIsSharing] = useState(false);
