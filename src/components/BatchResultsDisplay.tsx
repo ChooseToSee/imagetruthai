@@ -434,20 +434,12 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                                             <div className="flex items-center justify-between mb-2">
                                               <span className="text-xs font-semibold text-foreground">{m.model}</span>
                                               {manip.edited ? (
-                                                <span className="text-xs font-bold text-warning">
-                                                {manip.edited ? (
-                                                  <span className="text-xs font-bold text-amber-500">
+                                                <span className="text-xs font-bold text-amber-500">
                                                   Edit indicators found
-                                                  </span>
-                                                ) : (
-                                                  <span className="text-xs font-medium text-muted-foreground">
-                                                  No edit indicators found
-                                                  </span>
-                                                )}
                                                 </span>
                                               ) : (
                                                 <span className="text-xs font-medium text-muted-foreground">
-                                                  No Manipulation Indicators Found
+                                                  No edit indicators found
                                                 </span>
                                               )}
                                             </div>
