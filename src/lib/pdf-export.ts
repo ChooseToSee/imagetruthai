@@ -15,6 +15,15 @@ export async function exportReportPdf(
   imageUrl: string,
   shareUrl?: string
 ): Promise<void> {
+  // Always use the production domain in PDFs, regardless of where the PDF was generated.
+  if (shareUrl) {
+    try {
+      const u = new URL(shareUrl);
+      shareUrl = `https://imagetruthai.com${u.pathname}${u.search}${u.hash}`;
+    } catch {
+      // leave as-is if not a valid URL
+    }
+  }
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = pdf.internal.pageSize.getWidth();
   let y = 15;
@@ -246,7 +255,7 @@ export async function exportReportPdf(
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
   pdf.setTextColor(80, 80, 80);
-  const aboutText = "These results represent what each AI model found based on its training. AI Detection models (Winston AI, SightEngine, AI or Not) look for patterns associated with AI generation tools. Edit Detection models (Gemini, Hive) look for post-processing manipulation indicators. Results are probabilistic and should not be used as sole evidence of any determination.";
+  const aboutText = "These results represent what each AI model found based on its training. AI Detection models (Winston AI, SightEngine, AI or Not, Hive) look for patterns associated with AI generation tools. Visual analysis (Gemini) looks for post-processing manipulation indicators. Results are probabilistic and should not be used as sole evidence of any determination.";
   const aboutLines = pdf.splitTextToSize(aboutText, pageW - 30);
   pdf.text(aboutLines, 15, y);
   y += aboutLines.length * 4.5 + 4;
