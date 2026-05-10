@@ -214,36 +214,6 @@ export async function exportReportPdf(
     y += 4;
   }
 
-  // Edit Detection — Per Model
-  const editModels = result.modelBreakdown?.filter(m => m.manipulation) ?? [];
-  if (editModels.length > 0) {
-    if (y > 240) { pdf.addPage(); y = 15; }
-    pdf.setFontSize(12);
-    pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(40, 40, 40);
-    pdf.text("Edit Detection — Per Model", 15, y);
-    y += 6;
-    editModels.forEach((model) => {
-      if (y > 260) { pdf.addPage(); y = 15; }
-      const manip = model.manipulation!;
-      pdf.setFontSize(10);
-      pdf.setFont("helvetica", "bold");
-      pdf.setTextColor(manip.edited ? 200 : 50, manip.edited ? 130 : 160, manip.edited ? 0 : 80);
-      pdf.text(`${model.model}: ${manip.edited ? "manipulation indicators found" : "no manipulation indicators found"}`, 18, y);
-      y += 5;
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(9);
-      pdf.setTextColor(80, 80, 80);
-      manip.reasons.forEach((r) => {
-        if (y > 270) { pdf.addPage(); y = 15; }
-        const lines = pdf.splitTextToSize(`  • ${r}`, pageW - 35);
-        pdf.text(lines, 22, y);
-        y += lines.length * 4.5;
-      });
-      y += 3;
-    });
-    y += 4;
-  }
 
   // About these results
   if (y > 230) { pdf.addPage(); y = 15; }
