@@ -207,6 +207,13 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
         <div className="mx-auto max-w-4xl">
           {/* Batch Summary card hidden until a later release */}
 
+          <div className="mb-4 flex justify-center">
+            <Button variant="outline" onClick={onReset} className="gap-2">
+              <RotateCcw className="h-4 w-4" />
+              Analyze More Images
+            </Button>
+          </div>
+
           {/* Individual results */}
           <div className="space-y-3">
             {items.map((item, i) => {
@@ -434,12 +441,12 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                                             <div className="flex items-center justify-between mb-2">
                                               <span className="text-xs font-semibold text-foreground">{m.model}</span>
                                               {manip.edited ? (
-                                                <span className="text-xs font-bold text-warning">
-                                                  Manipulation Indicators Found
+                                                <span className="text-xs font-bold text-amber-500">
+                                                  Edit indicators found
                                                 </span>
                                               ) : (
                                                 <span className="text-xs font-medium text-muted-foreground">
-                                                  No Manipulation Indicators Found
+                                                  No edit indicators found
                                                 </span>
                                               )}
                                             </div>
@@ -548,15 +555,11 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
             })}
           </div>
 
-          {/* Disclaimer + reset */}
+          {/* Disclaimer */}
           <div className="mt-8 text-center">
-            <p className="mb-4 text-[11px] text-muted-foreground/70">
+            <p className="text-[11px] text-muted-foreground/70">
               No detector is 100% accurate — use as a helper tool alongside your judgment.
             </p>
-            <Button variant="outline" onClick={onReset} className="gap-2">
-              <RotateCcw className="h-4 w-4" />
-              Analyze More Images
-            </Button>
           </div>
         </div>
       </div>
