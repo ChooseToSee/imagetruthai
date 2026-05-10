@@ -555,15 +555,11 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
             })}
           </div>
 
-          {/* Disclaimer + reset */}
+          {/* Disclaimer */}
           <div className="mt-8 text-center">
-            <p className="mb-4 text-[11px] text-muted-foreground/70">
+            <p className="text-[11px] text-muted-foreground/70">
               No detector is 100% accurate — use as a helper tool alongside your judgment.
             </p>
-            <Button variant="outline" onClick={onReset} className="gap-2">
-              <RotateCcw className="h-4 w-4" />
-              Analyze More Images
-            </Button>
           </div>
         </div>
       </div>
