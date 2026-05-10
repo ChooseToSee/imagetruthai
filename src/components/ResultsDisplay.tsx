@@ -831,64 +831,6 @@ const ResultsDisplay = ({ result, imagePreview, isFinalResult = false, onReset, 
                       </ul>
                     </div>
 
-                    {/* Per-Model Edit Breakdown */}
-                    {result.modelBreakdown && result.modelBreakdown.some(m => m.manipulation) && (
-                      <div className="mb-4">
-                        <button
-                          onClick={() => setShowEditBreakdown(!showEditBreakdown)}
-                          className="flex w-full items-center gap-2 rounded-lg bg-muted/50 px-4 py-3 text-left transition-colors hover:bg-muted/80"
-                        >
-                          <Pencil className="h-4 w-4 text-primary" />
-                          <span className="flex-1 text-xs font-semibold text-foreground">Per-Model Edit Breakdown</span>
-                          {showEditBreakdown ? (
-                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </button>
-                        {showEditBreakdown && (
-                          <motion.div
-                            className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                          >
-                            {result.modelBreakdown.filter(m => m.manipulation).map((m, i) => {
-                              const manip = m.manipulation!;
-                              return (
-                                <div key={i} className="rounded-lg border border-border bg-muted/30 p-3">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-semibold text-foreground">{m.model}</span>
-                                    {manip.edited ? (
-                                      <span className="text-xs font-bold text-amber-500">
-                                        Edit indicators found
-                                      </span>
-                                    ) : (
-                                      <span className="text-xs font-medium text-muted-foreground">
-                                        No edit indicators found
-                                      </span>
-                                    )}
-                                  </div>
-                                  <ul className="space-y-1">
-                                    {manip.reasons.slice(0, 3).map((r, j) => (
-                                      <li key={j} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
-                                        <div className={`mt-1 h-1 w-1 shrink-0 rounded-full ${manip.edited ? "bg-warning" : "bg-success"}`} />
-                                        {r}
-                                      </li>
-                                    ))}
-                                   </ul>
-                                  {m.model === "SightEngine" && (
-                                    <p className="text-[10px] text-muted-foreground/60 italic mt-1.5">
-                                      SightEngine checks metadata and image quality signals only — not visual manipulation.
-                                    </p>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </motion.div>
-                        )}
-                      </div>
-                    )}
-
                     {/* Manipulation tips */}
                     <div className="rounded-lg bg-muted/50 p-4">
                       <div className="mb-2 flex items-center gap-2 text-xs font-medium text-foreground">

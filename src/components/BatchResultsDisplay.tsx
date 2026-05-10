@@ -417,55 +417,6 @@ const BatchResultsDisplay = ({ items, onReset }: BatchResultsDisplayProps) => {
                                 </ul>
                               </div>
 
-                              {/* Per-Model Edit Breakdown */}
-                              {item.result.modelBreakdown && item.result.modelBreakdown.some(m => m.manipulation) && (
-                                <div>
-                                  <button
-                                    onClick={() => setShowEditBreakdown(showEditBreakdown === i ? null : i)}
-                                    className="flex w-full items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-left transition-colors hover:bg-muted/80"
-                                  >
-                                    <Pencil className="h-3.5 w-3.5 text-primary" />
-                                    <span className="flex-1 text-[11px] font-semibold text-foreground">Per-Model Edit Breakdown</span>
-                                    {showEditBreakdown === i ? (
-                                      <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
-                                    ) : (
-                                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                                    )}
-                                  </button>
-                                  {showEditBreakdown === i && (
-                                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                                      {item.result.modelBreakdown.filter(m => m.manipulation).map((m, mi) => {
-                                        const manip = m.manipulation!;
-                                        return (
-                                          <div key={mi} className="rounded-lg border border-border bg-muted/30 p-3">
-                                            <div className="flex items-center justify-between mb-2">
-                                              <span className="text-xs font-semibold text-foreground">{m.model}</span>
-                                              {manip.edited ? (
-                                                <span className="text-xs font-bold text-amber-500">
-                                                  Edit indicators found
-                                                </span>
-                                              ) : (
-                                                <span className="text-xs font-medium text-muted-foreground">
-                                                  No edit indicators found
-                                                </span>
-                                              )}
-                                            </div>
-                                            <ul className="space-y-1">
-                                              {manip.reasons.slice(0, 3).map((r, j) => (
-                                                <li key={j} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
-                                                  <div className={`mt-1 h-1 w-1 shrink-0 rounded-full ${manip.edited ? "bg-warning" : "bg-success"}`} />
-                                                  {r}
-                                                </li>
-                                              ))}
-                                            </ul>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-
                               {manipulation.tips && manipulation.tips.length > 0 && (
                                 <div className="rounded-lg bg-muted/50 p-3">
                                   <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-foreground">
