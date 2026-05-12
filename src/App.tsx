@@ -23,6 +23,7 @@ import PhotoshoppedSigns from "./pages/PhotoshoppedSigns";
 import SharedReport from "./pages/SharedReport";
 import Unsubscribe from "./pages/Unsubscribe";
 import Admin from "./pages/Admin";
+import StyleGuide from "./pages/StyleGuide";
 import FeedbackWidget from "./components/FeedbackWidget";
 import ErrorBoundary from "./components/ErrorBoundary";
 
