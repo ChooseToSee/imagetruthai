@@ -55,6 +55,7 @@ const App = () => (
                 <Route path="/report/:token" element={<SharedReport />} />
                 <Route path="/unsubscribe" element={<Unsubscribe />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/style-guide" element={<StyleGuide />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <FeedbackWidget />
