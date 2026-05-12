@@ -23,6 +23,7 @@ import PhotoshoppedSigns from "./pages/PhotoshoppedSigns";
 import SharedReport from "./pages/SharedReport";
 import Unsubscribe from "./pages/Unsubscribe";
 import Admin from "./pages/Admin";
+import StyleGuide from "./pages/StyleGuide";
 import FeedbackWidget from "./components/FeedbackWidget";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -54,6 +55,7 @@ const App = () => (
                 <Route path="/report/:token" element={<SharedReport />} />
                 <Route path="/unsubscribe" element={<Unsubscribe />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/style-guide" element={<StyleGuide />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <FeedbackWidget />
