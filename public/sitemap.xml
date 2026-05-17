@@ -5,6 +5,14 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://imagetruthai.com/how-it-works</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://imagetruthai.com/blog/photoshopped-signs</loc>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://imagetruthai.com/contact</loc>
     <priority>0.7</priority>
   </url>

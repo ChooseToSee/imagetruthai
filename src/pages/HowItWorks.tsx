@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import { Eye, FileWarning, ShieldAlert, HeartHandshake, Scale } from "lucide-react";
 
@@ -14,6 +15,14 @@ const fade = (delay = 0) => ({
 const HowItWorksPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <Helmet>
+        <title>How ImageTruth AI Works — Multi-Model Image Analysis</title>
+        <meta name="description" content="A transparent look at how ImageTruth AI uses 5 independent AI models to detect AI generation, deepfakes, and image manipulation." />
+        <link rel="canonical" href="https://imagetruthai.com/how-it-works" />
+        <meta property="og:title" content="How ImageTruth AI Works" />
+        <meta property="og:description" content="How 5 independent AI models analyze your image and reach a consensus verdict." />
+        <meta property="og:url" content="https://imagetruthai.com/how-it-works" />
+      </Helmet>
       <Navbar />
       <main className="flex-1 container mx-auto px-4 py-20 max-w-3xl">
         <motion.h1 className="font-display text-3xl md:text-4xl font-bold mb-2" {...fade()}>

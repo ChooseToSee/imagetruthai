@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,6 +110,12 @@ const Auth = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <Helmet>
+        <title>{isSignUp ? "Sign Up" : "Sign In"} — ImageTruth AI</title>
+        <meta name="description" content="Sign in to ImageTruth AI to analyze images with 5 independent AI models and access your scan history." />
+        <link rel="canonical" href="https://imagetruthai.com/auth" />
+        <meta name="robots" content="noindex, follow" />
+      </Helmet>
       <Link to="/" className="absolute left-4 top-4">
         <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" />

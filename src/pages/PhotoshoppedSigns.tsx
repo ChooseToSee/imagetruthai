@@ -53,10 +53,26 @@ const jsonLd = {
   headline: "How to Tell if a Photo Is Photoshopped: 10 Signs an Image May Be Edited",
   description:
     "Learn the 10 most common signs that a photo has been digitally edited or Photoshopped. A practical guide for journalists, researchers, and anyone who wants to verify image authenticity.",
-  author: { "@type": "Organization", name: "ImageTruth AI" },
-  publisher: { "@type": "Organization", name: "ImageTruth AI" },
+  image: "https://imagetruthai.com/share-image.png",
+  author: {
+    "@type": "Organization",
+    name: "ImageTruth AI",
+    url: "https://imagetruthai.com",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "ImageTruth AI",
+    logo: {
+      "@type": "ImageObject",
+      url: "https://imagetruthai.com/icons/icon-512x512.png",
+    },
+  },
   datePublished: "2026-03-08",
   dateModified: "2026-03-08",
+  mainEntityOfPage: {
+    "@type": "WebPage",
+    "@id": "https://imagetruthai.com/blog/photoshopped-signs",
+  },
 };
 
 const PhotoshoppedSigns = () => (

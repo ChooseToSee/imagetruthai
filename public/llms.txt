@@ -1,0 +1,22 @@
+# ImageTruth AI
+
+> Detect AI-generated and manipulated images with a consensus of 5 independent AI models. Free to start.
+
+ImageTruth AI is a forensic image-verification tool for journalists, investigators, legal professionals, HR teams, insurance companies, and researchers. Upload a photo and 5 independent AI models analyze it for AI generation, deepfake signatures, and manipulation signals, then return a consensus verdict with per-model breakdown and a downloadable PDF report.
+
+## Pages
+
+- [Home](/): Upload an image and run multi-model AI detection.
+- [How It Works](/how-it-works): Transparent walkthrough of the analysis pipeline.
+- [Contact](/contact): Reach support and the team.
+
+## Blog
+
+- [10 Signs a Photo May Be Photoshopped](/blog/photoshopped-signs): Practical guide for spotting edited images.
+
+## Legal
+
+- [Terms of Service](/terms)
+- [Privacy Policy](/privacy)
+- [Refund Policy](/refund-policy)
+- [AI Disclaimer](/ai-disclaimer)
