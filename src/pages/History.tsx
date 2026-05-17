@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -224,6 +225,12 @@ const History = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Scan History — ImageTruth AI</title>
+        <meta name="description" content="Review your past ImageTruth AI scans, verdicts, and downloadable PDF reports." />
+        <link rel="canonical" href="https://imagetruthai.com/history" />
+        <meta name="robots" content="noindex, follow" />
+      </Helmet>
       <Navbar />
       <div className="container mx-auto px-4 pt-24 pb-16">
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

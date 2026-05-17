@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -102,6 +103,14 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Contact ImageTruth AI — Support & Feedback</title>
+        <meta name="description" content="Get in touch with the ImageTruth AI team. Send questions, feedback, or partnership inquiries — we reply within 24 hours." />
+        <link rel="canonical" href="https://imagetruthai.com/contact" />
+        <meta property="og:title" content="Contact ImageTruth AI" />
+        <meta property="og:description" content="Send questions, feedback, or partnership inquiries to the ImageTruth AI team." />
+        <meta property="og:url" content="https://imagetruthai.com/contact" />
+      </Helmet>
       <Navbar />
       <main className="container mx-auto px-4 pt-24 pb-16">
         <div className="mx-auto max-w-lg">
