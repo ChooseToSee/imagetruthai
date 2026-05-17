@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/lib/compress-image";
@@ -20,6 +21,29 @@ import TrustSection from "@/components/TrustSection";
 import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
+
+const HOMEPAGE_JSONLD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "ImageTruth AI",
+    url: "https://imagetruthai.com",
+    logo: "https://imagetruthai.com/icons/icon-512x512.png",
+    sameAs: ["https://twitter.com/ImageTruthAI"],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "ImageTruth AI",
+    url: "https://imagetruthai.com",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: "https://imagetruthai.com/?q={search_term_string}",
+      "query-input": "required name=search_term_string",
+    },
+  },
+];
+
 
 // Sample demo results
 const DEMO_AI_RESULT: AnalysisResult = {
@@ -419,6 +443,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>ImageTruth AI — 5 Independent AI Models. You Decide.</title>
+        <meta name="description" content="5 independent AI models analyze your image for AI generation, deepfakes, and manipulation signals. Free to start." />
+        <link rel="canonical" href="https://imagetruthai.com/" />
+        <meta property="og:url" content="https://imagetruthai.com/" />
+        <script type="application/ld+json">{JSON.stringify(HOMEPAGE_JSONLD)}</script>
+      </Helmet>
       <Navbar />
       <HeroSection onScrollToUpload={scrollToUpload} onStartFree={handleStartFree} />
 
