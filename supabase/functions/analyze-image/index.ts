@@ -999,7 +999,7 @@ serve(async (req) => {
           console.error(`[ScanLimit] Profile fetch error: ${profileErr.message}`);
         }
 
-        const SERVER_LIMITS: Record<string, number> = { free: 3, plus: 50, pro: 500 };
+        const SERVER_LIMITS: Record<string, number> = { free: 3, plus: 15, pro: 500 };
         const tier = profile?.subscription_tier ?? "free";
         userTier = tier;
         const limit = SERVER_LIMITS[tier] ?? 3;
@@ -1035,7 +1035,7 @@ serve(async (req) => {
         if (currentCount >= limit) {
           const message =
             tier === "free"
-              ? `Daily scan limit reached. Free plan includes ${limit} scans per day. Upgrade to Plus for 50 scans/day.`
+              ? `Daily scan limit reached. Free plan includes ${limit} scans per day. Upgrade to Plus for 15 scans/day.`
               : tier === "plus"
               ? `Daily scan limit reached. Plus plan includes ${limit} scans per day. Upgrade to Pro for higher limits.`
               : `Daily scan limit of ${limit} reached. Please contact support@imagetruthai.com if you need more.`;

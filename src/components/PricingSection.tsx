@@ -29,7 +29,7 @@ const plans = [
     name: "Plus",
     tier: "plus" as const,
     features: [
-      "50 scans per day",
+      "15 scans per day",
       "Batch upload up to 5 images",
       "30-day scan history with full analysis results",
       "Full detailed forensic reports",

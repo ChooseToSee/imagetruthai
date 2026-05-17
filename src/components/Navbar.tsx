@@ -221,7 +221,7 @@ const Navbar = () => {
                         onClick={() => setMenuOpen(false)}
                         className="block rounded-lg bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-primary font-medium hover:bg-primary/15 transition-colors text-center"
                       >
-                        ⚡ Upgrade to Plus — 50 scans/day + batch uploads
+                        ⚡ Upgrade to Plus — 15 scans/day + batch uploads
                       </a>
                     </div>
                   )}
@@ -402,7 +402,7 @@ const Navbar = () => {
                     onClick={() => setMobileOpen(false)}
                     className="block rounded-lg bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-primary font-medium mb-1"
                   >
-                    ⚡ Upgrade to Plus — 50 scans/day
+                    ⚡ Upgrade to Plus — 15 scans/day
                   </a>
                 )}
                 {plan === "plus" && (
