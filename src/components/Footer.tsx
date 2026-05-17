@@ -21,13 +21,13 @@ const Footer = () => {
             <a href="/contact" className="hover:text-foreground transition-colors">Contact</a>
             <a href="mailto:support@imagetruthai.com" className="hover:text-foreground transition-colors">support@imagetruthai.com</a>
           </div>
-          <p className="max-w-lg text-[11px] text-muted-foreground/70">
+          <p className="max-w-lg text-xs text-muted-foreground">
             ImageTruth AI is a trade name (DBA) of Choose To See, LLC, a Colorado limited liability company.
           </p>
-          <p className="text-[11px] text-muted-foreground/50">
+          <p className="text-xs text-muted-foreground">
             © 2026 Choose To See, LLC. All rights reserved.
           </p>
-          <p className="text-[11px] text-muted-foreground/50">
+          <p className="text-xs text-muted-foreground">
             Protected by reCAPTCHA —{" "}
             <a
               href="https://policies.google.com/privacy"
