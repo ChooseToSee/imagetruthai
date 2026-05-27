@@ -1,4 +1,4 @@
-# Welcome to your Lovable project
+# ImageTruth AI
 
 ## Project info
 
