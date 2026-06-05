@@ -156,10 +156,11 @@ const Navbar = () => {
           >
             <img
               alt="ImageTruth AI - 5 AI models analyze images for AI generation evidence | Product Hunt"
-              width="180"
-              height="39"
+              width="113"
+              height="25"
               src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1163877&theme=neutral&t=1780629989594"
             />
+
           </a>
           <a href="/#how-it-works" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
             How It Works
