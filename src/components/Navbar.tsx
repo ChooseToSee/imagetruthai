@@ -148,12 +148,26 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden items-center gap-6 md:flex">
+          <a
+            href="https://www.producthunt.com/products/imagetruth-ai?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-imagetruth-ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center"
+          >
+            <img
+              alt="ImageTruth AI - 5 AI models analyze images for AI generation evidence | Product Hunt"
+              width="180"
+              height="39"
+              src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1163877&theme=neutral&t=1780629989594"
+            />
+          </a>
           <a href="/#how-it-works" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
             How It Works
           </a>
           <a href="/#pricing" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
             Pricing
           </a>
+
           <Button variant="ghost" size="icon" onClick={handleShare} className="h-8 w-8 text-muted-foreground" title="Share ImageTruth AI">
             {shareIcon ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
           </Button>
