@@ -349,7 +349,51 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_shared_reports: {
+        Row: {
+          confidence: number | null
+          created_at: string | null
+          file_name: string | null
+          id: string | null
+          image_url: string | null
+          is_public: boolean | null
+          manipulation: Json | null
+          model_breakdown: Json | null
+          reasons: string[] | null
+          share_token: string | null
+          tips: string[] | null
+          verdict: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string | null
+          file_name?: string | null
+          id?: string | null
+          image_url?: string | null
+          is_public?: boolean | null
+          manipulation?: Json | null
+          model_breakdown?: Json | null
+          reasons?: string[] | null
+          share_token?: string | null
+          tips?: string[] | null
+          verdict?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string | null
+          file_name?: string | null
+          id?: string | null
+          image_url?: string | null
+          is_public?: boolean | null
+          manipulation?: Json | null
+          model_breakdown?: Json | null
+          reasons?: string[] | null
+          share_token?: string | null
+          tips?: string[] | null
+          verdict?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       delete_email: {
