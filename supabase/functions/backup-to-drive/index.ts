@@ -78,6 +78,21 @@ Deno.serve(async (req) => {
     if (!GOOGLE_DRIVE_API_KEY) throw new Error("GOOGLE_DRIVE_API_KEY not configured (link Google Drive connector)");
     if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("Supabase service credentials missing");
 
+    // Authorization: only the service role (cron / admin) may trigger a full backup.
+    // The caller must present the service-role key as a Bearer token.
+    const authHeader = req.headers.get("authorization") ?? req.headers.get("Authorization") ?? "";
+    const presented = authHeader.toLowerCase().startsWith("bearer ")
+      ? authHeader.slice(7).trim()
+      : "";
+    // Constant-time-ish length check first to avoid early-return shape leak
+    if (!presented || presented.length !== SERVICE_KEY.length || presented !== SERVICE_KEY) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+
     const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
     const snapshot: Record<string, unknown> = {
       generated_at: new Date().toISOString(),
