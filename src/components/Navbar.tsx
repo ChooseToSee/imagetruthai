@@ -152,7 +152,7 @@ const Navbar = () => {
             href="https://www.producthunt.com/products/imagetruth-ai?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-imagetruth-ai"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center"
+            className="hidden lg:flex items-center ml-[50px]"
           >
             <img
               alt="ImageTruth AI - 5 AI models analyze images for AI generation evidence | Product Hunt"
