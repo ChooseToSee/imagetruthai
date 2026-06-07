@@ -172,8 +172,8 @@ const HeroSection = ({ onScrollToUpload, onStartFree }: HeroSectionProps) => {
               </AnimatePresence>
               <span className="text-foreground">?</span>
             </span>{" "}
-            <br className={`hidden sm:block ${cycleWords[wordIndex] === "AI-Generated" ? "sm:max-lg:hidden" : ""}`} />
-            <span className={`text-gradient-brand ${cycleWords[wordIndex] === "AI-Generated" ? "hidden sm:inline" : ""}`}>Analyze It With AI.</span>
+            <br className="hidden sm:block" />
+            <span className="text-gradient-brand">Analyze It With AI.</span>
           </motion.h1>
 
           <motion.p
