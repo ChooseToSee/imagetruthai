@@ -9,6 +9,15 @@ const Footer = () => {
           <div className="flex items-center gap-2">
             <img src={logoSvg} alt="ImageTruth AI" className="h-6" />
           </div>
+          <a href="https://tools.cafe" target="_blank" rel="noopener noreferrer">
+            <img
+              src="https://tools.cafe/b/dark.svg"
+              alt="Featured on tools.cafe"
+              width="256"
+              height="80"
+              className="h-10 w-auto opacity-90 hover:opacity-100 transition-opacity"
+            />
+          </a>
           <p className="max-w-md text-xs leading-relaxed text-muted-foreground">
             No detector is 100% accurate. ImageTruth AI is designed as a helper tool —
             always use your own judgment alongside automated analysis.
