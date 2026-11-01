@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      anonymous_scans: {
+        Row: {
+          browser_id: string
+          id: string
+          ip_hash: string
+          scanned_at: string
+        }
+        Insert: {
+          browser_id: string
+          id?: string
+          ip_hash: string
+          scanned_at?: string
+        }
+        Update: {
+          browser_id?: string
+          id?: string
+          ip_hash?: string
+          scanned_at?: string
+        }
+        Relationships: []
+      }
       consent_logs: {
         Row: {
           ai_disclaimer_accepted: boolean
@@ -352,6 +373,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_anonymous_scan: {
+        Args: { p_browser_id: string; p_commit?: boolean; p_ip_hash: string }
+        Returns: string
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
