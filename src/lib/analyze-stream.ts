@@ -17,16 +17,18 @@ export async function analyzeImageStream(
   file: File,
   callbacks: StreamCallbacks,
   recaptchaToken?: string | null,
-  sessionToken?: string | null
+  sessionToken?: string | null,
+  browserId?: string
 ): Promise<void> {
   const formData = new FormData();
   formData.append("image", file);
   if (recaptchaToken) formData.append("recaptcha_token", recaptchaToken);
+  if (browserId) formData.append("browser_id", browserId);
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-  if (!sessionToken) {
+  if (!sessionToken && !browserId) {
     const err: any = new Error("Session expired. Please sign in again to continue.");
     err.requiresAuth = true;
     throw err;
@@ -37,7 +39,7 @@ export async function analyzeImageStream(
     resp = await fetch(`${supabaseUrl}/functions/v1/analyze-image`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${sessionToken}`,
+        ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
         apikey: supabaseAnonKey,
         "x-stream": "true",
       },
@@ -52,6 +54,10 @@ export async function analyzeImageStream(
     const text = await resp.text();
     let parsed: any = null;
     try { parsed = JSON.parse(text); } catch {}
+
+    if (typeof parsed?.error === "string" && parsed.error.startsWith("anonymous_")) {
+      throw new Error(parsed.message || "Trial scan unavailable. Please sign up for a free account to continue.");
+    }
 
     if (resp.status === 401 || parsed?.requiresAuth) {
       const err = new Error(parsed?.error || "Sign in required to analyze images.");
@@ -113,7 +119,7 @@ export async function analyzeImageStream(
           callbacks.onDone(parsed as AnalysisResult);
           break;
         case "error":
-          callbacks.onError(parsed.error || "Analysis failed");
+          callbacks.onError(parsed.message || parsed.error || "Analysis failed");
           break;
         case "model_error":
           // Individual model failure, consensus will still work

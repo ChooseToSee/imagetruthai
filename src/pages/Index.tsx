@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { compressImage } from "@/lib/compress-image";
 import { analyzeImageStream, type StreamConsensus } from "@/lib/analyze-stream";
 import { getRecaptchaToken } from "@/lib/recaptcha";
+import { getAnonymousBrowserId } from "@/lib/anonymous-browser";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import UploadSection from "@/components/UploadSection";
@@ -266,7 +267,7 @@ const Index = () => {
         toast({ title: "Analysis failed", description: error, variant: "destructive" });
         setStreamProgress(null);
       },
-    }, recaptchaToken, sessionToken);
+    }, recaptchaToken, sessionToken, !user && !sessionToken ? getAnonymousBrowserId() : undefined);
   };
 
   const analyzeOneFallback = async (
@@ -353,10 +354,11 @@ const Index = () => {
       // Try up to ~3 seconds for the session to become available. This
       // covers the case where the user just signed in / verified their
       // email and the auth state hasn't fully propagated yet.
-      for (let attempt = 0; attempt < 6; attempt++) {
+      for (let attempt = 0; attempt < (user ? 6 : 1); attempt++) {
         const { data: { session } } = await supabase.auth.getSession();
         sessionToken = session?.access_token ?? null;
         if (sessionToken) break;
+        if (!user) break;
         if (attempt === 2) {
           // Halfway through, try a refresh in case the stored session is stale
           try {
@@ -378,6 +380,9 @@ const Index = () => {
     const hasUser = !!user || !!sessionToken;
 
     try {
+      if (!hasUser && files.length !== 1) {
+        throw new Error("Trial scans support one image at a time. Please sign up for a free account for batch access.");
+      }
       // Get a reCAPTCHA v3 token for free-tier users to deter automated abuse.
       // Invisible to the user; null is acceptable (server fails open if absent).
       const isFreeTier = subscription.tier === "free";
