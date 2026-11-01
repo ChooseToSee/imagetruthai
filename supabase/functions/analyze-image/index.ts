@@ -1,12 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-stream, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { anonymousError, enforceAnonymousQuota, hashAnonymousIp, validateAnonymousUpload } from "./anonymous.ts";
 
 // (testHiveAIDetection removed — replaced by analyzeWithHiveAI below)
 
@@ -846,52 +842,12 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // ── Require authentication for ALL scans ────────────────────────────
-  // Anonymous traffic has no enforceable per-user quota, so block it
-  // entirely and route users to the auth flow on the client.
   const authHeader = req.headers.get("Authorization");
-  if (!authHeader) {
-    return new Response(
-      JSON.stringify({
-        error: "Sign in required to analyze images. Create a free account — it only takes a minute.",
-        requiresAuth: true,
-      }),
-      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
-
-  // Reject anon-key-only requests by inspecting the JWT payload.
-  // Both Supabase anon keys and user JWTs are 3-section JWTs, so we must
-  // decode the payload and check the `role` claim. Real signed-in users
-  // have role === "authenticated"; the publishable anon key has role === "anon".
-  // The full signature/expiry validation still happens later via getUser()
-  // inside the scan-limit block — this is just a fast pre-check.
-  {
-    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
-    const parts = token.split(".");
-    let role: string | null = null;
-    if (parts.length === 3) {
-      try {
-        // base64url → base64
-        const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-        const padded = b64 + "===".slice((b64.length + 3) % 4);
-        const payload = JSON.parse(atob(padded));
-        role = typeof payload?.role === "string" ? payload.role : null;
-      } catch {
-        role = null;
-      }
-    }
-    if (role !== "authenticated") {
-      console.log(`[Auth] Rejected request — token role="${role}" (need "authenticated")`);
-      return new Response(
-        JSON.stringify({
-          error: "Sign in required to analyze images. Create a free account — it only takes a minute.",
-          requiresAuth: true,
-        }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-  }
+  const withCors = (response: Response) => {
+    for (const [key, value] of Object.entries(corsHeaders)) response.headers.set(key, value);
+    response.headers.set("Content-Type", "application/json");
+    return response;
+  };
 
   try {
     // Early Content-Length check before reading body
@@ -906,7 +862,7 @@ serve(async (req) => {
     const formData = await req.formData();
     const imageFile = formData.get("image") as File;
 
-    if (!imageFile) {
+    if (!(imageFile instanceof File)) {
       return new Response(JSON.stringify({ error: "No image provided" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -931,7 +887,7 @@ serve(async (req) => {
       );
     }
 
-    // Capture client IP for abuse-pattern visibility (no blocking — backend lacks rate-limit primitives)
+    // Use the gateway-forwarded address; never persist or log the raw address.
     const clientIP =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       req.headers.get("x-real-ip") ||
@@ -951,43 +907,42 @@ serve(async (req) => {
     const wantsStream = req.headers.get("x-stream") === "true";
 
     // ── Server-side scan limit enforcement ──────────────────────────
-    // All callers are authenticated (gated at top of handler).
-    // Plan-based daily limits are enforced here so technical users
-    // can't bypass UI checks.
+    // Signed-in plan enforcement remains unchanged; anonymous callers use a
+    // separate, fail-closed rolling allowance and never touch profiles/history.
     const supabaseUrlForLimit = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKeyForLimit = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     let userTier: string = "free";
     let userIdForLog: string | null = null;
+    const adminClient = createClient(supabaseUrlForLimit, supabaseServiceKeyForLimit);
+    const bearerToken = authHeader?.replace(/^Bearer\s+/i, "").trim();
+    const { data: userData } = bearerToken
+      ? await adminClient.auth.getUser(bearerToken)
+      : { data: { user: null } };
+    const user = userData?.user && !userData.user.is_anonymous ? userData.user : null;
+    let anonymousIpHash: string | null = null;
+    let anonymousBrowserId: string | null = null;
+    const checkAnonymous = async (commit: boolean) => {
+      if (user) return null;
+      return enforceAnonymousQuota(async () => adminClient.rpc("check_anonymous_scan", {
+        p_ip_hash: anonymousIpHash,
+        p_browser_id: anonymousBrowserId,
+        p_commit: commit,
+      }), commit);
+    };
+    if (!user) {
+      const validationError = validateAnonymousUpload(formData);
+      if (validationError) return withCors(anonymousError(validationError));
+      anonymousBrowserId = String(formData.get("browser_id")).toLowerCase();
+      const salt = Deno.env.get("ANON_HASH_SALT");
+      if (!salt || clientIP === "unknown") return withCors(anonymousError("anonymous_scan_unavailable"));
+      anonymousIpHash = await hashAnonymousIp(clientIP, salt);
+      const denied = await checkAnonymous(false);
+      if (denied) return withCors(denied);
+    }
+    if (user) {
     {
       try {
-        const adminClient = createClient(supabaseUrlForLimit, supabaseServiceKeyForLimit);
-        const bearerToken = authHeader.replace(/^Bearer\s+/i, "").trim();
-
-        // Validate JWT via admin client passing the token explicitly.
-        // Using the admin client with an explicit token avoids issues with
-        // userClient auto-header extraction returning null in some runtimes.
-        const { data: userData, error: userErr } = await adminClient.auth.getUser(bearerToken);
-        const user = userData?.user ?? null;
-
-        console.log(
-          `[ScanLimit] getUser result — userId=${user?.id?.slice(0, 8) ?? "null"} email=${user?.email ?? "null"} error=${userErr?.message ?? "none"}`
-        );
-
-        if (!user) {
-          // JWT was structurally valid (role=authenticated passed earlier) but
-          // failed signature/expiry validation. Block the request rather than
-          // silently allowing an unauthenticated scan through.
-          console.log(`[ScanLimit] Rejecting — getUser returned null user`);
-          return new Response(
-            JSON.stringify({
-              error: "Session expired. Please sign in again to continue analyzing images.",
-              requiresAuth: true,
-            }),
-            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
         userIdForLog = user.id;
         const { data: profile, error: profileErr } = await adminClient
           .from("profiles")
@@ -1064,13 +1019,13 @@ serve(async (req) => {
         console.error("[ScanLimit] Check threw exception, allowing request:", (limitErr as Error).message, (limitErr as Error).stack);
       }
     }
+    }
 
     // Free-tier usage visibility (helps spot abuse patterns)
     if (userTier === "free") {
       console.log(
         "[Scan] Free tier scan:",
         userIdForLog?.slice(0, 8) ?? "anon",
-        "IP:", clientIP,
         "Size:", imageFile.size,
         "Type:", mimeType,
       );
@@ -1082,7 +1037,7 @@ serve(async (req) => {
       if (recaptchaToken) {
         const isHuman = await verifyRecaptcha(recaptchaToken);
         if (!isHuman) {
-          console.warn("[reCAPTCHA] Bot signal detected, blocking request from IP:", clientIP);
+          console.warn("[reCAPTCHA] Bot signal detected, blocking request");
           return new Response(
             JSON.stringify({ error: "Request blocked. Please try again.", recaptchaFailed: true }),
             { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -1248,6 +1203,9 @@ serve(async (req) => {
 
       await cleanupTemp();
 
+      const denied = await checkAnonymous(true);
+      if (denied) return withCors(denied);
+
       return new Response(
         JSON.stringify({ ...consensus, modelBreakdown: successfulResults, manipulation }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -1256,10 +1214,15 @@ serve(async (req) => {
 
     // ── Streaming SSE path ─────────────────────────────────────────
     const encoder = new TextEncoder();
+    // Do not expose even partial anonymous results before the atomic quota
+    // commit. Signed-in streaming remains immediate and unchanged.
+    const pendingAnonymousEvents: Uint8Array[] = [];
     const stream = new ReadableStream({
       async start(controller) {
         const send = (event: string, data: unknown) => {
-          controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+          const bytes = encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+          if (!user && event !== "error") pendingAnonymousEvents.push(bytes);
+          else controller.enqueue(bytes);
         };
 
         const successfulResults: ModelResult[] = [];
@@ -1302,10 +1265,18 @@ serve(async (req) => {
         if (successfulResults.length === 0) {
           send("error", { error: "All detection services failed" });
         } else {
+          const denied = await checkAnonymous(true);
+          if (denied) {
+            send("error", await denied.json());
+            await cleanupTemp();
+            controller.close();
+            return;
+          }
           const final = computeConsensus(successfulResults, tasks.length);
           const manipulation = computeManipulation(labeledEdits.map(e => ({ label: e.label, ...e.result })));
           attachEditToModels(successfulResults, labeledEdits);
           send("done", { ...final, modelBreakdown: successfulResults, manipulation });
+          for (const bytes of pendingAnonymousEvents) controller.enqueue(bytes);
         }
 
         await cleanupTemp();
