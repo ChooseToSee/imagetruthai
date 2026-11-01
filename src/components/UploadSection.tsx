@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef, useEffect, forwardRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { Upload, Image as ImageIcon, X, Loader2, Plus, Link as LinkIcon, ZoomIn, LogIn } from "lucide-react";
+import { Upload, Image as ImageIcon, X, Loader2, Plus, Link as LinkIcon, ZoomIn } from "lucide-react";
 import ImageLightbox from "@/components/ImageLightbox";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -41,9 +40,7 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
     const inputRef = useRef<HTMLInputElement>(null);
     const { plan, limits } = usePlan();
     const { user } = useAuth();
-    const navigate = useNavigate();
-
-    const maxSlots = limits.batchLimit;
+    const maxSlots = user ? limits.batchLimit : 1;
     const allConsentsChecked = consent1 && consent2 && consent3;
 
     // On mount or user change, check if consent already recorded for current terms version
@@ -230,7 +227,9 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
             >
-              {plan === "free" ? (
+              {!user ? (
+                <>Try <span className="text-primary font-semibold">1 image scan per 24 hours</span> without signing in.</>
+              ) : plan === "free" ? (
                 <>Analyze <span className="text-primary font-semibold">1 image at a time</span> — {limits.scansPerDay} scans per day on the Free plan.</>
               ) : plan === "plus" ? (
                 <>Drop up to <span className="text-primary font-semibold">{limits.batchLimit} images</span> — {limits.scansPerDay} scans/day on the Plus plan.</>
@@ -453,16 +452,6 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
                       Clear
                     </Button>
                   )}
-                  {!user ? (
-                    <Button
-                      size="sm"
-                      onClick={() => navigate("/auth")}
-                      className="shadow-glow gap-2"
-                    >
-                      <LogIn className="h-4 w-4" />
-                      Sign In to Analyze
-                    </Button>
-                  ) : (
                     <Button
                       size="sm"
                       onClick={() => onAnalyze(selectedFiles.map((f) => f.file))}
@@ -476,7 +465,6 @@ const UploadSection = forwardRef<HTMLDivElement, UploadSectionProps>(
                       )}
                       Analyze {selectedFiles.length > 1 ? `All ${selectedFiles.length}` : ""}
                     </Button>
-                  )}
                 </div>
               </div>
             </motion.div>
