@@ -243,6 +243,11 @@ const Index = () => {
       onDone: (finalResult) => {
         setSingleResult({ result: finalResult, preview });
         setIsFinalResult(true);
+        requestAnimationFrame(() => {
+          if (document.getElementById("results")) {
+            window.__lovableEvents?.track?.("project.analysis_results_shown", { image_count: 1, mode: "single" });
+          }
+        });
         setStreamProgress(null);
         saveToHistory(file, finalResult);
         saveResultToSession(finalResult, preview);
@@ -394,6 +399,13 @@ const Index = () => {
           setSingleResult({ result: successes[0].result, preview: successes[0].preview });
           setIsFinalResult(true);
         } else { setBatchResults(successes); }
+        if (successes.length > 0) {
+          requestAnimationFrame(() => {
+            if (document.getElementById("results")) {
+              window.__lovableEvents?.track?.("project.analysis_results_shown", { image_count: successes.length, mode: "batch" });
+            }
+          });
+        }
       }
     } catch (err: any) {
       if (err?.requiresAuth) {
