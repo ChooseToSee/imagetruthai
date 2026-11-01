@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "events": {
+    "project.analysis_results_shown": {
+      "event_schema_version": 1,
+      "description": "Fresh completed analysis results are displayed to the visitor; excludes demos, restored results, and failed images. Sum image_count for the weekly metric.",
+      "privacy": {
+        "contains_pii": false,
+        "purpose": "product_analytics"
+      },
+      "properties_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "image_count",
+          "mode"
+        ],
+        "properties": {
+          "image_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "single",
+              "batch"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,3 @@
+# Project conventions
+- Emit completed-analysis analytics directly from existing successful single and batch handlers after results are committed; exclude demos and restored results, and count only successfully displayed images.
+- Admin traffic data must come from the supported Lovable analytics API through a server-authorized connector; never expose development query credentials or present visits as unique people.
