@@ -56,6 +56,7 @@ const App = () => (
                 <Route path="/unsubscribe" element={<Unsubscribe />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/style-guide" element={<StyleGuide />} />
+                <Route path="/pricing" element={<Navigate to="/#pricing" replace />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <FeedbackWidget />
