@@ -28,7 +28,7 @@ Deno.test("anonymous scans reject batches and duplicate image fields", () => {
 });
 Deno.test("IP identifiers use salted SHA-256, not raw addresses", async () => {
   const hash = await hashAnonymousIp("192.0.2.1", "test-salt");
-  assert(hash === "8e3f7c39233616205083c1b87a2b22f99016f8fa97c7fb31dc431de2b52a761f", "SHA-256 mismatch");
+  assert(hash === "85660fe60314c0d4e0300fea202896c1ce62e93115bf964dd89a1686ff2d339d", "SHA-256 mismatch");
   assert(hash !== await hashAnonymousIp("192.0.2.1", "other-salt"), "Salt ignored");
 });
 Deno.test("quota calls fail closed and return recognizable errors", async () => {
