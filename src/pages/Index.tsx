@@ -137,6 +137,16 @@ const Index = () => {
     }
   }, []);
 
+  // Scroll to an in-page anchor when arriving with a hash (e.g. /#pricing)
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      setTimeout(() => {
+        document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    }
+  }, []);
+
   useEffect(() => {
     const shouldScroll = sessionStorage.getItem("scrollToUpload");
     if (shouldScroll) {
