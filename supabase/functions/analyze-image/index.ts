@@ -1,8 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { corsHeaders as sdkCorsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { anonymousError, enforceAnonymousQuota, hashAnonymousIp, validateAnonymousUpload } from "./anonymous.ts";
+
+const corsHeaders = {
+  ...sdkCorsHeaders,
+  "Access-Control-Allow-Headers": `${sdkCorsHeaders["Access-Control-Allow-Headers"]}, x-stream`,
+};
 
 // (testHiveAIDetection removed — replaced by analyzeWithHiveAI below)
 
